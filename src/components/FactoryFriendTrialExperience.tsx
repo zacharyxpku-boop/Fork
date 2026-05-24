@@ -121,17 +121,17 @@ const DATA_INPUTS = [
 ];
 
 const CLAW_FEATURES = [
-  { title: '20 大模块 200+ 技能', detail: '覆盖品牌定位、菜单优化、外卖增长、本地生活、会员增长、盈利分析、人力资源、库存采购和连锁标准。', state: '内部任务包' },
-  { title: '50+ 安全办公工具', detail: '日报、菜单卡、活动复盘、社群话术、发布检查、证据回填、负责人交接先内置为可执行模板。', state: '可试用' },
-  { title: '三模型任务路由', detail: '文案、表格、长文档、图片理解和经营复盘拆开处理，输出只保留可审查结论和下一步。', state: '需 Provider Key' },
-  { title: '沙箱隔离数据安全', detail: '无授权不读账号、无凭证不宣称发布、无来源不做经营归因，高风险动作全部进入阻断态。', state: '已产品化' },
-  { title: '跨平台数据分析', detail: '当前支持链接、截图、CSV 和人工回填；POS、核销、私信和平台评论需要合法 API/OAuth 或导出。', state: '外部接入门槛' },
+  { title: '今日任务包', detail: '把门店、菜品、活动边界和渠道变成可审核的工作单，不让客户从空白页开始。', state: '可试用' },
+  { title: '证据回执', detail: '发布链接、截图、券领取、预约和私信咨询先进入证据账本，再交给负责人处理。', state: '内部闭环' },
+  { title: '经营导入', detail: '支持链接、截图、CSV 和人工回填；POS、核销、会员和评论需要合法 API/OAuth 或导出。', state: '需授权' },
+  { title: '浏览器执行', detail: '外部账号接入前只生成受控 runbook；配置 Runner 后再回传步骤、截图和失败原因。', state: '需 Provider' },
+  { title: '安全边界', detail: '无授权不读账号，无凭证不宣称发布，无来源不做经营归因，高风险动作进入阻断态。', state: '已产品化' },
 ];
 
 const OPENING_STEPS = [
-  { title: '获取邀请码', detail: '先选择门店类型、经营目标和本轮要解决的问题，进入餐饮试用工作区。' },
-  { title: '安装并激活', detail: '接入可用 Provider Key、浏览器 Runner、门店资料和允许导入的数据源。' },
-  { title: '开始 AI 经营', detail: '从菜单、外卖、本地生活、会员、复盘、排班或合规任务中选择一个当天闭环。' },
+  { title: '填门店任务', detail: '先确认餐厅、菜品/套餐、目标客群、渠道和本轮活动边界。' },
+  { title: '跑受控试单', detail: '生成内容计划、负责人、证据要求和下一步，不直接冒充外部发布。' },
+  { title: '补外部钥匙', detail: '需要自动发布、核销或真实经营分析时，再接 Provider Key、Runner、授权和数据合同。' },
 ];
 
 const RESTAURANT_SCENARIOS = [
@@ -263,10 +263,10 @@ export function FactoryFriendTrialExperience({
                     </div>
 
                     <h2 className="mt-6 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">
-                      餐饮人的超级 AI 大脑
+                      今天先跑一张门店经营工单
                     </h2>
                     <p className="mt-4 max-w-2xl text-base leading-7 text-stone-300">
-                      跨平台数据分析能力 | 300+ 餐饮技能目标地图 | 50+ 成熟效率工具。当前先把可内部闭环的任务、证据、负责人、浏览器执行和记忆写回做成可试用产品，外部账号和经营系统接入前不冒充自动化。
+                      从菜品、套餐、门店活动和本地渠道开始，生成可审核的内容计划、发布证据、负责人和下一步。自动发布、自动核销和真实经营分析只在 Provider、商家授权、浏览器 Runner 与数据合同就绪后开启。
                     </p>
 
                     <div className="mt-6 flex flex-wrap gap-3">
@@ -291,7 +291,7 @@ export function FactoryFriendTrialExperience({
 
                   <div className="border-t border-white/10 bg-black/20 p-5 lg:border-l lg:border-t-0">
                     <div className="rounded-3xl border border-emerald-300/20 bg-emerald-300/10 p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">三步开启 AI 经营</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">试用路径</p>
                       <div className="mt-4 space-y-3">
                         {OPENING_STEPS.map((item, index) => (
                           <div className="rounded-2xl border border-white/10 bg-[#07130f]/75 p-3" key={item.title}>
@@ -620,7 +620,7 @@ export function FactoryFriendTrialExperience({
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">竞品能力训练与接入矩阵</h2>
                     </div>
                     <p className="max-w-2xl text-sm leading-6 text-stone-600">
-                      目标不是把“300+ 技能”写成口号，而是每项能力都有训练材料、外部门槛、验收证据和第一步。内部能做的先训练成任务包，外部必须接的明确列出来。
+                      目标不是堆技能数量，而是每项能力都有训练材料、外部门槛、验收证据和第一步。内部能做的先训练成任务包，外部必须接的明确列出来。
                     </p>
                   </div>
                 </div>
