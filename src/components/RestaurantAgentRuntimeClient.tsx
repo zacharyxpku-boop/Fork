@@ -2669,6 +2669,50 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandAiEmployeeMemoryPack = dispatchState.aiEmployeeMemoryPack;
   const commandCustomerDemandGateway = dispatchState.customerDemandGateway;
   const commandVoiceOrderConsole = dispatchState.voiceOrderConsole;
+  const commandCockpitZones = commandAiCockpit?.zones || [
+    {
+      id: 'today-operations',
+      title: 'Today Operations',
+      status: 'ready-internal',
+      answer: '把今天的门店目标、主推套餐、服务窗口、负责人和可验收证据排成一张试跑工单。',
+      primaryAction: '先生成受控试跑，再看 Execution Timeline。',
+      visibleProof: ['门店资料', '主推套餐', '服务窗口'],
+      providerGate: 'none for internal planning',
+    },
+    {
+      id: 'ai-consultant',
+      title: 'AI Consultant',
+      status: 'needs-evidence',
+      answer: '把店长问题转成菜品卖点、到店理由、内容动作和运营建议，但每条建议都带负责人和证据要求。',
+      primaryAction: '补齐菜单、活动、渠道和约束后生成顾问方案。',
+      visibleProof: ['菜单截图', '活动口径', '渠道限制'],
+      providerGate: 'provider proof for external data',
+    },
+    {
+      id: 'automation-launch',
+      title: 'Automation Launch',
+      status: 'provider-gated',
+      answer: '自动发布、自动获客、自动核销和真实经营分析需要商户授权、平台回调、浏览器会话或 POS/券码数据合同。',
+      primaryAction: '先跑 Provider Setup Pack，拿到 key、grant、callback 和 stop line。',
+      visibleProof: ['provider health', 'merchant grant', 'signed callback'],
+      providerGate: 'keys / grants / browser session / callback',
+    },
+    {
+      id: 'evidence-review',
+      title: 'Evidence Review',
+      status: 'needs-evidence',
+      answer: '所有结果只看公开链接、截图回执、签名回调或脱敏经营聚合，不展示私信、手机号、券码或原始 POS 行。',
+      primaryAction: '导入回执或脱敏汇总后，生成下一轮门店动作。',
+      visibleProof: ['发布链接', '截图回执', '脱敏 POS 汇总'],
+      providerGate: 'aggregate field dictionary',
+    },
+  ];
+  const commandCockpitSummary = commandAiCockpit?.summary || {
+    zones: commandCockpitZones.length,
+    readyInternal: commandCockpitZones.filter(zone => zone.status === 'ready-internal').length,
+    providerGated: commandCockpitZones.filter(zone => zone.status === 'provider-gated').length,
+    canClaimAutomation: false,
+  };
 
   return (
     <section className="border border-stone-200 bg-white p-5 shadow-sm" id="restaurant-agent-runtime">
@@ -2799,69 +2843,76 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="w-full xl:w-[360px]">
                 <button
-                  className="w-full border border-amber-200 bg-amber-200 px-3 py-2 text-sm font-black text-stone-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full border border-amber-200 bg-amber-200 px-3 py-3 text-sm font-black text-stone-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={dispatchState.status === 'loading'}
                   onClick={buildAiCockpit}
                   type="button"
                 >
                   AI Cockpit
                 </button>
-                <button
-                  className="mt-2 w-full border border-amber-200/70 px-3 py-2 text-sm font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={dispatchState.status === 'loading'}
-                  onClick={routeRestaurantCommand}
-                  type="button"
-                >
-                  Route Command
-                </button>
-                <button
-                  className="mt-2 w-full border border-violet-200/60 px-3 py-2 text-sm font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={dispatchState.status === 'loading'}
-                  onClick={buildAiEmployeeMemoryPack}
-                  type="button"
-                >
-                  Employee Memory
-                </button>
-                <button
-                  className="mt-2 w-full border border-fuchsia-200/60 px-3 py-2 text-sm font-black text-fuchsia-100 transition hover:bg-fuchsia-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={dispatchState.status === 'loading'}
-                  onClick={buildAiConsultantCopilot}
-                  type="button"
-                >
-                  AI Consultant
-                </button>
-                <button
-                  className="mt-2 w-full border border-lime-200/60 px-3 py-2 text-sm font-black text-lime-100 transition hover:bg-lime-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={dispatchState.status === 'loading'}
-                  onClick={buildStoreOperatingPlan}
-                  type="button"
-                >
-                  Operating Plan
-                </button>
-                <button
-                  className="mt-2 w-full border border-emerald-200/60 px-3 py-2 text-sm font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={dispatchState.status === 'loading'}
-                  onClick={buildCustomerDemandGateway}
-                  type="button"
-                >
-                  Demand Gateway
-                </button>
-                <button
-                  className="mt-2 w-full border border-sky-200/60 px-3 py-2 text-sm font-black text-sky-100 transition hover:bg-sky-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={dispatchState.status === 'loading'}
-                  onClick={buildVoiceOrderConsole}
-                  type="button"
-                >
-                  Voice Orders
-                </button>
-                <button
-                  className="mt-2 w-full border border-rose-200/60 px-3 py-2 text-sm font-black text-rose-100 transition hover:bg-rose-200/10 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={dispatchState.status === 'loading'}
-                  onClick={buildProviderLaunchBoard}
-                  type="button"
-                >
-                  Launch Board
-                </button>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    className="border border-amber-200/70 px-3 py-2 text-sm font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={dispatchState.status === 'loading'}
+                    onClick={routeRestaurantCommand}
+                    type="button"
+                  >
+                    Route Command
+                  </button>
+                  <button
+                    className="border border-lime-200/60 px-3 py-2 text-sm font-black text-lime-100 transition hover:bg-lime-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={dispatchState.status === 'loading'}
+                    onClick={buildStoreOperatingPlan}
+                    type="button"
+                  >
+                    Operating Plan
+                  </button>
+                </div>
+                <details className="mt-2 border border-white/10 bg-white/[0.04] p-3">
+                  <summary className="cursor-pointer text-xs font-black text-white/75">Advanced cockpit tools</summary>
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      className="w-full border border-violet-200/60 px-3 py-2 text-sm font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={buildAiEmployeeMemoryPack}
+                      type="button"
+                    >
+                      Employee Memory
+                    </button>
+                    <button
+                      className="w-full border border-fuchsia-200/60 px-3 py-2 text-sm font-black text-fuchsia-100 transition hover:bg-fuchsia-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={buildAiConsultantCopilot}
+                      type="button"
+                    >
+                      AI Consultant
+                    </button>
+                    <button
+                      className="w-full border border-emerald-200/60 px-3 py-2 text-sm font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={buildCustomerDemandGateway}
+                      type="button"
+                    >
+                      Demand Gateway
+                    </button>
+                    <button
+                      className="w-full border border-sky-200/60 px-3 py-2 text-sm font-black text-sky-100 transition hover:bg-sky-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={buildVoiceOrderConsole}
+                      type="button"
+                    >
+                      Voice Orders
+                    </button>
+                    <button
+                      className="w-full border border-rose-200/60 px-3 py-2 text-sm font-black text-rose-100 transition hover:bg-rose-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={buildProviderLaunchBoard}
+                      type="button"
+                    >
+                      Launch Board
+                    </button>
+                  </div>
+                </details>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <button
                     className="border border-white/15 px-2 py-2 text-left text-white/70 transition hover:bg-white/10"
@@ -2940,41 +2991,40 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
               </div>
             ) : null}
-            {commandAiCockpit ? (
-              <div className="mt-3 border border-amber-200/40 bg-amber-200/[0.06] p-3">
+            <div className="mt-3 border border-amber-200/40 bg-amber-200/[0.06] p-3">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">Restaurant AI Cockpit</div>
-                    <h4 className="mt-1 text-base font-black text-white">{commandAiCockpit.payloadShape}</h4>
+                    <h4 className="mt-1 text-base font-black text-white">{commandAiCockpit?.payloadShape || 'restaurant-ai-cockpit-preview'}</h4>
                     <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
-                      {commandAiCockpit.restaurant} / {commandAiCockpit.offer}: Today Operations, AI Consultant, Automation Launch and Evidence Review in one cockpit.
+                      {(commandAiCockpit?.restaurant || runtimeIntake.restaurant)} / {(commandAiCockpit?.offer || runtimeIntake.offer)}: Today Operations, AI Consultant, Automation Launch and Evidence Review in one cockpit.
                     </p>
                   </div>
                   <div className="grid gap-2 text-xs sm:grid-cols-5 lg:min-w-[620px]">
                     <div className="border border-white/10 bg-white/[0.05] p-2">
-                      <div className="font-mono text-white">{commandAiCockpit.verdict}</div>
+                      <div className="font-mono text-white">{commandAiCockpit?.verdict || 'preview-before-run'}</div>
                       <p className="mt-1 text-white/55">verdict</p>
                     </div>
                     <div className="border border-white/10 bg-white/[0.05] p-2">
-                      <div className="font-mono text-white">{commandAiCockpit.summary.zones}</div>
+                      <div className="font-mono text-white">{commandCockpitSummary.zones}</div>
                       <p className="mt-1 text-white/55">zones</p>
                     </div>
                     <div className="border border-white/10 bg-white/[0.05] p-2">
-                      <div className="font-mono text-white">{commandAiCockpit.summary.readyInternal}</div>
+                      <div className="font-mono text-white">{commandCockpitSummary.readyInternal}</div>
                       <p className="mt-1 text-white/55">internal</p>
                     </div>
                     <div className="border border-white/10 bg-white/[0.05] p-2">
-                      <div className="font-mono text-white">{commandAiCockpit.summary.providerGated}</div>
+                      <div className="font-mono text-white">{commandCockpitSummary.providerGated}</div>
                       <p className="mt-1 text-white/55">provider gated</p>
                     </div>
                     <div className="border border-white/10 bg-white/[0.05] p-2">
-                      <div className="font-mono text-white">{commandAiCockpit.summary.canClaimAutomation ? 'ready' : 'blocked'}</div>
+                      <div className="font-mono text-white">{commandCockpitSummary.canClaimAutomation ? 'ready' : 'blocked'}</div>
                       <p className="mt-1 text-white/55">automation claim</p>
                     </div>
                   </div>
                 </div>
                 <div className="mt-3 grid gap-2 lg:grid-cols-4">
-                  {commandAiCockpit.zones.map(zone => (
+                  {commandCockpitZones.map(zone => (
                     <div className="border border-white/10 bg-white/[0.05] p-3" key={zone.id}>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="font-mono text-xs text-white">{zone.title}</span>
@@ -2990,22 +3040,26 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="mt-3 grid gap-2 lg:grid-cols-3">
                   <div className="border border-white/10 bg-white/[0.05] p-3">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">primary runbook</div>
-                    {commandAiCockpit.primaryRunbook.map(line => (
+                    {(commandAiCockpit?.primaryRunbook || [
+                      'Open Today Operations first and confirm merchant evidence.',
+                      'Use AI Consultant only to create owner-visible plays, not hidden automation.',
+                      'Move Automation Launch one lane at a time through Provider health, merchant grant and signed callback.',
+                      'Close Evidence Review with public proof or sanitized aggregate imports before next-loop decisions.',
+                    ]).map(line => (
                       <p className="mt-2 text-[11px] leading-4 text-amber-100/65" key={line}>{line}</p>
                     ))}
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-3">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">evidence board</div>
-                    <p className="mt-2 text-xs leading-5 text-white/55">{commandAiCockpit.evidenceBoard.slice(0, 12).join(' / ') || 'none'}</p>
+                    <p className="mt-2 text-xs leading-5 text-white/55">{(commandAiCockpit?.evidenceBoard || commandCockpitZones.flatMap(zone => zone.visibleProof)).slice(0, 12).join(' / ') || 'none'}</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-3">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider unlocks</div>
-                    <p className="mt-2 text-xs leading-5 text-amber-100/65">{commandAiCockpit.providerUnlocks.slice(0, 12).join(' / ') || 'none'}</p>
-                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandAiCockpit.safetyBoundary}</p>
+                    <p className="mt-2 text-xs leading-5 text-amber-100/65">{(commandAiCockpit?.providerUnlocks || ['merchant grant', 'provider key', 'browser session', 'callback secret', 'POS aggregate contract']).slice(0, 12).join(' / ') || 'none'}</p>
+                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandAiCockpit?.safetyBoundary || 'Preview only: no auto-publish, live call, POS write, payment, delivery, coupon redemption or private-message access without accepted Provider proof.'}</p>
                   </div>
                 </div>
               </div>
-            ) : null}
             {commandAiEmployeeMemoryPack ? (
               <div className="mt-3 border border-violet-200/30 bg-violet-200/[0.06] p-3">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
