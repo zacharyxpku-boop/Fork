@@ -9,6 +9,7 @@ import type { RestaurantAgentChannelScheduleRun } from '@/lib/restaurant-agent-c
 import type { RestaurantBuildQueueReport } from '@/lib/restaurant-agent-build-queue';
 import type { RestaurantCallbackSimulatorReport } from '@/lib/restaurant-agent-callback-simulator';
 import type { RestaurantAgentCommandCenter } from '@/lib/restaurant-agent-command-center';
+import type { RestaurantAiEmployeeMemoryPack } from '@/lib/restaurant-ai-employee-memory-pack';
 import type { RestaurantCommandRoute } from '@/lib/restaurant-command-router';
 import type { RestaurantAiEmployeeInbox } from '@/lib/restaurant-ai-employee-inbox';
 import type { RestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
@@ -252,6 +253,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dayZeroMissionPack?: RestaurantDayZeroMissionPack;
     opsConsole?: RestaurantAgentOpsConsole;
     commandCenter?: RestaurantAgentCommandCenter;
+    aiEmployeeMemoryPack?: RestaurantAiEmployeeMemoryPack;
     commandRoute?: RestaurantCommandRoute;
     aiEmployeeInbox?: RestaurantAiEmployeeInbox;
     channelHub?: RestaurantAgentChannelHub;
@@ -2276,6 +2278,46 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildAiEmployeeMemoryPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building AI employee memory pack...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'ai-employee-memory-pack',
+          command: restaurantCommand,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.aiEmployeeMemoryPack?.employee?.safeToAutonomouslyRun ? 'queued' : 'blocked',
+        message: `AI employee memory pack: ${payload?.aiEmployeeMemoryPack?.summary?.memoryCards ?? 0} memory cards, ${payload?.aiEmployeeMemoryPack?.summary?.nextWakeups ?? 0} wakeups, ${payload?.aiEmployeeMemoryPack?.summary?.externalRequired ?? 0} external gates.`,
+        aiEmployeeMemoryPack: payload?.aiEmployeeMemoryPack || previous.aiEmployeeMemoryPack,
+        commandRoute: payload?.commandRoute || previous.commandRoute,
+        commandCenter: payload?.commandCenter || previous.commandCenter,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        storeManagerTaskWatcher: payload?.storeManagerTaskWatcher || previous.storeManagerTaskWatcher,
+        channelDeliveryReport: payload?.channelDeliveryReport || previous.channelDeliveryReport,
+        clawSkillExecutionLedger: payload?.clawSkillExecutionLedger || previous.clawSkillExecutionLedger,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'AI employee memory pack is temporarily unavailable.' }));
+    }
+  };
+
   const commandMode =
     dispatchState.commandCenter?.mode ||
     dispatchState.executionTimeline?.mode ||
@@ -2389,6 +2431,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dispatchState.commandCenter?.clawSkillExecutionLedger ||
     dispatchState.clawSkillExecutionLedger;
   const commandRoute = dispatchState.commandRoute;
+  const commandAiEmployeeMemoryPack = dispatchState.aiEmployeeMemoryPack;
 
   return (
     <section className="border border-stone-200 bg-white p-5 shadow-sm" id="restaurant-agent-runtime">
@@ -2526,6 +2569,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 >
                   Route Command
                 </button>
+                <button
+                  className="mt-2 w-full border border-violet-200/60 px-3 py-2 text-sm font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildAiEmployeeMemoryPack}
+                  type="button"
+                >
+                  Employee Memory
+                </button>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <button
                     className="border border-white/15 px-2 py-2 text-left text-white/70 transition hover:bg-white/10"
@@ -2601,6 +2652,80 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   >
                     Run Routed Action
                   </button>
+                </div>
+              </div>
+            ) : null}
+            {commandAiEmployeeMemoryPack ? (
+              <div className="mt-3 border border-violet-200/30 bg-violet-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">AI employee memory pack</div>
+                    <h4 className="mt-1 text-base font-black text-white">{commandAiEmployeeMemoryPack.payloadShape}</h4>
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                      {commandAiEmployeeMemoryPack.residentEmployeeBrief.join(' / ')}
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-4 lg:min-w-[520px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiEmployeeMemoryPack.summary.memoryCards}</div>
+                      <p className="mt-1 text-white/55">memory cards</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiEmployeeMemoryPack.summary.trainingReady}</div>
+                      <p className="mt-1 text-white/55">training ready</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiEmployeeMemoryPack.summary.providerGates}</div>
+                      <p className="mt-1 text-white/55">provider gates</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiEmployeeMemoryPack.employee.safeToAutonomouslyRun ? 'ready' : 'gated'}</div>
+                      <p className="mt-1 text-white/55">autonomy</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  {commandAiEmployeeMemoryPack.memoryCards.slice(0, 6).map(card => (
+                    <div className="border border-white/10 bg-white/[0.05] p-3" key={card.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-white">{card.title}</span>
+                        <span className="text-[11px] text-violet-100/70">{card.status} / {card.owner}</span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-white/65">{card.detail}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">{card.nextAction}</p>
+                      <p className="mt-2 text-[11px] leading-4 text-violet-100/60">evidence: {card.evidenceRequired}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">next wakeups</div>
+                    <div className="mt-2 space-y-2">
+                      {commandAiEmployeeMemoryPack.nextWakeups.slice(0, 4).map(wakeup => (
+                        <div className="border border-white/10 bg-white/[0.04] p-2" key={wakeup.id}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-mono text-white">{wakeup.owner}</span>
+                            <span className="text-white/45">{wakeup.dueWindow}</span>
+                          </div>
+                          <p className="mt-1 text-xs leading-5 text-white/60">{wakeup.action}</p>
+                          <p className="mt-1 text-[11px] text-white/40">trigger: {wakeup.trigger}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">training and external gates</div>
+                    <p className="mt-2 text-xs leading-5 text-white/60">
+                      trainable now: {commandAiEmployeeMemoryPack.trainingProgress.trainableNow}; provider gated: {commandAiEmployeeMemoryPack.trainingProgress.providerGated}; missing materials: {commandAiEmployeeMemoryPack.summary.trainingMissingMaterials}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-white/55">
+                      next training: {commandAiEmployeeMemoryPack.trainingProgress.nextInternalTraining.slice(0, 3).map(item => `${item.capabilityId}: ${item.material}`).join(' / ') || 'none'}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-violet-100/65">
+                      external: {commandAiEmployeeMemoryPack.externalRequired.slice(0, 6).join(' / ') || 'none'}
+                    </p>
+                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandAiEmployeeMemoryPack.safetyBoundary}</p>
+                  </div>
                 </div>
               </div>
             ) : null}

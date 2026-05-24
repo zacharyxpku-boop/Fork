@@ -6,6 +6,7 @@ import { buildRestaurantAgentChannelDeliveryReport, executeRestaurantAgentChanne
 import { buildRestaurantAgentChannelHub } from '@/lib/restaurant-agent-channel-hub';
 import { runRestaurantAgentChannelSchedule } from '@/lib/restaurant-agent-channel-scheduler';
 import { buildRestaurantAgentCommandCenter } from '@/lib/restaurant-agent-command-center';
+import { buildRestaurantAiEmployeeMemoryPack } from '@/lib/restaurant-ai-employee-memory-pack';
 import { buildRestaurantCommandRoute } from '@/lib/restaurant-command-router';
 import { buildRestaurantBrowserRunnerCallbackContract } from '@/lib/restaurant-agent-browser-runner-contract';
 import { buildRestaurantBrowserRunnerEventHealth, listRestaurantBrowserRunnerEvents, recordRestaurantBrowserRunnerEvent } from '@/lib/restaurant-agent-browser-runner-event-store';
@@ -1006,6 +1007,81 @@ export async function POST(request: NextRequest) {
         commandCenter,
       }),
       commandCenter,
+      runs,
+      receipts,
+    });
+  }
+
+  if (body.action === 'ai-employee-memory-pack') {
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const commandCenter = await buildRestaurantAgentCommandCenter({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      runs,
+      receipts,
+      readiness: buildRestaurantExternalReadiness(),
+      browserSessions: listRestaurantBrowserSessions(),
+    });
+    const commandRoute = typeof body.command === 'string' && body.command.trim()
+      ? buildRestaurantCommandRoute({
+          command: body.command,
+          restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+          offer: typeof body.offer === 'string' ? body.offer : undefined,
+          audience: typeof body.audience === 'string' ? body.audience : undefined,
+          channels: typeof body.channels === 'string' ? body.channels : undefined,
+          visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+          constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+          evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+          commandCenter,
+        })
+      : undefined;
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger({
+      configuredProviders: [
+        ...providerSetupState.provided.envKeys,
+        ...providerSetupState.provided.merchantApprovals,
+        ...providerSetupState.provided.dataContracts,
+      ],
+    });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const storeManagerTaskWatcher = buildRestaurantStoreManagerTaskWatcher(storeManagerTaskQueue);
+    const channelDeliveryReport = buildRestaurantAgentChannelDeliveryReport();
+    const clawSkillExecutionLedger = buildRestaurantClawSkillExecutionLedger();
+    const safeCommandRoute = commandRoute
+      ? {
+          ...commandRoute,
+          command: commandRoute.extracted.forbiddenHints.length ? '[redacted-sensitive-command]' : commandRoute.command,
+        }
+      : undefined;
+
+    return NextResponse.json({
+      ok: true,
+      aiEmployeeMemoryPack: buildRestaurantAiEmployeeMemoryPack({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        commandRoute,
+        commandCenter,
+        capabilityTrainingPlan,
+        providerSetupState,
+        storeManagerTaskQueue,
+        storeManagerTaskWatcher,
+        channelDeliveryReport,
+        clawSkillExecutionLedger,
+      }),
+      commandRoute: safeCommandRoute,
+      commandCenter,
+      capabilityTrainingPlan,
+      providerSetupState,
+      storeManagerTaskQueue,
+      storeManagerTaskWatcher,
+      channelDeliveryReport,
+      clawSkillExecutionLedger,
       runs,
       receipts,
     });

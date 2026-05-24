@@ -44,6 +44,10 @@ Invoke-Step "Vitest restaurant command router" {
   npm.cmd run test -- __tests__/restaurant-command-router.test.ts
 }
 
+Invoke-Step "Vitest restaurant AI employee memory pack" {
+  npm.cmd run test -- __tests__/restaurant-ai-employee-memory-pack.test.ts
+}
+
 Invoke-Step "TypeScript noEmit" {
   npx.cmd tsc --noEmit
 }
