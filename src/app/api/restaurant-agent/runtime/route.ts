@@ -47,6 +47,7 @@ import { buildRestaurantProviderSetupWizard } from '@/lib/restaurant-provider-se
 import { buildRestaurantProviderSetupStateSummary, recordRestaurantProviderSetupState } from '@/lib/restaurant-provider-setup-state-store';
 import { buildRestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
+import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-profile-intake';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
@@ -154,6 +155,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       businessSignals: buildRestaurantBusinessSignals(runs, receipts),
+      runs,
+      receipts,
+    });
+  }
+
+  if (body.action === 'provider-sandbox-contract') {
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+    });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const taskProviderHandoff = buildRestaurantTaskProviderHandoff({
+      queue: storeManagerTaskQueue,
+      target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+        ? body.runtimeTarget
+        : undefined,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness });
+    return NextResponse.json({
+      ok: true,
+      providerSandboxContract: buildRestaurantProviderSandboxContract({
+        runtimeProbe,
+        providerReadinessHealth,
+        taskProviderHandoff,
+        providerReceiptInbox,
+      }),
+      runtimeProbe,
+      providerReadinessHealth,
+      taskProviderHandoff,
+      providerReceiptInbox,
+      storeManagerTaskQueue,
+      providerSetupState,
       runs,
       receipts,
     });

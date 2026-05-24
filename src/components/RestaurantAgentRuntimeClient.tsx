@@ -34,6 +34,7 @@ import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-se
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
+import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import { buildRestaurantExternalReadiness, type RestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
 import type { RestaurantGrantChecklist } from '@/lib/restaurant-agent-grant-checklist';
 import type { RestaurantMerchantGrantManifest } from '@/lib/restaurant-agent-grant-manifest';
@@ -218,6 +219,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerSetupState?: RestaurantProviderSetupStateSummary;
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
+    providerSandboxContract?: RestaurantProviderSandboxContract;
     businessSignals?: RestaurantBusinessSignalReport;
     browserSessionHealth?: RestaurantBrowserSessionHealth;
     toolPolicy?: RestaurantAgentToolPolicyReport;
@@ -695,6 +697,34 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider receipt inbox is temporarily unavailable.' }));
+    }
+  };
+
+  const inspectProviderSandboxContract = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building provider sandbox acceptance contract...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'provider-sandbox-contract', runtimeTarget: 'openclaw' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.providerSandboxContract?.summary?.canClaimAutomation ? 'queued' : 'blocked',
+        message: `Provider sandbox contract: ${payload?.providerSandboxContract?.summary?.passed ?? 0}/${payload?.providerSandboxContract?.summary?.checks ?? 0} passed, verdict ${payload?.providerSandboxContract?.verdict || 'unknown'}.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider sandbox contract is temporarily unavailable.' }));
     }
   };
 
@@ -1789,6 +1819,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dispatchState.commandCenter?.taskProviderHandoff ||
     dispatchState.taskProviderHandoff;
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
+  const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandAiEmployeeInbox =
     dispatchState.commandCenter?.aiEmployeeInbox ||
     dispatchState.aiEmployeeInbox;
@@ -2698,6 +2729,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     {commandProviderReceiptInbox.requests.slice(0, 1).map(request => (
                       <p className="mt-1 text-[11px] leading-4 text-white/45" key={request.requestId}>
                         {request.priority}: {request.callback.action} · {request.requiredEvidence.slice(0, 3).join(' / ')}
+                      </p>
+                    ))}
+                    <button
+                      className="mt-2 border border-cyan-200/50 px-2 py-1 text-[11px] font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={inspectProviderSandboxContract}
+                      type="button"
+                    >
+                      Sandbox Contract
+                    </button>
+                  </div>
+                ) : null}
+                {commandProviderSandboxContract ? (
+                  <div className="border border-lime-200/25 bg-lime-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/70">provider sandbox contract</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandProviderSandboxContract.payloadShape} / {commandProviderSandboxContract.verdict} / passed {commandProviderSandboxContract.summary.passed}/{commandProviderSandboxContract.summary.checks}
+                    </p>
+                    {commandProviderSandboxContract.checks.slice(0, 2).map(check => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45" key={check.id}>
+                        {check.status}: {check.label} · {check.nextAction}
                       </p>
                     ))}
                   </div>
