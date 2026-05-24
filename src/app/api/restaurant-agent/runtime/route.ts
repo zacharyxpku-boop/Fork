@@ -45,6 +45,7 @@ import { buildRestaurantClawSkillCatalog, buildRestaurantClawTrainingBatch } fro
 import { buildRestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-workbench';
 import { buildRestaurantClawSkillExecutionLedger, recordRestaurantClawSkillExecution } from '@/lib/restaurant-claw-skill-execution-store';
 import { runRestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
+import { buildRestaurantCustomerDemandGateway } from '@/lib/restaurant-customer-demand-gateway';
 import { buildRestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
 import { buildRestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import { buildRestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
@@ -1084,6 +1085,54 @@ export async function POST(request: NextRequest) {
       clawSkillExecutionLedger,
       runs,
       receipts,
+    });
+  }
+
+  if (body.action === 'customer-demand-gateway') {
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger({
+      configuredProviders: [
+        ...providerSetupState.provided.envKeys,
+        ...providerSetupState.provided.merchantApprovals,
+        ...providerSetupState.provided.dataContracts,
+      ],
+    });
+    const commandRoute = typeof body.command === 'string' && body.command.trim()
+      ? buildRestaurantCommandRoute({
+          command: body.command,
+          restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+          offer: typeof body.offer === 'string' ? body.offer : undefined,
+          audience: typeof body.audience === 'string' ? body.audience : undefined,
+          channels: typeof body.channels === 'string' ? body.channels : undefined,
+          visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+          constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+          evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        })
+      : undefined;
+    const safeCommandRoute = commandRoute
+      ? {
+          ...commandRoute,
+          command: commandRoute.extracted.forbiddenHints.length ? '[redacted-sensitive-command]' : commandRoute.command,
+        }
+      : undefined;
+
+    return NextResponse.json({
+      ok: true,
+      customerDemandGateway: buildRestaurantCustomerDemandGateway({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        commandRoute,
+        capabilityTrainingPlan,
+        providerSetupState,
+      }),
+      commandRoute: safeCommandRoute,
+      capabilityTrainingPlan,
+      providerSetupState,
     });
   }
 

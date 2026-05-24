@@ -27,6 +27,7 @@ import type { RestaurantClawSkillCatalog, RestaurantClawTrainingBatch } from '@/
 import type { RestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-workbench';
 import type { RestaurantClawSkillExecutionLedger, RestaurantClawSkillExecutionRecord } from '@/lib/restaurant-claw-skill-execution-store';
 import type { RestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
+import type { RestaurantCustomerDemandGateway } from '@/lib/restaurant-customer-demand-gateway';
 import type { RestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
 import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import type { RestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
@@ -226,6 +227,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawSkillExecutionLedger?: RestaurantClawSkillExecutionLedger;
     clawTrainingBatch?: RestaurantClawTrainingBatch;
     controlledTrialRun?: RestaurantControlledTrialRun;
+    customerDemandGateway?: RestaurantCustomerDemandGateway;
     aiOsAuditReport?: RestaurantAiOsAuditReport;
     platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
     operatingInsightReport?: RestaurantOperatingInsightReport;
@@ -2318,6 +2320,39 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildCustomerDemandGateway = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Customer Demand Gateway...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'customer-demand-gateway',
+          command: restaurantCommand,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.customerDemandGateway?.summary?.canClaimAutoOrderTaking ? 'queued' : 'blocked',
+        message: `Customer demand gateway: ${payload?.customerDemandGateway?.summary?.channels ?? 0} channels, ${payload?.customerDemandGateway?.summary?.internalReady ?? 0} internal-ready, ${payload?.customerDemandGateway?.externalRequired?.length ?? 0} external gates.`,
+        customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
+        commandRoute: payload?.commandRoute || previous.commandRoute,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Customer Demand Gateway is temporarily unavailable.' }));
+    }
+  };
+
   const commandMode =
     dispatchState.commandCenter?.mode ||
     dispatchState.executionTimeline?.mode ||
@@ -2432,6 +2467,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dispatchState.clawSkillExecutionLedger;
   const commandRoute = dispatchState.commandRoute;
   const commandAiEmployeeMemoryPack = dispatchState.aiEmployeeMemoryPack;
+  const commandCustomerDemandGateway = dispatchState.customerDemandGateway;
 
   return (
     <section className="border border-stone-200 bg-white p-5 shadow-sm" id="restaurant-agent-runtime">
@@ -2576,6 +2612,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   type="button"
                 >
                   Employee Memory
+                </button>
+                <button
+                  className="mt-2 w-full border border-emerald-200/60 px-3 py-2 text-sm font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildCustomerDemandGateway}
+                  type="button"
+                >
+                  Demand Gateway
                 </button>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <button
@@ -2725,6 +2769,78 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       external: {commandAiEmployeeMemoryPack.externalRequired.slice(0, 6).join(' / ') || 'none'}
                     </p>
                     <p className="mt-3 text-[11px] leading-4 text-white/40">{commandAiEmployeeMemoryPack.safetyBoundary}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {commandCustomerDemandGateway ? (
+              <div className="mt-3 border border-emerald-200/30 bg-emerald-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/70">Customer Demand Gateway</div>
+                    <h4 className="mt-1 text-base font-black text-white">{commandCustomerDemandGateway.payloadShape}</h4>
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">{commandCustomerDemandGateway.customerPromise}</p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-4 lg:min-w-[520px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandCustomerDemandGateway.summary.channels}</div>
+                      <p className="mt-1 text-white/55">demand channels</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandCustomerDemandGateway.summary.internalReady}</div>
+                      <p className="mt-1 text-white/55">internal ready</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandCustomerDemandGateway.summary.providerGated}</div>
+                      <p className="mt-1 text-white/55">provider gated</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandCustomerDemandGateway.summary.canClaimAutoOrderTaking ? 'ready' : 'gated'}</div>
+                      <p className="mt-1 text-white/55">order taking</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  {commandCustomerDemandGateway.channels.map(channel => (
+                    <div className="border border-white/10 bg-white/[0.05] p-3" key={channel.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-white">{channel.name}</span>
+                        <span className="text-[11px] text-emerald-100/70">{channel.status} / {channel.owner}</span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-white/60">{channel.internalNow.slice(0, 2).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">{channel.nextAction}</p>
+                      <p className="mt-2 text-[11px] leading-4 text-emerald-100/60">evidence: {channel.evidenceRequired.slice(0, 3).join(' / ')}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">intake schema</div>
+                    <div className="mt-2 space-y-2">
+                      {commandCustomerDemandGateway.intakeSchema.map(field => (
+                        <div className="grid gap-2 border border-white/10 bg-white/[0.04] p-2 text-xs md:grid-cols-[0.7fr_0.7fr_1.3fr]" key={field.field}>
+                          <span className="font-mono text-white">{field.field}</span>
+                          <span className="text-emerald-100/70">{field.storage}</span>
+                          <span className="text-white/55">{field.purpose}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider gates and staff handoff</div>
+                    <p className="mt-2 text-xs leading-5 text-emerald-100/65">
+                      external: {commandCustomerDemandGateway.externalRequired.slice(0, 8).join(' / ') || 'none'}
+                    </p>
+                    <div className="mt-2 space-y-2">
+                      {commandCustomerDemandGateway.staffHandoff.map(item => (
+                        <div className="border border-white/10 bg-white/[0.04] p-2" key={`${item.owner}-${item.action}`}>
+                          <div className="font-mono text-xs text-white">{item.owner}</div>
+                          <p className="mt-1 text-xs leading-5 text-white/55">{item.action}</p>
+                          <p className="mt-1 text-[11px] text-white/40">evidence: {item.evidenceRequired}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandCustomerDemandGateway.safetyBoundary}</p>
                   </div>
                 </div>
               </div>
