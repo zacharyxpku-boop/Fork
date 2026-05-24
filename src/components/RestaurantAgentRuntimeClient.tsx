@@ -55,6 +55,7 @@ import type { RestaurantPublicProfileIntakeReport } from '@/lib/restaurant-publi
 import type { RestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import type { RestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
 import type { RestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
+import type { RestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import type { RestaurantAgentOpsConsole } from '@/lib/restaurant-agent-ops-console';
 import type { RestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import type { RestaurantStoreManagerTaskQueue } from '@/lib/restaurant-store-manager-task-store';
@@ -237,6 +238,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     publicIntelligenceBrief?: RestaurantPublicIntelligenceBrief;
     publicSourceHarvestPack?: RestaurantPublicSourceHarvestPack;
     publicTrialSeed?: RestaurantPublicTrialSeed;
+    dayZeroMissionPack?: RestaurantDayZeroMissionPack;
     opsConsole?: RestaurantAgentOpsConsole;
     commandCenter?: RestaurantAgentCommandCenter;
     aiEmployeeInbox?: RestaurantAiEmployeeInbox;
@@ -1878,6 +1880,33 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Public trial seed is temporarily unavailable.' }));
+    }
+  };
+
+  const buildDayZeroMissionPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Day-0 owner missions from public trial seed...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'day-zero-mission-pack',
+          sampleId: 'osm-node-600243400',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          visitReason: runtimeIntake.visitReason,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.dayZeroMissionPack?.summary?.externalGated ? 'blocked' : 'queued',
+        message: `Day-0 mission pack: ${payload?.dayZeroMissionPack?.summary?.readyInternal ?? 0} internal-ready, ${payload?.dayZeroMissionPack?.summary?.needsMerchantEvidence ?? 0} need merchant evidence, ${payload?.dayZeroMissionPack?.summary?.externalGated ?? 0} external-gated.`,
+        dayZeroMissionPack: payload?.dayZeroMissionPack || previous.dayZeroMissionPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Day-0 mission pack is temporarily unavailable.' }));
     }
   };
 
@@ -5477,8 +5506,77 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Seed Trial
                         </button>
+                        <button
+                          className="ml-2 mt-2 border border-amber-200/50 px-2 py-1 text-[11px] font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildDayZeroMissionPack}
+                          type="button"
+                        >
+                          Day-0 Missions
+                        </button>
                       </div>
                     </div>
+                  </div>
+                ) : null}
+                {dispatchState.dayZeroMissionPack ? (
+                  <div className="mt-3 border border-amber-200/25 bg-amber-200/[0.06] p-3">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">Day-0 Mission Pack</div>
+                        <p className="mt-1 text-sm font-black text-white">
+                          {dispatchState.dayZeroMissionPack.payloadShape} / {dispatchState.dayZeroMissionPack.verdict}
+                        </p>
+                        <p className="mt-1 text-[11px] leading-4 text-white/45">
+                          {dispatchState.dayZeroMissionPack.restaurant} / {dispatchState.dayZeroMissionPack.offer}
+                        </p>
+                      </div>
+                      <div className="grid gap-2 text-xs sm:grid-cols-4 md:min-w-[520px]">
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.dayZeroMissionPack.summary.readyInternal}</div>
+                          <p className="mt-1 text-white/55">internal-ready</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.dayZeroMissionPack.summary.needsMerchantEvidence}</div>
+                          <p className="mt-1 text-white/55">merchant evidence</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.dayZeroMissionPack.summary.externalGated}</div>
+                          <p className="mt-1 text-white/55">external gated</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.dayZeroMissionPack.summary.normalizedEvidenceFields}</div>
+                          <p className="mt-1 text-white/55">import fields</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      {dispatchState.dayZeroMissionPack.missions.slice(0, 6).map(item => (
+                        <div className="border border-white/10 bg-white/[0.05] p-2" key={item.id}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="font-mono text-white">{item.owner} / {item.lane}</div>
+                            <span className="border border-white/10 px-2 py-1 text-[10px] font-black text-white/70">{item.status}</span>
+                          </div>
+                          <p className="mt-1 text-white/70">{item.title}</p>
+                          <p className="mt-1 text-white/45">{item.nextAction}</p>
+                          <p className="mt-1 text-white/35">evidence: {item.evidenceRequired}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      <div className="border border-white/10 bg-white/[0.05] p-2">
+                        <div className="text-white/45">Store manager checklist</div>
+                        {dispatchState.dayZeroMissionPack.storeManagerChecklist.slice(0, 5).map(item => (
+                          <p className="mt-1 text-white/60" key={`${item.owner}-${item.action}`}>{item.owner}: {item.action}</p>
+                        ))}
+                      </div>
+                      <div className="border border-white/10 bg-white/[0.05] p-2">
+                        <div className="text-white/45">External unlocks</div>
+                        {dispatchState.dayZeroMissionPack.providerUnlocks.slice(0, 5).map(item => (
+                          <p className="mt-1 text-white/60" key={item}>{item}</p>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="mt-3 border border-white/10 bg-white/[0.05] p-2 text-[11px] leading-4 text-white/45">{dispatchState.dayZeroMissionPack.safetyBoundary}</p>
                   </div>
                 ) : null}
                 {dispatchState.publicTrialSeed ? (

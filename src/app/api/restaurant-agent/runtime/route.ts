@@ -56,6 +56,7 @@ import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-
 import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-profile-intake';
 import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
 import { buildRestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
+import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
 import { buildRestaurantStoreManagerTaskWatcher } from '@/lib/restaurant-store-manager-task-watcher';
@@ -1089,6 +1090,24 @@ export async function POST(request: NextRequest) {
         sourceUrl: typeof body.sourceUrl === 'string' ? body.sourceUrl : undefined,
         suggestedOffer: typeof body.suggestedOffer === 'string' ? body.suggestedOffer : undefined,
         suggestedAudience: typeof body.suggestedAudience === 'string' ? body.suggestedAudience : undefined,
+        manualText: typeof body.manualText === 'string' ? body.manualText : undefined,
+      }),
+    });
+  }
+
+  if (body.action === 'day-zero-mission-pack') {
+    return NextResponse.json({
+      ok: true,
+      dayZeroMissionPack: buildRestaurantDayZeroMissionPack({
+        sampleId: typeof body.sampleId === 'string' ? body.sampleId : undefined,
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        city: typeof body.city === 'string' ? body.city : undefined,
+        area: typeof body.area === 'string' ? body.area : undefined,
+        cuisine: typeof body.cuisine === 'string' ? body.cuisine : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        sourceUrl: typeof body.sourceUrl === 'string' ? body.sourceUrl : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
         manualText: typeof body.manualText === 'string' ? body.manualText : undefined,
       }),
     });
