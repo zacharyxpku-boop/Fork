@@ -1160,10 +1160,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       const payload = await response.json();
       setDispatchState({
         status: payload?.clawSkillWorkbench?.summary?.providerGated ? 'blocked' : 'queued',
-        message: `${selectedClawWorkbenchPreset.label} Skill Workbench built and remembered: ${payload?.clawSkillWorkbench?.summary?.runnableNow ?? 0} runnable skills, ${payload?.clawSkillWorkbench?.summary?.trainingNeeded ?? 0} training gaps, ${payload?.clawSkillWorkbench?.summary?.providerGated ?? 0} provider gates.`,
+        message: `${selectedClawWorkbenchPreset.label} Skill Workbench built and remembered: ${payload?.clawSkillWorkbench?.summary?.runnableNow ?? 0} runnable skills, ${payload?.clawSkillWorkbench?.summary?.trainingNeeded ?? 0} training gaps, ${payload?.clawSkillWorkbench?.summary?.providerGated ?? 0} provider gates, ${payload?.storeManagerTaskRecords?.length ?? 0} owner tasks.`,
         clawSkillWorkbench: payload?.clawSkillWorkbench,
         clawSkillExecutionRecord: payload?.clawSkillExecutionRecord,
         clawSkillExecutionLedger: payload?.clawSkillExecutionLedger,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue,
+        storeManagerTaskWatcher: payload?.storeManagerTaskWatcher,
+        staffNotificationHandoff: payload?.staffNotificationHandoff,
+        staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge,
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Claw Skill Workbench is temporarily unavailable.' });

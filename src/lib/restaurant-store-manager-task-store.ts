@@ -1,4 +1,5 @@
 import { appendRestaurantAgentLedgerEntry, clearRestaurantAgentLedgerKindForTest, listRestaurantAgentLedgerEntries } from '@/lib/restaurant-agent-ledger-store';
+import type { RestaurantClawSkillExecutionRecord } from '@/lib/restaurant-claw-skill-execution-store';
 import type { RestaurantStoreManagerFollowupTask } from '@/lib/restaurant-store-manager-followup';
 
 export type RestaurantStoreManagerTaskStatus = 'open' | 'blocked' | 'done';
@@ -8,7 +9,7 @@ export type RestaurantStoreManagerTaskRecord = RestaurantStoreManagerFollowupTas
   status: RestaurantStoreManagerTaskStatus;
   createdAt: string;
   updatedAt: string;
-  source: 'followup-pack' | 'manual';
+  source: 'followup-pack' | 'manual' | 'claw-skill-execution';
   auditNote: string;
 };
 
@@ -93,6 +94,60 @@ export function recordRestaurantStoreManagerTasks(
     memoryTasks.splice(MAX_TASKS);
     appendRestaurantAgentLedgerEntry('store-manager-task', record, now);
     return record;
+  });
+}
+
+function ownerFromSkillOwner(owner: string): RestaurantStoreManagerFollowupTask['owner'] {
+  if (owner === 'tech') return 'runtime-admin';
+  if (owner === 'marketing') return 'community-ops';
+  if (owner === 'finance' || owner === 'ops' || owner === 'hr') return 'shift-lead';
+  return 'store-manager';
+}
+
+function priorityFromSkillStatus(status: RestaurantClawSkillExecutionRecord['status']): RestaurantStoreManagerFollowupTask['priority'] {
+  return status === 'ready-now' ? 'today' : status === 'needs-training' ? 'next-shift' : 'blocked';
+}
+
+export function recordRestaurantStoreManagerTasksFromClawExecution(
+  record: RestaurantClawSkillExecutionRecord,
+  now = new Date(record.createdAt),
+): RestaurantStoreManagerTaskRecord[] {
+  const tasks: RestaurantStoreManagerFollowupTask[] = record.deliverables.map(deliverable => ({
+    id: `claw-${record.recordId}-${deliverable.id}`,
+    owner: ownerFromSkillOwner(deliverable.owner),
+    priority: priorityFromSkillStatus(deliverable.status),
+    restaurant: record.restaurant,
+    offer: record.offer,
+    signal: 'setup-gap',
+    action: `${deliverable.title}: ${record.nextAction}`,
+    talkTrack: `${record.offer} skill pack is ready for internal execution review. Keep external actions blocked unless evidence and provider gates are ready.`,
+    evidenceRequired: [
+      `Claw execution record ${record.recordId}`,
+      record.evidenceRequired.slice(0, 2).join(' + '),
+    ].filter(Boolean).join('; '),
+    dueWindow: deliverable.status === 'ready-now' ? 'today before campaign review' : deliverable.status === 'needs-training' ? 'next shift training review' : 'after provider unlock',
+    stopLine: 'Do not publish, contact customers, redeem coupons, read private messages, expose PII, pull raw POS rows or claim operating impact from this internal skill task.',
+  }));
+
+  return tasks.map(task => {
+    const taskMemoryId = `store-task-${stableId([task.id, task.restaurant, task.offer, task.evidenceRequired])}`;
+    const previous = listRestaurantStoreManagerTasks().find(item => item.taskMemoryId === taskMemoryId);
+    const taskRecord: RestaurantStoreManagerTaskRecord = {
+      ...task,
+      taskMemoryId,
+      status: previous?.status || statusFromTask(task),
+      createdAt: previous?.createdAt || now.toISOString(),
+      updatedAt: now.toISOString(),
+      source: 'claw-skill-execution',
+      auditNote: 'Generated from a remembered Claw Skill Workbench execution pack. It is an internal owner task only; external publish, contact, redemption, private-message access and POS pulls remain gated.',
+    };
+
+    const previousIndex = memoryTasks.findIndex(item => item.taskMemoryId === taskRecord.taskMemoryId);
+    if (previousIndex >= 0) memoryTasks.splice(previousIndex, 1);
+    memoryTasks.unshift(taskRecord);
+    memoryTasks.splice(MAX_TASKS);
+    appendRestaurantAgentLedgerEntry('store-manager-task', taskRecord, now);
+    return taskRecord;
   });
 }
 

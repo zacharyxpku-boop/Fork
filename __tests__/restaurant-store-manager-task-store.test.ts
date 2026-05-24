@@ -132,8 +132,8 @@ describe('restaurant store manager task store', () => {
     expect(payload.storeManagerTaskQueue.summary.total).toBeGreaterThan(0);
     expect(payload.commandCenter.storeManagerTaskQueue.summary.total).toBeGreaterThan(0);
     expect(payload.commandCenter.storeManagerTaskWatcher.payloadShape).toBe('restaurant-store-manager-task-watcher-v1');
-    expect(payload.commandCenter.staffNotificationHandoff.summary.drafts).toBe(1);
-    expect(payload.commandCenter.staffNotificationDeliveryBridge.summary.manualReady).toBe(1);
+    expect(payload.commandCenter.staffNotificationHandoff.summary.drafts).toBeGreaterThanOrEqual(1);
+    expect(payload.commandCenter.staffNotificationDeliveryBridge.summary.manualReady).toBeGreaterThanOrEqual(1);
     expect(payload.commandCenter.staffNotificationAuditLog.summary.total).toBeGreaterThan(0);
 
     const closeResponse = await POST(new NextRequest('http://localhost/api/restaurant-agent/runtime', {

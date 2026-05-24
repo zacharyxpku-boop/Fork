@@ -49,7 +49,7 @@ import { buildRestaurantProviderReadinessHealth } from '@/lib/restaurant-provide
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-profile-intake';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
-import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
+import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
 import { buildRestaurantStoreManagerTaskWatcher } from '@/lib/restaurant-store-manager-task-watcher';
 import { buildRestaurantStaffNotificationAuditLog, recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge, recordRestaurantStaffNotificationAuditEventsFromHandoff } from '@/lib/restaurant-staff-notification-audit-store';
 import { buildRestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-notification-handoff';
@@ -319,11 +319,23 @@ export async function POST(request: NextRequest) {
       moduleIds: Array.isArray(body.moduleIds) ? body.moduleIds.filter((item): item is string => typeof item === 'string') : undefined,
     });
     const clawSkillExecutionRecord = recordRestaurantClawSkillExecution(clawSkillWorkbench);
+    const storeManagerTaskRecords = recordRestaurantStoreManagerTasksFromClawExecution(clawSkillExecutionRecord);
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const storeManagerTaskWatcher = buildRestaurantStoreManagerTaskWatcher(storeManagerTaskQueue);
+    const staffNotificationHandoff = buildRestaurantStaffNotificationHandoff(storeManagerTaskWatcher);
+    const staffNotificationDeliveryBridge = buildRestaurantStaffNotificationDeliveryBridge({
+      handoff: staffNotificationHandoff,
+    });
     return NextResponse.json({
       ok: true,
       clawSkillWorkbench,
       clawSkillExecutionRecord,
       clawSkillExecutionLedger: buildRestaurantClawSkillExecutionLedger(),
+      storeManagerTaskRecords,
+      storeManagerTaskQueue,
+      storeManagerTaskWatcher,
+      staffNotificationHandoff,
+      staffNotificationDeliveryBridge,
     });
   }
 

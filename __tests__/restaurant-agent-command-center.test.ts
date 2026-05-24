@@ -10,12 +10,14 @@ import { buildRestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-w
 import { clearRestaurantProviderSetupStateForTest } from '@/lib/restaurant-provider-setup-state-store';
 import { clearRestaurantAgentReceiptsForTest, recordRestaurantAgentReceipt } from '@/lib/restaurant-agent-receipt-store';
 import { clearRestaurantAgentRunsForTest, recordRestaurantAgentRun } from '@/lib/restaurant-agent-run-store';
+import { clearRestaurantStoreManagerTasksForTest, recordRestaurantStoreManagerTasksFromClawExecution } from '@/lib/restaurant-store-manager-task-store';
 
 describe('restaurant agent command center', () => {
   beforeEach(() => {
     clearRestaurantAgentChannelDeliveryAttemptsForTest();
     clearRestaurantProviderSetupStateForTest();
     clearRestaurantClawSkillExecutionsForTest();
+    clearRestaurantStoreManagerTasksForTest();
   });
 
   it('starts with a controlled trial as the primary action before any run exists', async () => {
@@ -66,7 +68,8 @@ describe('restaurant agent command center', () => {
       offer: 'Tomato beef noodle set',
       now: new Date('2026-05-24T09:00:00.000Z'),
     });
-    recordRestaurantClawSkillExecution(workbench, new Date('2026-05-24T09:01:00.000Z'));
+    const record = recordRestaurantClawSkillExecution(workbench, new Date('2026-05-24T09:01:00.000Z'));
+    recordRestaurantStoreManagerTasksFromClawExecution(record, new Date('2026-05-24T09:01:30.000Z'));
 
     const center = await buildRestaurantAgentCommandCenter({
       restaurant: 'North City Noodles',
@@ -80,6 +83,8 @@ describe('restaurant agent command center', () => {
     expect(center.clawSkillExecutionLedger.summary.total).toBeGreaterThanOrEqual(1);
     expect(center.clawSkillExecutionLedger.latest.map(item => item.restaurant)).toContain('North City Noodles');
     expect(center.clawSkillExecutionLedger.safetyBoundary).toContain('does not claim automatic publishing');
+    expect(center.storeManagerTaskQueue.summary.total).toBeGreaterThanOrEqual(3);
+    expect(center.storeManagerTaskQueue.tasks.map(item => item.source)).toContain('claw-skill-execution');
   });
 
   it('promotes accepted proof into business-review mode without claiming real automation', async () => {

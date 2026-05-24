@@ -4,10 +4,12 @@ import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/restaurant-agent/runtime/route';
 import { buildRestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-workbench';
 import { buildRestaurantClawSkillExecutionLedger, clearRestaurantClawSkillExecutionsForTest, recordRestaurantClawSkillExecution } from '@/lib/restaurant-claw-skill-execution-store';
+import { buildRestaurantStoreManagerTaskQueue, clearRestaurantStoreManagerTasksForTest, recordRestaurantStoreManagerTasksFromClawExecution } from '@/lib/restaurant-store-manager-task-store';
 
 describe('restaurant claw skill workbench', () => {
   beforeEach(() => {
     clearRestaurantClawSkillExecutionsForTest();
+    clearRestaurantStoreManagerTasksForTest();
   });
 
   it('turns the Claw catalog into runnable restaurant task packs', () => {
@@ -55,6 +57,25 @@ describe('restaurant claw skill workbench', () => {
     expect(ledger.latest[0].recordId).toBe(record.recordId);
   });
 
+  it('turns remembered skill packs into closable owner tasks', () => {
+    const workbench = buildRestaurantClawSkillWorkbench({
+      restaurant: 'North City Noodles',
+      offer: 'Tomato beef noodle set',
+      now: new Date('2026-05-24T09:00:00.000Z'),
+    });
+    const record = recordRestaurantClawSkillExecution(workbench, new Date('2026-05-24T09:01:00.000Z'));
+    const tasks = recordRestaurantStoreManagerTasksFromClawExecution(record, new Date('2026-05-24T09:02:00.000Z'));
+    const queue = buildRestaurantStoreManagerTaskQueue(new Date('2026-05-24T09:03:00.000Z'));
+
+    expect(tasks).toHaveLength(3);
+    expect(tasks.map(item => item.source)).toEqual(['claw-skill-execution', 'claw-skill-execution', 'claw-skill-execution']);
+    expect(tasks.map(item => item.status)).toContain('blocked');
+    expect(tasks[0].auditNote).toContain('remembered Claw Skill Workbench');
+    expect(queue.summary.total).toBe(3);
+    expect(queue.tasks[0].evidenceRequired).toContain(record.recordId);
+    expect(queue.safetyBoundary).toContain('does not contact customers');
+  });
+
   it('is exposed through the restaurant runtime API', async () => {
     const response = await POST(new NextRequest('http://localhost/api/restaurant-agent/runtime', {
       method: 'POST',
@@ -78,5 +99,10 @@ describe('restaurant claw skill workbench', () => {
     expect(payload.clawSkillExecutionRecord.payloadShape).toBe('restaurant-claw-skill-execution-record-v1');
     expect(payload.clawSkillExecutionLedger.payloadShape).toBe('restaurant-claw-skill-execution-ledger-v1');
     expect(payload.clawSkillExecutionLedger.summary.total).toBeGreaterThanOrEqual(1);
+    expect(payload.storeManagerTaskRecords).toHaveLength(3);
+    expect(payload.storeManagerTaskQueue.payloadShape).toBe('restaurant-store-manager-task-queue-v1');
+    expect(payload.storeManagerTaskWatcher.payloadShape).toBe('restaurant-store-manager-task-watcher-v1');
+    expect(payload.staffNotificationHandoff.payloadShape).toBe('restaurant-staff-notification-handoff-v1');
+    expect(payload.staffNotificationDeliveryBridge.payloadShape).toBe('restaurant-staff-notification-delivery-bridge-v1');
   });
 });
