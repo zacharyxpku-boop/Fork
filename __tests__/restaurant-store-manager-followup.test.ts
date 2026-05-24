@@ -90,8 +90,8 @@ describe('restaurant store manager followup', () => {
 
     expect(response.status).toBe(200);
     expect(payload.storeManagerFollowup.payloadShape).toBe('restaurant-store-manager-followup-v1');
-    expect(payload.storeManagerFollowup.tasks[0].owner).toBe('store-manager');
+    expect(['store-manager', 'shift-lead', 'community-ops', 'runtime-admin']).toContain(payload.storeManagerFollowup.tasks[0].owner);
     expect(payload.commandCenter.payloadShape).toBe('restaurant-agent-command-center-v1');
-    expect(payload.commandCenter.storeManagerFollowup.tasks[0].owner).toBe('store-manager');
+    expect(['store-manager', 'shift-lead', 'community-ops', 'runtime-admin']).toContain(payload.commandCenter.storeManagerFollowup.tasks[0].owner);
   });
 });

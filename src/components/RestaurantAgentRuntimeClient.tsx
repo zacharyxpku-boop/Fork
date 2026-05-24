@@ -35,6 +35,7 @@ import type { RestaurantExternalUnlockRequestPack } from '@/lib/restaurant-exter
 import type { RestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
 import type { RestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
 import type { RestaurantFirstRunControlTower } from '@/lib/restaurant-first-run-control-tower';
+import type { RestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-review-pack';
 import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
@@ -236,6 +237,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerSandboxContract?: RestaurantProviderSandboxContract;
     firstForwardableRunPack?: RestaurantFirstForwardableRunPack;
     firstRunControlTower?: RestaurantFirstRunControlTower;
+    postRunReviewPack?: RestaurantPostRunReviewPack;
     providerLaunchTrainingPack?: RestaurantProviderLaunchTrainingPack;
     businessSignals?: RestaurantBusinessSignalReport;
     browserSessionHealth?: RestaurantBrowserSessionHealth;
@@ -1733,6 +1735,57 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildPostRunReviewPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building post-run review pack and next-loop SOP...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'post-run-review-pack',
+          runtimeTarget: 'openclaw',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+          rows: [
+            {
+              businessDate: '2026-05-23',
+              storeName: runtimeIntake.restaurant,
+              offerName: runtimeIntake.offer,
+              channel: 'group-buy coupon',
+              couponClaimCount: 38,
+              redemptionCount: 21,
+              grossSales: 2180,
+              orderCount: 24,
+              inventoryUsed: 21,
+            },
+          ],
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.postRunReviewPack?.summary?.canClaimTrueOperatingAnalysis ? 'queued' : 'blocked',
+        message: `Post-run review: ${payload?.postRunReviewPack?.verdict || 'unknown'}; ${payload?.postRunReviewPack?.summary?.storeTasks ?? 0} store tasks, ${payload?.postRunReviewPack?.summary?.blockedInsights ?? 0} blocked insights.`,
+        receipts: payload?.receipts || previous.receipts,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        posImport: payload?.posImport || previous.posImport,
+        businessSignals: payload?.businessSignals || previous.businessSignals,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Post-run review pack is temporarily unavailable.' }));
+    }
+  };
+
   const recordCapabilityTrainingSample = async () => {
     setDispatchState({ status: 'loading', message: '正在写入 Claw 能力训练样本...' });
     try {
@@ -2137,6 +2190,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandFirstForwardableRunPack = dispatchState.firstForwardableRunPack;
   const commandFirstRunControlTower = dispatchState.firstRunControlTower;
+  const commandPostRunReviewPack = dispatchState.postRunReviewPack;
   const commandProviderLaunchTrainingPack = dispatchState.providerLaunchTrainingPack;
   const commandPlatformConnectorMatrix = dispatchState.platformConnectorMatrix;
   const commandAiOsAuditReport = dispatchState.aiOsAuditReport;
@@ -3394,6 +3448,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 type="button"
               >
                 Operating Insight
+              </button>
+              <button
+                className="border border-cyan-200/60 px-3 py-2 text-sm font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={dispatchState.status === 'loading'}
+                onClick={buildPostRunReviewPack}
+                type="button"
+              >
+                Post Run Review
               </button>
               <button
                 className="border border-violet-200/60 px-3 py-2 text-sm font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
@@ -4809,6 +4871,56 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
                     {dispatchState.operatingInsightReport.safetyBoundary}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {commandPostRunReviewPack ? (
+              <div className="md:col-span-3">
+                <div className="text-white/45">Post Run Review Pack 路 proof, SOP, next loop</div>
+                <div className="mt-2 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-white/[0.05] p-2 md:col-span-2">
+                    <div className="font-mono text-white">{commandPostRunReviewPack.payloadShape}</div>
+                    <p className="mt-1 text-white/60">{commandPostRunReviewPack.verdict}</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandPostRunReviewPack.summary.acceptedReceipts}</div>
+                    <p className="mt-1 text-white/60">accepted proof</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandPostRunReviewPack.summary.storeTasks}</div>
+                    <p className="mt-1 text-white/60">store tasks</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandPostRunReviewPack.summary.acceptedPosImports}</div>
+                    <p className="mt-1 text-white/60">POS imports</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandPostRunReviewPack.summary.canClaimTrueOperatingAnalysis ? 'ready' : 'blocked'}</div>
+                    <p className="mt-1 text-white/60">true analysis</p>
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-5">
+                  {commandPostRunReviewPack.lanes.map(lane => (
+                    <div className="border border-white/10 bg-white/[0.05] p-2" key={lane.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-white">{lane.title}</span>
+                        <span>{lane.status}</span>
+                      </div>
+                      <p className="mt-1 text-white/60">{lane.owner}: {lane.decision}</p>
+                      <p className="mt-1 line-clamp-3 text-white/45">{lane.nextAction}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="text-white/45">Next-loop SOP</div>
+                    {commandPostRunReviewPack.nextLoopSop.slice(0, 5).map(step => (
+                      <p className="mt-1 text-white/60" key={step.step}>{step.owner}: {step.step} - {step.output}</p>
+                    ))}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    {commandPostRunReviewPack.safetyBoundary}
                   </div>
                 </div>
               </div>
