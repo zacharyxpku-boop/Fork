@@ -35,6 +35,7 @@ import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provi
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
+import type { RestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantExternalReadiness, type RestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
 import type { RestaurantGrantChecklist } from '@/lib/restaurant-agent-grant-checklist';
 import type { RestaurantMerchantGrantManifest } from '@/lib/restaurant-agent-grant-manifest';
@@ -220,6 +221,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
+    providerLaunchTrainingPack?: RestaurantProviderLaunchTrainingPack;
     businessSignals?: RestaurantBusinessSignalReport;
     browserSessionHealth?: RestaurantBrowserSessionHealth;
     toolPolicy?: RestaurantAgentToolPolicyReport;
@@ -725,6 +727,37 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider sandbox contract is temporarily unavailable.' }));
+    }
+  };
+
+  const buildProviderLaunchTrainingPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building provider launch training pack...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'provider-launch-training-pack',
+          runtimeTarget: 'openclaw',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.providerLaunchTrainingPack?.verdict === 'ready-to-pilot' ? 'queued' : 'blocked',
+        message: `Provider launch training pack: ${payload?.providerLaunchTrainingPack?.summary?.ready ?? 0}/${payload?.providerLaunchTrainingPack?.summary?.tracks ?? 0} tracks ready, verdict ${payload?.providerLaunchTrainingPack?.verdict || 'unknown'}.`,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        providerSetupPack: payload?.providerSetupPack || previous.providerSetupPack,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+        providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        providerLaunchTrainingPack: payload?.providerLaunchTrainingPack || previous.providerLaunchTrainingPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider launch training pack is temporarily unavailable.' }));
     }
   };
 
@@ -1820,6 +1853,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dispatchState.taskProviderHandoff;
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
+  const commandProviderLaunchTrainingPack = dispatchState.providerLaunchTrainingPack;
   const commandAiEmployeeInbox =
     dispatchState.commandCenter?.aiEmployeeInbox ||
     dispatchState.aiEmployeeInbox;
@@ -2752,6 +2786,32 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         {check.status}: {check.label} · {check.nextAction}
                       </p>
                     ))}
+                    <button
+                      className="mt-2 border border-lime-200/50 px-2 py-1 text-[11px] font-black text-lime-100 transition hover:bg-lime-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={buildProviderLaunchTrainingPack}
+                      type="button"
+                    >
+                      Launch Training Pack
+                    </button>
+                  </div>
+                ) : null}
+                {commandProviderLaunchTrainingPack ? (
+                  <div className="border border-amber-200/25 bg-amber-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">provider launch training pack</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandProviderLaunchTrainingPack.payloadShape} / {commandProviderLaunchTrainingPack.verdict} / ready {commandProviderLaunchTrainingPack.summary.ready}/{commandProviderLaunchTrainingPack.summary.tracks}
+                    </p>
+                    {commandProviderLaunchTrainingPack.tracks.slice(0, 2).map(track => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45" key={track.id}>
+                        {track.status}: {track.title} · {track.nextAction}
+                      </p>
+                    ))}
+                    {commandProviderLaunchTrainingPack.providerKeyChecklist.length ? (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">
+                        keys: {commandProviderLaunchTrainingPack.providerKeyChecklist.slice(0, 4).join(' / ')}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

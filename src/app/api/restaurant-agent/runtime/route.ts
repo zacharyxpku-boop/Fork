@@ -46,6 +46,7 @@ import { buildRestaurantProviderSetupPack } from '@/lib/restaurant-provider-setu
 import { buildRestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import { buildRestaurantProviderSetupStateSummary, recordRestaurantProviderSetupState } from '@/lib/restaurant-provider-setup-state-store';
 import { buildRestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
+import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
@@ -193,6 +194,54 @@ export async function POST(request: NextRequest) {
       providerSetupState,
       runs,
       receipts,
+    });
+  }
+
+  if (body.action === 'provider-launch-training-pack') {
+    const restaurant = typeof body.restaurant === 'string' ? body.restaurant : undefined;
+    const offer = typeof body.offer === 'string' ? body.offer : undefined;
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+    });
+    const providerSetupPack = buildRestaurantProviderSetupPack({
+      restaurant,
+      offer,
+    });
+    const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger();
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const taskProviderHandoff = buildRestaurantTaskProviderHandoff({
+      queue: storeManagerTaskQueue,
+      target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+        ? body.runtimeTarget
+        : undefined,
+    });
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness });
+    const providerSandboxContract = buildRestaurantProviderSandboxContract({
+      runtimeProbe,
+      providerReadinessHealth,
+      taskProviderHandoff,
+      providerReceiptInbox,
+    });
+    return NextResponse.json({
+      ok: true,
+      providerLaunchTrainingPack: buildRestaurantProviderLaunchTrainingPack({
+        capabilityTrainingPlan,
+        providerSetupPack,
+        providerReadinessHealth,
+        runtimeProbe,
+        providerSandboxContract,
+      }),
+      capabilityTrainingPlan,
+      providerSetupPack,
+      providerReadinessHealth,
+      runtimeProbe,
+      providerSandboxContract,
+      providerSetupState,
     });
   }
 
