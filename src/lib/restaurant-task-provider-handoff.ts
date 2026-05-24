@@ -22,7 +22,7 @@ export type RestaurantTaskProviderHandoffItem = {
     externalRequired: string[];
     stopLine: string;
   };
-  executionPackage: Pick<RestaurantExecutionPackage, 'payloadShape' | 'packageId' | 'target' | 'status' | 'canForward' | 'blockedReasons' | 'runtimeContract' | 'executionPolicy' | 'audit' | 'nextStep'>;
+  executionPackage: RestaurantExecutionPackage;
   blockedReasons: string[];
   nextAction: string;
 };
@@ -117,18 +117,7 @@ function buildItem(input: {
       externalRequired: input.task.externalRequired,
       stopLine: input.task.stopLine,
     },
-    executionPackage: {
-      payloadShape: executionPackage.payloadShape,
-      packageId: executionPackage.packageId,
-      target: executionPackage.target,
-      status: executionPackage.status,
-      canForward: executionPackage.canForward,
-      blockedReasons: executionPackage.blockedReasons,
-      runtimeContract: executionPackage.runtimeContract,
-      executionPolicy: executionPackage.executionPolicy,
-      audit: executionPackage.audit,
-      nextStep: executionPackage.nextStep,
-    },
+    executionPackage,
     blockedReasons,
     nextAction: canForward
       ? `Forward ${executionPackage.packageId} to ${input.target}, then require a signed external-receipt callback before closing the task.`

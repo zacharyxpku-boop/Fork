@@ -109,7 +109,7 @@ describe('restaurant store manager task store', () => {
     expect(closedQueue.tasks.find(task => task.taskMemoryId === records[0].taskMemoryId)?.status).toBe('done');
   });
 
-  it('tracks evidence and provider handoff states before done closeout', () => {
+  it('tracks evidence and provider handoff states before done closeout', async () => {
     clearRestaurantStoreManagerTasksForTest();
 
     const records = recordRestaurantStoreManagerTasks([{
@@ -185,6 +185,25 @@ describe('restaurant store manager task store', () => {
     expect(JSON.stringify(handoff)).not.toContain('secret-api-key');
     expect(JSON.stringify(handoff)).not.toContain('callback-secret');
     expect(JSON.stringify(handoff)).not.toContain('profile-1');
+
+    const forwardResponse = await POST(new NextRequest('http://localhost/api/restaurant-agent/runtime', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'task-provider-forward',
+        runtimeTarget: 'openclaw',
+        taskMemoryId: records[0].taskMemoryId,
+      }),
+    }));
+    const forwardPayload = await forwardResponse.json();
+
+    expect(forwardResponse.status).toBe(409);
+    expect(forwardPayload.selectedPackage.executionPackage.payloadShape).toBe('restaurant-agent-external-execution-v1');
+    expect(forwardPayload.bridge.status).toBe('blocked');
+    expect(forwardPayload.bridge.audit.secretExposed).toBe(false);
+    expect(forwardPayload.run.status).toBe('blocked');
+    expect(forwardPayload.run.taskId).toBe('external-runtime-attach');
+    expect(JSON.stringify(forwardPayload)).not.toContain('secret-api-key');
   });
 
   it('blocks provider handoff for tasks that are not ready-for-provider', () => {

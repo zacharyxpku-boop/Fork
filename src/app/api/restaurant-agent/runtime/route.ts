@@ -30,7 +30,7 @@ import { buildRestaurantRunHealth } from '@/lib/restaurant-agent-run-health';
 import { listRestaurantAgentRuns, recordRestaurantAgentRun } from '@/lib/restaurant-agent-run-store';
 import { buildRestaurantRuntimeProbe } from '@/lib/restaurant-agent-runtime-probe';
 import { buildRestaurantRuntimeSetupContract } from '@/lib/restaurant-agent-runtime-setup-contract';
-import { forwardRestaurantAgentDispatch, readRestaurantRuntimeBridgeConfig } from '@/lib/restaurant-agent-runtime-bridge';
+import { forwardRestaurantAgentDispatch, forwardRestaurantAgentExecutionPackage, readRestaurantRuntimeBridgeConfig } from '@/lib/restaurant-agent-runtime-bridge';
 import { buildRestaurantAgentRuntime } from '@/lib/restaurant-agent-runtime';
 import { buildRestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-tool-policy';
 import { buildRestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
@@ -384,6 +384,54 @@ export async function POST(request: NextRequest) {
           : undefined,
       }),
     });
+  }
+
+  if (body.action === 'task-provider-forward') {
+    const runtimeTarget = body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+      ? body.runtimeTarget
+      : 'openclaw';
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const taskProviderHandoff = buildRestaurantTaskProviderHandoff({
+      queue: storeManagerTaskQueue,
+      target: runtimeTarget,
+    });
+    const selectedPackage = [
+      ...taskProviderHandoff.packages,
+      ...taskProviderHandoff.blockedPackages,
+    ].find(item => (typeof body.handoffId === 'string' && item.handoffId === body.handoffId)
+      || (typeof body.taskMemoryId === 'string' && item.taskMemoryId === body.taskMemoryId))
+      || taskProviderHandoff.packages[0]
+      || taskProviderHandoff.blockedPackages[0];
+
+    if (!selectedPackage) {
+      return NextResponse.json({
+        ok: false,
+        error: 'task_provider_handoff_not_found',
+        taskProviderHandoff,
+      }, { status: 404 });
+    }
+
+    const bridge = await forwardRestaurantAgentExecutionPackage(
+      selectedPackage.executionPackage,
+      readRestaurantRuntimeBridgeConfig(runtimeTarget),
+    );
+    const dispatch = buildRestaurantAgentDispatch({
+      taskId: 'external-runtime-attach',
+      restaurant: selectedPackage.safePayload.restaurant,
+      offer: selectedPackage.safePayload.offer,
+      owner: selectedPackage.safePayload.owner,
+      source: 'task_provider_handoff',
+      runtimeTarget: 'local',
+    });
+    const run = recordRestaurantAgentRun(dispatch, runtimeTarget, bridge);
+
+    return NextResponse.json({
+      ok: bridge.ok,
+      selectedPackage,
+      bridge,
+      run,
+      taskProviderHandoff,
+    }, { status: bridge.ok ? 202 : 409 });
   }
 
   if (body.action === 'benchmark-strategy') {
