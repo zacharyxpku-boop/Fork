@@ -104,6 +104,33 @@ const defaultRuntimeIntake: Required<RestaurantTrialIntake> = {
   evidence: '菜单截图、菜品图、团购券规则或发布链接',
 };
 
+const clawWorkbenchPresets = [
+  {
+    id: 'content-launch',
+    label: 'Content Launch',
+    description: 'Dianping, Xiaohongshu, Douyin and WeChat content pack',
+    moduleIds: ['brand-positioning', 'menu-engineering', 'local-life-content', 'competitive-intel'],
+  },
+  {
+    id: 'private-domain',
+    label: 'Private Domain',
+    description: 'Inquiry, group follow-up, reservation and member tasks',
+    moduleIds: ['member-growth', 'private-domain', 'reservation-ops', 'service-quality'],
+  },
+  {
+    id: 'coupon-pos',
+    label: 'Coupon + POS',
+    description: 'Coupon redemption, POS import and finance evidence gates',
+    moduleIds: ['coupon-redemption', 'pos-analytics', 'finance-diagnosis', 'legal-compliance'],
+  },
+  {
+    id: 'agent-governance',
+    label: 'Agent Governance',
+    description: 'Browser runner, receipts, recovery and provider unlocks',
+    moduleIds: ['agent-ops', 'chain-standard', 'staff-scheduling', 'food-safety'],
+  },
+];
+
 function normalizeRuntimeIntake(intake: RestaurantTrialIntake = {}): Required<RestaurantTrialIntake> {
   return {
     restaurant: intake.restaurant || defaultRuntimeIntake.restaurant,
@@ -209,6 +236,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     staffNotificationAuditLog?: RestaurantStaffNotificationAuditLog;
     trialWorkflowPack?: RestaurantTrialWorkflowPack;
   }>({ status: 'idle' });
+  const [selectedClawWorkbenchPreset, setSelectedClawWorkbenchPreset] = useState(clawWorkbenchPresets[0]);
   const browserConnector = runtime.connectors.find(item => item.id === 'local-browser-plan');
   const memoryConnector = runtime.connectors.find(item => item.id === 'restaurant-memory');
   const queueConnector = runtime.connectors.find(item => item.id === 'agent-task-queue');
@@ -282,6 +310,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
           visitReason: runtimeIntake.visitReason,
           constraints: runtimeIntake.constraints,
           evidence: runtimeIntake.evidence,
+          moduleIds: selectedClawWorkbenchPreset.moduleIds,
         }),
       });
       const payload = await response.json();
@@ -1131,7 +1160,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       const payload = await response.json();
       setDispatchState({
         status: payload?.clawSkillWorkbench?.summary?.providerGated ? 'blocked' : 'queued',
-        message: `Skill Workbench built and remembered: ${payload?.clawSkillWorkbench?.summary?.runnableNow ?? 0} runnable skills, ${payload?.clawSkillWorkbench?.summary?.trainingNeeded ?? 0} training gaps, ${payload?.clawSkillWorkbench?.summary?.providerGated ?? 0} provider gates.`,
+        message: `${selectedClawWorkbenchPreset.label} Skill Workbench built and remembered: ${payload?.clawSkillWorkbench?.summary?.runnableNow ?? 0} runnable skills, ${payload?.clawSkillWorkbench?.summary?.trainingNeeded ?? 0} training gaps, ${payload?.clawSkillWorkbench?.summary?.providerGated ?? 0} provider gates.`,
         clawSkillWorkbench: payload?.clawSkillWorkbench,
         clawSkillExecutionRecord: payload?.clawSkillExecutionRecord,
         clawSkillExecutionLedger: payload?.clawSkillExecutionLedger,
@@ -1936,6 +1965,26 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-[11px] leading-4 text-white/45">{module.runnableSkills} runnable / {module.blockedSkills} blocked</p>
                 </div>
               ))}
+            </div>
+            <div className="mt-3 grid gap-2 lg:grid-cols-4">
+              {clawWorkbenchPresets.map(preset => {
+                const active = preset.id === selectedClawWorkbenchPreset.id;
+                return (
+                  <button
+                    className={`border p-2 text-left transition ${active ? 'border-cyan-200/70 bg-cyan-200/[0.12]' : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.07]'}`}
+                    disabled={dispatchState.status === 'loading'}
+                    key={preset.id}
+                    onClick={() => setSelectedClawWorkbenchPreset(preset)}
+                    type="button"
+                  >
+                    <div className="text-xs font-black text-white">{preset.label}</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/45">{preset.description}</p>
+                    <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.12em] text-cyan-100/60">
+                      {preset.moduleIds.length} modules
+                    </p>
+                  </button>
+                );
+              })}
             </div>
             <div className="mt-3 border border-cyan-200/20 bg-white/[0.04] p-2">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">

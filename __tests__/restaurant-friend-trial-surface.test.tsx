@@ -90,6 +90,10 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Build Activation Cockpit');
     expect(html).toContain('Claw Skill Workbench');
     expect(html).toContain('Pick a restaurant skill, get an executable task pack');
+    expect(html).toContain('Content Launch');
+    expect(html).toContain('Private Domain');
+    expect(html).toContain('Coupon + POS');
+    expect(html).toContain('Agent Governance');
     expect(html).toContain('Open Skill Workbench');
     expect(html).toContain('Public Intelligence Brief');
     expect(html).toContain('Store facts, local platforms, material gaps');

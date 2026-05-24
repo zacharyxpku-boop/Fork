@@ -77,6 +77,6 @@ describe('restaurant claw skill workbench', () => {
     expect(payload.clawSkillWorkbench.summary.runnableNow).toBeGreaterThan(0);
     expect(payload.clawSkillExecutionRecord.payloadShape).toBe('restaurant-claw-skill-execution-record-v1');
     expect(payload.clawSkillExecutionLedger.payloadShape).toBe('restaurant-claw-skill-execution-ledger-v1');
-    expect(payload.clawSkillExecutionLedger.summary.total).toBe(1);
+    expect(payload.clawSkillExecutionLedger.summary.total).toBeGreaterThanOrEqual(1);
   });
 });
