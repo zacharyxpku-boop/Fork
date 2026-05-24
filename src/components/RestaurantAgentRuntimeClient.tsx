@@ -34,6 +34,7 @@ import type { RestaurantExternalExecutionWizard } from '@/lib/restaurant-externa
 import type { RestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import type { RestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
 import type { RestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
+import type { RestaurantFirstRunControlTower } from '@/lib/restaurant-first-run-control-tower';
 import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
@@ -234,6 +235,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     firstForwardableRunPack?: RestaurantFirstForwardableRunPack;
+    firstRunControlTower?: RestaurantFirstRunControlTower;
     providerLaunchTrainingPack?: RestaurantProviderLaunchTrainingPack;
     businessSignals?: RestaurantBusinessSignalReport;
     browserSessionHealth?: RestaurantBrowserSessionHealth;
@@ -770,6 +772,33 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'First forwardable run preflight is temporarily unavailable.' }));
+    }
+  };
+
+  const buildFirstRunControlTower = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building first run control tower...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'first-run-control-tower', runtimeTarget: 'openclaw' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.firstRunControlTower?.summary?.blockedLanes ? 'blocked' : 'queued',
+        message: `First run control tower: ${payload?.firstRunControlTower?.verdict || 'unknown'}; ${payload?.firstRunControlTower?.summary?.blockedLanes ?? 0} blocked lanes.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        firstRunControlTower: payload?.firstRunControlTower || previous.firstRunControlTower,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'First run control tower is temporarily unavailable.' }));
     }
   };
 
@@ -2107,6 +2136,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandFirstForwardableRunPack = dispatchState.firstForwardableRunPack;
+  const commandFirstRunControlTower = dispatchState.firstRunControlTower;
   const commandProviderLaunchTrainingPack = dispatchState.providerLaunchTrainingPack;
   const commandPlatformConnectorMatrix = dispatchState.platformConnectorMatrix;
   const commandAiOsAuditReport = dispatchState.aiOsAuditReport;
@@ -3021,6 +3051,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 >
                   First Forwardable Run
                 </button>
+                <button
+                  className="shrink-0 border border-orange-200/60 px-2 py-1 text-xs font-black text-orange-100 transition hover:bg-orange-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildFirstRunControlTower}
+                  type="button"
+                >
+                  First Run Tower
+                </button>
               </div>
               <div className="mt-3 space-y-2">
                 {(commandTaskQueue?.tasks.length ? commandTaskQueue.tasks : commandFollowupTasks).slice(0, 2).map(task => (
@@ -3235,6 +3273,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     </div>
                     <p className="mt-2 text-[11px] leading-4 text-white/35">
                       automation claim: {commandFirstForwardableRunPack.summary.canClaimAutomation ? 'ready' : 'blocked'} / callback: {commandFirstForwardableRunPack.selectedPackage?.callbackHeader || 'x-restaurant-agent-signature'}
+                    </p>
+                  </div>
+                ) : null}
+                {commandFirstRunControlTower ? (
+                  <div className="border border-orange-200/25 bg-orange-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-100/70">first run control tower</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandFirstRunControlTower.payloadShape} / {commandFirstRunControlTower.verdict} / runs {commandFirstRunControlTower.summary.totalRuns} / waiting receipts {commandFirstRunControlTower.summary.waitingReceipts}
+                    </p>
+                    <div className="mt-2 grid gap-1">
+                      {commandFirstRunControlTower.lanes.map(lane => (
+                        <p className="text-[11px] leading-4 text-white/45" key={lane.id}>
+                          {lane.status}: {lane.label} / {lane.owner} / {lane.nextAction}
+                        </p>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[11px] leading-4 text-white/35">
+                      recovery: {commandFirstRunControlTower.summary.recoveryActions} / blocked lanes: {commandFirstRunControlTower.summary.blockedLanes} / claim: {commandFirstRunControlTower.summary.canClaimAutomation ? 'ready' : 'blocked'}
+                    </p>
+                    <p className="mt-2 text-[11px] leading-4 text-white/35">
+                      {commandFirstRunControlTower.safetyBoundary}
                     </p>
                   </div>
                 ) : null}

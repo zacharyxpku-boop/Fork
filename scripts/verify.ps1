@@ -28,6 +28,10 @@ Invoke-Step "Vitest restaurant first forwardable run" {
   npm.cmd run test -- __tests__/restaurant-first-forwardable-run-pack.test.ts
 }
 
+Invoke-Step "Vitest restaurant first run control tower" {
+  npm.cmd run test -- __tests__/restaurant-first-run-control-tower.test.ts
+}
+
 Invoke-Step "TypeScript noEmit" {
   npx.cmd tsc --noEmit
 }
