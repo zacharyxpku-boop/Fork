@@ -56,6 +56,10 @@ Invoke-Step "Vitest restaurant voice order console" {
   npm.cmd run test -- __tests__/restaurant-voice-order-console.test.ts
 }
 
+Invoke-Step "Vitest restaurant provider launch board" {
+  npm.cmd run test -- __tests__/restaurant-provider-launch-board.test.ts
+}
+
 Invoke-Step "TypeScript noEmit" {
   npx.cmd tsc --noEmit
 }

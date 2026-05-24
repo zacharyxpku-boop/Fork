@@ -47,6 +47,7 @@ import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provi
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
+import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import type { RestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantExternalReadiness, type RestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
 import type { RestaurantGrantChecklist } from '@/lib/restaurant-agent-grant-checklist';
@@ -242,6 +243,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
+    providerLaunchBoard?: RestaurantProviderLaunchBoard;
     firstForwardableRunPack?: RestaurantFirstForwardableRunPack;
     firstRunControlTower?: RestaurantFirstRunControlTower;
     postRunReviewPack?: RestaurantPostRunReviewPack;
@@ -2389,6 +2391,42 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildProviderLaunchBoard = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Provider Launch Board...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'provider-launch-board',
+          command: restaurantCommand,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.providerLaunchBoard?.summary?.canClaimExternalAutomation ? 'queued' : 'blocked',
+        message: `Provider launch board: ${payload?.providerLaunchBoard?.summary?.capabilities ?? 0} capabilities, ${payload?.providerLaunchBoard?.summary?.readyToSandbox ?? 0} sandbox-ready, ${payload?.providerLaunchBoard?.summary?.missingProvider ?? 0} missing-provider.`,
+        providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
+        customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
+        voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
+        commandRoute: payload?.commandRoute || previous.commandRoute,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider Launch Board is temporarily unavailable.' }));
+    }
+  };
+
   const commandMode =
     dispatchState.commandCenter?.mode ||
     dispatchState.executionTimeline?.mode ||
@@ -2445,6 +2483,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dispatchState.taskProviderHandoff;
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
+  const commandProviderLaunchBoard = dispatchState.providerLaunchBoard;
   const commandFirstForwardableRunPack = dispatchState.firstForwardableRunPack;
   const commandFirstRunControlTower = dispatchState.firstRunControlTower;
   const commandPostRunReviewPack = dispatchState.postRunReviewPack;
@@ -2665,6 +2704,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   type="button"
                 >
                   Voice Orders
+                </button>
+                <button
+                  className="mt-2 w-full border border-rose-200/60 px-3 py-2 text-sm font-black text-rose-100 transition hover:bg-rose-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildProviderLaunchBoard}
+                  type="button"
+                >
+                  Launch Board
                 </button>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <button
@@ -2973,6 +3020,88 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       external: {commandVoiceOrderConsole.externalRequired.slice(0, 6).join(' / ') || 'none'}
                     </p>
                     <p className="mt-3 text-[11px] leading-4 text-white/40">{commandVoiceOrderConsole.safetyBoundary}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {commandProviderLaunchBoard ? (
+              <div className="mt-3 border border-rose-200/30 bg-rose-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-100/70">Provider Launch Board</div>
+                    <h4 className="mt-1 text-base font-black text-white">{commandProviderLaunchBoard.payloadShape}</h4>
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                      {commandProviderLaunchBoard.restaurant} / {commandProviderLaunchBoard.offer}: launch-readiness for voice, platform proof, messaging, reservation, POS/payment/delivery, operating analysis and persistent runtime.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-5 lg:min-w-[620px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandProviderLaunchBoard.summary.capabilities}</div>
+                      <p className="mt-1 text-white/55">capabilities</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandProviderLaunchBoard.summary.readyToSandbox}</div>
+                      <p className="mt-1 text-white/55">sandbox-ready</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandProviderLaunchBoard.summary.setupRecorded}</div>
+                      <p className="mt-1 text-white/55">setup noted</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandProviderLaunchBoard.summary.missingProvider}</div>
+                      <p className="mt-1 text-white/55">missing</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandProviderLaunchBoard.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                      <p className="mt-1 text-white/55">automation claim</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  {commandProviderLaunchBoard.capabilities.map(capability => (
+                    <div className="border border-white/10 bg-white/[0.05] p-3" key={capability.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-white">{capability.name}</span>
+                        <span className="text-[11px] text-rose-100/70">{capability.status}</span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-white/60">{capability.customerPromise}</p>
+                      <p className="mt-2 text-[11px] leading-4 text-white/45">now: {capability.canDoInternallyNow.slice(0, 3).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-rose-100/60">launch: {capability.launchStep}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">stop: {capability.stopLine}</p>
+                      {capability.providerKeysNeeded.length || capability.merchantApprovalsNeeded.length || capability.dataContractsNeeded.length ? (
+                        <p className="mt-2 text-[11px] leading-4 text-amber-100/60">
+                          needs: {[...capability.providerKeysNeeded, ...capability.merchantApprovalsNeeded, ...capability.dataContractsNeeded].slice(0, 5).join(' / ')}
+                        </p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">launch order</div>
+                    <div className="mt-2 space-y-2">
+                      {commandProviderLaunchBoard.launchOrder.slice(0, 5).map(item => (
+                        <div className="border border-white/10 bg-white/[0.04] p-2" key={`${item.owner}-${item.capabilityId}`}>
+                          <div className="font-mono text-xs text-white">{item.owner} / {item.capabilityId}</div>
+                          <p className="mt-1 text-[11px] leading-4 text-white/50">{item.action}</p>
+                          <p className="mt-1 text-[11px] leading-4 text-white/35">{item.evidenceRequired}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider checklist</div>
+                    <p className="mt-2 text-xs leading-5 text-amber-100/65">
+                      {commandProviderLaunchBoard.providerKeyChecklist.slice(0, 12).join(' / ') || 'No provider key needed for internal-only work.'}
+                    </p>
+                    <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external required</div>
+                    <p className="mt-2 text-xs leading-5 text-white/55">
+                      {commandProviderLaunchBoard.externalRequired.slice(0, 12).join(' / ') || 'none'}
+                    </p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">boundary</div>
+                    <p className="mt-2 text-xs leading-5 text-white/55">{commandProviderLaunchBoard.safetyBoundary}</p>
                   </div>
                 </div>
               </div>
