@@ -54,6 +54,7 @@ import type { RestaurantAgentWatcherPolicy } from '@/lib/restaurant-agent-watche
 import type { RestaurantPublicProfileIntakeReport } from '@/lib/restaurant-public-profile-intake';
 import type { RestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import type { RestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
+import type { RestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
 import type { RestaurantAgentOpsConsole } from '@/lib/restaurant-agent-ops-console';
 import type { RestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import type { RestaurantStoreManagerTaskQueue } from '@/lib/restaurant-store-manager-task-store';
@@ -235,6 +236,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     publicProfile?: RestaurantPublicProfileIntakeReport;
     publicIntelligenceBrief?: RestaurantPublicIntelligenceBrief;
     publicSourceHarvestPack?: RestaurantPublicSourceHarvestPack;
+    publicTrialSeed?: RestaurantPublicTrialSeed;
     opsConsole?: RestaurantAgentOpsConsole;
     commandCenter?: RestaurantAgentCommandCenter;
     aiEmployeeInbox?: RestaurantAiEmployeeInbox;
@@ -1847,6 +1849,35 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Public source harvest pack is temporarily unavailable.' }));
+    }
+  };
+
+  const buildPublicTrialSeed = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building controlled trial seed from public store intel...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'public-trial-seed',
+          sampleId: 'osm-node-600243400',
+          restaurant: runtimeIntake.restaurant,
+          suggestedOffer: runtimeIntake.offer,
+          suggestedAudience: runtimeIntake.audience,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.publicTrialSeed?.summary?.providerRequired ? 'blocked' : 'queued',
+        message: `Public trial seed: ${payload?.publicTrialSeed?.summary?.usableFields ?? 0} usable fields, ${payload?.publicTrialSeed?.summary?.workflowReadySteps ?? 0} ready workflow steps, ${payload?.publicTrialSeed?.summary?.workflowExternalGatedSteps ?? 0} external-gated.`,
+        publicTrialSeed: payload?.publicTrialSeed || previous.publicTrialSeed,
+        publicProfile: payload?.publicTrialSeed?.publicProfile || previous.publicProfile,
+        publicIntelligenceBrief: payload?.publicTrialSeed?.publicIntelligenceBrief || previous.publicIntelligenceBrief,
+        publicSourceHarvestPack: payload?.publicTrialSeed?.publicSourceHarvestPack || previous.publicSourceHarvestPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Public trial seed is temporarily unavailable.' }));
     }
   };
 
@@ -5438,8 +5469,64 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Source Harvest Pack
                         </button>
+                        <button
+                          className="ml-2 mt-2 border border-emerald-200/50 px-2 py-1 text-[11px] font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildPublicTrialSeed}
+                          type="button"
+                        >
+                          Seed Trial
+                        </button>
                       </div>
                     </div>
+                  </div>
+                ) : null}
+                {dispatchState.publicTrialSeed ? (
+                  <div className="mt-3 border border-violet-200/25 bg-violet-200/[0.06] p-3">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">Public Trial Seed</div>
+                        <p className="mt-1 text-sm font-black text-white">
+                          {dispatchState.publicTrialSeed.payloadShape} / {dispatchState.publicTrialSeed.verdict}
+                        </p>
+                        <p className="mt-1 text-[11px] leading-4 text-white/45">
+                          {dispatchState.publicTrialSeed.trialIntake.restaurant} / {dispatchState.publicTrialSeed.trialIntake.offer}
+                        </p>
+                      </div>
+                      <div className="grid gap-2 text-xs sm:grid-cols-4 md:min-w-[520px]">
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.publicTrialSeed.summary.usableFields}</div>
+                          <p className="mt-1 text-white/55">usable fields</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.publicTrialSeed.summary.internalHarvestTargets}</div>
+                          <p className="mt-1 text-white/55">internal harvest</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.publicTrialSeed.summary.workflowReadySteps}</div>
+                          <p className="mt-1 text-white/55">ready steps</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.publicTrialSeed.summary.workflowExternalGatedSteps}</div>
+                          <p className="mt-1 text-white/55">external gated</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      <div className="border border-white/10 bg-white/[0.05] p-2">
+                        <div className="text-white/45">Trial intake</div>
+                        {Object.entries(dispatchState.publicTrialSeed.trialIntake).slice(0, 6).map(([key, value]) => (
+                          <p className="mt-1 text-white/60" key={key}>{key}: {String(value)}</p>
+                        ))}
+                      </div>
+                      <div className="border border-white/10 bg-white/[0.05] p-2">
+                        <div className="text-white/45">Next actions</div>
+                        {dispatchState.publicTrialSeed.nextActions.map(item => (
+                          <p className="mt-1 text-white/60" key={`${item.owner}-${item.action}`}>{item.owner}: {item.action}</p>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="mt-3 border border-white/10 bg-white/[0.05] p-2 text-[11px] leading-4 text-white/45">{dispatchState.publicTrialSeed.safetyBoundary}</p>
                   </div>
                 ) : null}
                 {dispatchState.publicSourceHarvestPack ? (
