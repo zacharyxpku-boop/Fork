@@ -50,6 +50,7 @@ import type { RestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-too
 import type { RestaurantAgentWatcherPolicy } from '@/lib/restaurant-agent-watcher-policy';
 import type { RestaurantPublicProfileIntakeReport } from '@/lib/restaurant-public-profile-intake';
 import type { RestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
+import type { RestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
 import type { RestaurantAgentOpsConsole } from '@/lib/restaurant-agent-ops-console';
 import type { RestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import type { RestaurantStoreManagerTaskQueue } from '@/lib/restaurant-store-manager-task-store';
@@ -227,6 +228,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     toolPolicy?: RestaurantAgentToolPolicyReport;
     publicProfile?: RestaurantPublicProfileIntakeReport;
     publicIntelligenceBrief?: RestaurantPublicIntelligenceBrief;
+    publicSourceHarvestPack?: RestaurantPublicSourceHarvestPack;
     opsConsole?: RestaurantAgentOpsConsole;
     commandCenter?: RestaurantAgentCommandCenter;
     aiEmployeeInbox?: RestaurantAiEmployeeInbox;
@@ -1721,6 +1723,34 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       });
     } catch {
       setDispatchState({ status: 'failed', message: '公开门店资料导入暂不可用。' });
+    }
+  };
+
+  const buildPublicSourceHarvestPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building public source harvest pack...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'public-source-harvest-pack',
+          sampleId: 'osm-node-600243400',
+          restaurant: runtimeIntake.restaurant,
+          suggestedOffer: runtimeIntake.offer,
+          suggestedAudience: runtimeIntake.audience,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.publicSourceHarvestPack?.summary?.providerRequired ? 'blocked' : 'queued',
+        message: `Public source harvest pack: ${payload?.publicSourceHarvestPack?.summary?.internalTargets ?? 0}/${payload?.publicSourceHarvestPack?.summary?.targets ?? 0} targets can run internally.`,
+        publicProfile: payload?.publicProfile || previous.publicProfile,
+        publicIntelligenceBrief: payload?.publicIntelligenceBrief || previous.publicIntelligenceBrief,
+        publicSourceHarvestPack: payload?.publicSourceHarvestPack || previous.publicSourceHarvestPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Public source harvest pack is temporarily unavailable.' }));
     }
   };
 
@@ -5111,6 +5141,63 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <div className="border border-white/10 bg-white/[0.05] p-2">
                         <div className="text-white/45">Operator script</div>
                         {dispatchState.publicIntelligenceBrief.operatorScript.map(item => (
+                          <p className="mt-1 text-white/60" key={item}>{item}</p>
+                        ))}
+                        <button
+                          className="mt-2 border border-emerald-200/50 px-2 py-1 text-[11px] font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildPublicSourceHarvestPack}
+                          type="button"
+                        >
+                          Source Harvest Pack
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                {dispatchState.publicSourceHarvestPack ? (
+                  <div className="mt-3 border border-sky-200/25 bg-sky-200/[0.06] p-3">
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">Public Source Harvest Pack</div>
+                        <p className="mt-1 text-sm font-black text-white">
+                          {dispatchState.publicSourceHarvestPack.payloadShape} / {dispatchState.publicSourceHarvestPack.verdict}
+                        </p>
+                      </div>
+                      <div className="grid gap-2 text-xs sm:grid-cols-3 md:min-w-[420px]">
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.publicSourceHarvestPack.summary.internalTargets}/{dispatchState.publicSourceHarvestPack.summary.targets}</div>
+                          <p className="mt-1 text-white/55">internal targets</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.publicSourceHarvestPack.summary.merchantUploads}</div>
+                          <p className="mt-1 text-white/55">merchant uploads</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{dispatchState.publicSourceHarvestPack.summary.providerRequired}</div>
+                          <p className="mt-1 text-white/55">provider gates</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-5">
+                      {dispatchState.publicSourceHarvestPack.targets.map(item => (
+                        <div className="border border-white/10 bg-white/[0.05] p-2" key={item.id}>
+                          <div className="font-mono text-white">{item.platform}</div>
+                          <p className="mt-1 text-white/60">{item.mode}</p>
+                          <p className="mt-1 line-clamp-3 text-white/45">{item.nextAction}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      <div className="border border-white/10 bg-white/[0.05] p-2">
+                        <div className="text-white/45">Normalized import fields</div>
+                        {dispatchState.publicSourceHarvestPack.normalizedImportTemplate.slice(0, 5).map(item => (
+                          <p className="mt-1 text-white/60" key={item.field}>{item.field}: {item.currentValue}</p>
+                        ))}
+                      </div>
+                      <div className="border border-white/10 bg-white/[0.05] p-2">
+                        <div className="text-white/45">Runner boundary</div>
+                        {dispatchState.publicSourceHarvestPack.browserRunnerInstructions.map(item => (
                           <p className="mt-1 text-white/60" key={item}>{item}</p>
                         ))}
                       </div>
