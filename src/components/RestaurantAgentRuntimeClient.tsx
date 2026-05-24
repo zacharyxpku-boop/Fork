@@ -3141,6 +3141,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                           Provider Setup Pack
                         </button>
                       </div>
+                      <p className="max-w-2xl text-[11px] leading-4 text-cyan-100/55">
+                        External Unlock Requests 会生成 Signoff delivery kit、Acceptance fields 和 Export digest，方便交给商户、技术和数据负责人签收。
+                      </p>
                     </div>
                   </div>
                   <div className="mt-3 grid gap-2 lg:grid-cols-3">
@@ -4218,6 +4221,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">external auto</div>
                       <div className="mt-1 font-mono text-white">{dispatchState.externalUnlockRequestPack.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
                     </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-[1.1fr_1fr_1fr]">
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-white/45">Signoff delivery kit</div>
+                    <p className="mt-1 text-white/60">
+                      {dispatchState.externalUnlockRequestPack.signoffChecklist.length} checklist items / {dispatchState.externalUnlockRequestPack.ownerHandoff.length} owner handoffs
+                    </p>
+                    <p className="mt-1 text-white/45">{dispatchState.externalUnlockRequestPack.acceptanceReceiptTemplate.title}</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-white/45">Acceptance fields</div>
+                    <p className="mt-1 text-white/60">
+                      {dispatchState.externalUnlockRequestPack.acceptanceReceiptTemplate.requiredFields.slice(0, 5).join(' / ')}
+                    </p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-white/45">Export digest</div>
+                    <p className="mt-1 text-white/60">
+                      markdown {dispatchState.externalUnlockRequestPack.exportDigest.markdown.length} chars / csv {dispatchState.externalUnlockRequestPack.exportDigest.csv.split('\n').length - 1} rows
+                    </p>
                   </div>
                 </div>
                 <div className="mt-3 grid gap-2 lg:grid-cols-3">

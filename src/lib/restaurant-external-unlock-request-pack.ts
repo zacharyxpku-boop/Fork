@@ -24,6 +24,18 @@ export type RestaurantExternalUnlockRequest = {
   stopLine: string;
 };
 
+export type RestaurantExternalUnlockSignoffItem = {
+  id: string;
+  owner: RestaurantExternalUnlockRequest['owner'];
+  priority: RestaurantExternalUnlockRequest['priority'];
+  title: string;
+  acceptance: string;
+  proofRequired: string;
+  handoffTarget: 'merchant-owner' | 'runtime-admin' | 'ops-lead' | 'data-owner';
+  status: 'ready-to-send' | 'waiting-external';
+  stopLine: string;
+};
+
 export type RestaurantExternalUnlockRequestPack = {
   ok: true;
   payloadShape: 'restaurant-external-unlock-request-pack-v1';
@@ -60,6 +72,23 @@ export type RestaurantExternalUnlockRequestPack = {
     evidenceRequired: string;
   }>;
   internalFallbacks: RestaurantProviderSetupPack['internalFallbacks'];
+  signoffChecklist: RestaurantExternalUnlockSignoffItem[];
+  ownerHandoff: Array<{
+    owner: RestaurantExternalUnlockRequest['owner'];
+    target: RestaurantExternalUnlockSignoffItem['handoffTarget'];
+    requests: number;
+    firstAction: string;
+  }>;
+  acceptanceReceiptTemplate: {
+    title: string;
+    requiredFields: string[];
+    forbiddenFields: string[];
+    acceptedWhen: string[];
+  };
+  exportDigest: {
+    markdown: string;
+    csv: string;
+  };
   snapshots: {
     providerSetup: Pick<RestaurantProviderSetupPack, 'payloadShape' | 'summary'>;
     dayZeroMission: Pick<RestaurantDayZeroMissionPack, 'payloadShape' | 'summary' | 'verdict'>;
@@ -101,6 +130,70 @@ function uniqueById<T extends { id: string }>(items: T[]): T[] {
     seen.add(item.id);
     return true;
   });
+}
+
+function handoffTargetFor(owner: RestaurantExternalUnlockRequest['owner']): RestaurantExternalUnlockSignoffItem['handoffTarget'] {
+  if (owner === 'merchant') return 'merchant-owner';
+  if (owner === 'data-ops') return 'data-owner';
+  if (owner === 'ops') return 'ops-lead';
+  return 'runtime-admin';
+}
+
+function buildSignoffChecklist(requests: RestaurantExternalUnlockRequest[]): RestaurantExternalUnlockSignoffItem[] {
+  return requests.slice(0, 18).map(request => ({
+    id: `signoff-${request.id}`,
+    owner: request.owner,
+    priority: request.priority,
+    title: request.ask,
+    acceptance: `${request.evidenceRequired}; unlocks ${request.unlocks.slice(0, 3).join(' / ') || 'the scoped provider lane'}.`,
+    proofRequired: request.evidenceRequired,
+    handoffTarget: handoffTargetFor(request.owner),
+    status: 'waiting-external',
+    stopLine: request.stopLine,
+  }));
+}
+
+function csvCell(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+function buildExportDigest(input: {
+  restaurant: string;
+  offer: string;
+  generatedAt: string;
+  requests: RestaurantExternalUnlockRequest[];
+  signoffChecklist: RestaurantExternalUnlockSignoffItem[];
+  safetyBoundary: string;
+}) {
+  const markdown = [
+    `# ${input.restaurant} / ${input.offer} Provider Unlock Signoff`,
+    '',
+    `Generated: ${input.generatedAt}`,
+    '',
+    '## P0/P1 Requests',
+    ...input.requests.slice(0, 12).map(request => `- [${request.priority}] ${request.owner} / ${request.category}: ${request.ask} | proof: ${request.evidenceRequired}`),
+    '',
+    '## Signoff Checklist',
+    ...input.signoffChecklist.slice(0, 12).map(item => `- [ ] ${item.handoffTarget}: ${item.title} | acceptance: ${item.acceptance}`),
+    '',
+    '## Safety Boundary',
+    input.safetyBoundary,
+  ].join('\n');
+  const csv = [
+    'id,priority,owner,handoff_target,title,proof_required,status,stop_line',
+    ...input.signoffChecklist.map(item => [
+      item.id,
+      item.priority,
+      item.owner,
+      item.handoffTarget,
+      item.title,
+      item.proofRequired,
+      item.status,
+      item.stopLine,
+    ].map(csvCell).join(',')),
+  ].join('\n');
+
+  return { markdown, csv };
 }
 
 export function buildRestaurantExternalUnlockRequestPack(input: RestaurantTrialIntake & {
@@ -164,11 +257,60 @@ export function buildRestaurantExternalUnlockRequestPack(input: RestaurantTrialI
   const requests = uniqueById([...envRequests, ...merchantRequests, ...channelRequests])
     .sort((left, right) => left.priority.localeCompare(right.priority))
     .slice(0, 24);
+  const generatedAt = now.toISOString();
+  const signoffChecklist = buildSignoffChecklist(requests);
+  const ownerHandoff = Array.from(new Set(signoffChecklist.map(item => item.owner))).map(owner => {
+    const ownerItems = signoffChecklist.filter(item => item.owner === owner);
+    return {
+      owner,
+      target: handoffTargetFor(owner),
+      requests: ownerItems.length,
+      firstAction: ownerItems[0]?.title || 'No action required.',
+    };
+  });
+  const acceptanceReceiptTemplate = {
+    title: `${restaurant} / ${offer} external unlock acceptance receipt`,
+    requiredFields: [
+      'requestId',
+      'owner',
+      'handoffTarget',
+      'configuredOrApprovedEvidence',
+      'allowedActions',
+      'expiryOrReviewDate',
+      'revocationOwner',
+      'signedAt',
+    ],
+    forbiddenFields: [
+      'API keys',
+      'cookies',
+      'tokens',
+      'browser profile files',
+      'private-message raw text',
+      'customer phone numbers',
+      'coupon codes',
+      'order-level POS rows',
+    ],
+    acceptedWhen: [
+      'The proof matches a signoff checklist item.',
+      'Merchant authorization includes allowed actions, expiry and revocation owner.',
+      'Provider keys are configured server-side and health-checked without exposing values.',
+      'Operating data arrives as no-PII aggregate contract with field dictionary.',
+    ],
+  };
+  const safetyBoundary = 'External Unlock Request Pack is a setup request artifact only. It lists required keys, grants, contracts, owners and safe placeholders; it never exposes secret values, cookies, raw browser profiles, private messages, customer identifiers, coupon codes or order-level POS rows, and it does not claim external automation until health and evidence prove it.';
+  const exportDigest = buildExportDigest({
+    restaurant,
+    offer,
+    generatedAt,
+    requests,
+    signoffChecklist,
+    safetyBoundary,
+  });
 
   return {
     ok: true,
     payloadShape: 'restaurant-external-unlock-request-pack-v1',
-    generatedAt: now.toISOString(),
+    generatedAt,
     restaurant,
     offer,
     summary: {
@@ -201,6 +343,10 @@ export function buildRestaurantExternalUnlockRequestPack(input: RestaurantTrialI
       evidenceRequired: item.evidenceRequired,
     })),
     internalFallbacks: providerSetup.internalFallbacks,
+    signoffChecklist,
+    ownerHandoff,
+    acceptanceReceiptTemplate,
+    exportDigest,
     snapshots: {
       providerSetup: {
         payloadShape: providerSetup.payloadShape,
@@ -226,6 +372,6 @@ export function buildRestaurantExternalUnlockRequestPack(input: RestaurantTrialI
       'Merchant authorization must define platforms, allowed actions, expiry, revocation owner and proof callback requirements before publishing, lead follow-up or coupon/redemption automation.',
       'POS/redemption/member data should arrive as no-PII aggregate CSV/API contract with field dictionary before any operating analysis claim.',
     ],
-    safetyBoundary: 'External Unlock Request Pack is a setup request artifact only. It lists required keys, grants, contracts, owners and safe placeholders; it never exposes secret values, cookies, raw browser profiles, private messages, customer identifiers, coupon codes or order-level POS rows, and it does not claim external automation until health and evidence prove it.',
+    safetyBoundary,
   };
 }

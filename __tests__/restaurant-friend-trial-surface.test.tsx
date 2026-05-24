@@ -90,6 +90,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Build Platform Operating Spine');
     expect(html).toContain('Build Operating Data Contract');
     expect(html).toContain('Provider Setup Pack');
+    expect(html).toContain('Signoff delivery kit');
+    expect(html).toContain('Acceptance fields');
+    expect(html).toContain('Export digest');
     expect(html).toContain('External Execution Wizard');
     expect(html).toContain('Controlled Trial Run');
     expect(html).toContain('Execution Timeline');

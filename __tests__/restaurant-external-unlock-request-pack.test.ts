@@ -41,6 +41,17 @@ describe('restaurant external unlock request pack', () => {
       'staff-channel',
     ]));
     expect(pack.customerHandoffCopy.join(' ')).toContain('server-side environment');
+    expect(pack.signoffChecklist.length).toBeGreaterThan(0);
+    expect(pack.signoffChecklist[0].acceptance).toContain('unlocks');
+    expect(pack.ownerHandoff.map(item => item.target)).toEqual(expect.arrayContaining([
+      'runtime-admin',
+      'merchant-owner',
+      'data-owner',
+    ]));
+    expect(pack.acceptanceReceiptTemplate.requiredFields).toContain('revocationOwner');
+    expect(pack.acceptanceReceiptTemplate.forbiddenFields).toContain('API keys');
+    expect(pack.exportDigest.markdown).toContain('Provider Unlock Signoff');
+    expect(pack.exportDigest.csv).toContain('id,priority,owner,handoff_target,title,proof_required,status,stop_line');
     expect(pack.safetyBoundary).toContain('never exposes secret values');
     expect(serialized).not.toContain('secret-callback-value');
     expect(serialized).not.toContain('sk-secret-openclaw');
@@ -68,6 +79,9 @@ describe('restaurant external unlock request pack', () => {
     expect(payload.externalUnlockRequestPack.providerEnvKeys.length).toBeGreaterThan(0);
     expect(payload.externalUnlockRequestPack.merchantAuthorizationPacket.length).toBeGreaterThan(0);
     expect(payload.externalUnlockRequestPack.operatingDataPacket.length).toBeGreaterThan(0);
+    expect(payload.externalUnlockRequestPack.signoffChecklist.length).toBeGreaterThan(0);
+    expect(payload.externalUnlockRequestPack.acceptanceReceiptTemplate.acceptedWhen.join(' ')).toContain('health-checked');
+    expect(payload.externalUnlockRequestPack.exportDigest.markdown).toContain('Signoff Checklist');
     expect(payload.externalUnlockRequestPack.safetyBoundary).toContain('does not claim external automation');
   });
 });
