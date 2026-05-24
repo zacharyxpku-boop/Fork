@@ -31,6 +31,7 @@ import type { RestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platfor
 import type { RestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
 import type { RestaurantExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import type { RestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
+import type { RestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import type { RestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
 import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
@@ -225,6 +226,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     platformOperatingSpine?: RestaurantPlatformOperatingSpine;
     operatingDataContract?: RestaurantOperatingDataContract;
     providerSetupPack?: RestaurantProviderSetupPack;
+    externalUnlockRequestPack?: RestaurantExternalUnlockRequestPack;
     providerSetupWizard?: RestaurantProviderSetupWizard;
     providerSetupState?: RestaurantProviderSetupStateSummary;
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
@@ -902,6 +904,36 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Provider setup pack is temporarily unavailable.' });
+    }
+  };
+
+  const buildExternalUnlockRequestPack = async () => {
+    setDispatchState({ status: 'loading', message: 'Building external unlock request pack for provider keys, merchant grants and POS contracts...' });
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'external-unlock-request-pack',
+          sampleId: 'osm-node-600243400',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.externalUnlockRequestPack?.summary?.canClaimExternalAutomation ? 'queued' : 'blocked',
+        message: `External unlock request pack built: ${payload?.externalUnlockRequestPack?.summary?.p0 ?? 0} P0 items, ${payload?.externalUnlockRequestPack?.summary?.providerKeys ?? 0} provider keys, ${payload?.externalUnlockRequestPack?.summary?.merchantAuthorizations ?? 0} merchant grants.`,
+        externalUnlockRequestPack: payload?.externalUnlockRequestPack || previous.externalUnlockRequestPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'External unlock request pack is temporarily unavailable.' }));
     }
   };
 
@@ -2657,6 +2689,84 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
             >
               Save Setup State
             </button>
+            <button
+              className="ml-2 mt-3 border border-amber-200/60 px-3 py-2 text-xs font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={dispatchState.status === 'loading'}
+              onClick={buildExternalUnlockRequestPack}
+              type="button"
+            >
+              External Unlock Requests
+            </button>
+            {dispatchState.externalUnlockRequestPack ? (
+              <div className="mt-3 border border-amber-200/25 bg-amber-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">External Unlock Request Pack</div>
+                    <h4 className="mt-1 text-base font-black text-white">
+                      {dispatchState.externalUnlockRequestPack.payloadShape}
+                    </h4>
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                      {dispatchState.externalUnlockRequestPack.restaurant} / {dispatchState.externalUnlockRequestPack.offer}: exact asks for provider keys, merchant grants, staff channels, callback proof and POS aggregate contracts.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">P0</div>
+                      <div className="mt-1 font-mono text-white">{dispatchState.externalUnlockRequestPack.summary.p0}</div>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">P1</div>
+                      <div className="mt-1 font-mono text-white">{dispatchState.externalUnlockRequestPack.summary.p1}</div>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">provider keys</div>
+                      <div className="mt-1 font-mono text-white">{dispatchState.externalUnlockRequestPack.summary.providerKeys}</div>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">merchant grants</div>
+                      <div className="mt-1 font-mono text-white">{dispatchState.externalUnlockRequestPack.summary.merchantAuthorizations}</div>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">external auto</div>
+                      <div className="mt-1 font-mono text-white">{dispatchState.externalUnlockRequestPack.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  {dispatchState.externalUnlockRequestPack.requests.slice(0, 6).map(item => (
+                    <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-amber-100/70">{item.priority} / {item.category}</span>
+                        <span className="text-[10px] text-white/35">{item.owner}</span>
+                      </div>
+                      <p className="mt-1 text-xs leading-5 text-white">{item.ask}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/40">evidence: {item.evidenceRequired}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-white/45">Server-side keys</div>
+                    {dispatchState.externalUnlockRequestPack.providerEnvKeys.slice(0, 6).map(item => (
+                      <p className="mt-1 text-white/60" key={item.key}>{item.key}: {item.placeholder}</p>
+                    ))}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-white/45">Merchant authorization</div>
+                    {dispatchState.externalUnlockRequestPack.merchantAuthorizationPacket.slice(0, 4).map(item => (
+                      <p className="mt-1 text-white/60" key={`${item.capability}-${item.proof}`}>{item.capability}: {item.ask}</p>
+                    ))}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-white/45">Operating data packet</div>
+                    {dispatchState.externalUnlockRequestPack.operatingDataPacket.slice(0, 5).map(item => (
+                      <p className="mt-1 text-white/60" key={item.field}>{item.field}: {item.evidenceRequired}</p>
+                    ))}
+                  </div>
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.05] p-2 text-[11px] leading-4 text-white/45">{dispatchState.externalUnlockRequestPack.safetyBoundary}</p>
+              </div>
+            ) : null}
           </div>
           <div className="mt-4 border border-emerald-200/30 bg-emerald-200/[0.06] p-3">
             {commandAiEmployeeInbox ? (
