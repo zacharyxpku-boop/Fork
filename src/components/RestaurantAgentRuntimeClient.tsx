@@ -28,6 +28,7 @@ import type { RestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-w
 import type { RestaurantClawSkillExecutionLedger, RestaurantClawSkillExecutionRecord } from '@/lib/restaurant-claw-skill-execution-store';
 import type { RestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
 import type { RestaurantCustomerDemandGateway } from '@/lib/restaurant-customer-demand-gateway';
+import type { RestaurantVoiceOrderConsole } from '@/lib/restaurant-voice-order-console';
 import type { RestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
 import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import type { RestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
@@ -228,6 +229,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawTrainingBatch?: RestaurantClawTrainingBatch;
     controlledTrialRun?: RestaurantControlledTrialRun;
     customerDemandGateway?: RestaurantCustomerDemandGateway;
+    voiceOrderConsole?: RestaurantVoiceOrderConsole;
     aiOsAuditReport?: RestaurantAiOsAuditReport;
     platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
     operatingInsightReport?: RestaurantOperatingInsightReport;
@@ -2353,6 +2355,40 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildVoiceOrderConsole = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Voice Order Console...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'voice-order-console',
+          command: restaurantCommand,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.voiceOrderConsole?.summary?.canWriteOrdersNow ? 'queued' : 'blocked',
+        message: `Voice order console: ${payload?.voiceOrderConsole?.summary?.intents ?? 0} intents, ${payload?.voiceOrderConsole?.summary?.orderDrafts ?? 0} order drafts, ${payload?.voiceOrderConsole?.externalRequired?.length ?? 0} external gates.`,
+        voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
+        customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
+        commandRoute: payload?.commandRoute || previous.commandRoute,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Voice Order Console is temporarily unavailable.' }));
+    }
+  };
+
   const commandMode =
     dispatchState.commandCenter?.mode ||
     dispatchState.executionTimeline?.mode ||
@@ -2468,6 +2504,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandRoute = dispatchState.commandRoute;
   const commandAiEmployeeMemoryPack = dispatchState.aiEmployeeMemoryPack;
   const commandCustomerDemandGateway = dispatchState.customerDemandGateway;
+  const commandVoiceOrderConsole = dispatchState.voiceOrderConsole;
 
   return (
     <section className="border border-stone-200 bg-white p-5 shadow-sm" id="restaurant-agent-runtime">
@@ -2620,6 +2657,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   type="button"
                 >
                   Demand Gateway
+                </button>
+                <button
+                  className="mt-2 w-full border border-sky-200/60 px-3 py-2 text-sm font-black text-sky-100 transition hover:bg-sky-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildVoiceOrderConsole}
+                  type="button"
+                >
+                  Voice Orders
                 </button>
                 <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   <button
@@ -2841,6 +2886,93 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       ))}
                     </div>
                     <p className="mt-3 text-[11px] leading-4 text-white/40">{commandCustomerDemandGateway.safetyBoundary}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {commandVoiceOrderConsole ? (
+              <div className="mt-3 border border-sky-200/30 bg-sky-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">Voice Order Console</div>
+                    <h4 className="mt-1 text-base font-black text-white">{commandVoiceOrderConsole.payloadShape}</h4>
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                      Phone/order/reservation layer for menu answers, intent classification, order drafts, POS/payment/delivery gates and staff takeover.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-4 lg:min-w-[520px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandVoiceOrderConsole.summary.intents}</div>
+                      <p className="mt-1 text-white/55">intents</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandVoiceOrderConsole.summary.orderDrafts}</div>
+                      <p className="mt-1 text-white/55">order drafts</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandVoiceOrderConsole.summary.providerGated}</div>
+                      <p className="mt-1 text-white/55">gated lanes</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandVoiceOrderConsole.summary.canWriteOrdersNow ? 'ready' : 'gated'}</div>
+                      <p className="mt-1 text-white/55">POS write</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  {commandVoiceOrderConsole.intents.map(intent => (
+                    <div className="border border-white/10 bg-white/[0.05] p-3" key={intent.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-white">{intent.label}</span>
+                        <span className="text-[11px] text-sky-100/70">{intent.status} / {intent.confidence}</span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-white/60">{intent.customerNeed}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">{intent.safeResponse}</p>
+                      <p className="mt-2 text-[11px] leading-4 text-sky-100/60">evidence: {intent.evidenceRequired.slice(0, 3).join(' / ')}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-3 lg:col-span-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">order drafts</div>
+                    <div className="mt-2 space-y-2">
+                      {commandVoiceOrderConsole.orderDrafts.map(draft => (
+                        <div className="grid gap-2 border border-white/10 bg-white/[0.04] p-2 text-xs md:grid-cols-[0.5fr_0.6fr_1.4fr_1.2fr]" key={draft.id}>
+                          <span className="font-mono text-white">{draft.serviceMode}</span>
+                          <span className="text-sky-100/70">{draft.status}</span>
+                          <span className="text-white/55">{draft.items.map(item => `${item.quantity}x ${item.name}`).join(' / ') || draft.missingFields.join(' / ')}</span>
+                          <span className="text-white/45">{draft.nextAction}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">menu knowledge</div>
+                    <div className="mt-2 grid gap-2 md:grid-cols-2">
+                      {commandVoiceOrderConsole.menuKnowledge.map(item => (
+                        <div className="border border-white/10 bg-white/[0.04] p-2" key={item.topic}>
+                          <div className="font-mono text-xs text-white">{item.topic}</div>
+                          <p className="mt-1 text-xs leading-5 text-white/55">{item.answer}</p>
+                          <p className="mt-1 text-[11px] text-white/40">source: {item.sourceRequired}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sync gates</div>
+                    <div className="mt-2 space-y-2">
+                      {commandVoiceOrderConsole.syncGates.map(gate => (
+                        <div className="border border-white/10 bg-white/[0.04] p-2" key={gate.id}>
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="font-mono text-xs text-white">{gate.label}</span>
+                            <span className="text-[11px] text-sky-100/70">{gate.status}</span>
+                          </div>
+                          <p className="mt-1 text-[11px] leading-4 text-white/45">{gate.nextAction}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-xs leading-5 text-sky-100/65">
+                      external: {commandVoiceOrderConsole.externalRequired.slice(0, 6).join(' / ') || 'none'}
+                    </p>
+                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandVoiceOrderConsole.safetyBoundary}</p>
                   </div>
                 </div>
               </div>

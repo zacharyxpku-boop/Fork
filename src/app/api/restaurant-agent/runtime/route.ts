@@ -73,6 +73,7 @@ import { buildRestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-
 import { buildRestaurantStaffNotificationDeliveryBridge } from '@/lib/restaurant-staff-notification-delivery-bridge';
 import { buildRestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
 import { buildRestaurantTrialWorkflowPack } from '@/lib/restaurant-trial-workflow-pack';
+import { buildRestaurantVoiceOrderConsole } from '@/lib/restaurant-voice-order-console';
 
 function readBusinessSignalType(value: unknown): RestaurantBusinessSignalType | undefined {
   return value === 'publish-proof'
@@ -1130,6 +1131,66 @@ export async function POST(request: NextRequest) {
         capabilityTrainingPlan,
         providerSetupState,
       }),
+      commandRoute: safeCommandRoute,
+      capabilityTrainingPlan,
+      providerSetupState,
+    });
+  }
+
+  if (body.action === 'voice-order-console') {
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger({
+      configuredProviders: [
+        ...providerSetupState.provided.envKeys,
+        ...providerSetupState.provided.merchantApprovals,
+        ...providerSetupState.provided.dataContracts,
+      ],
+    });
+    const commandRoute = typeof body.command === 'string' && body.command.trim()
+      ? buildRestaurantCommandRoute({
+          command: body.command,
+          restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+          offer: typeof body.offer === 'string' ? body.offer : undefined,
+          audience: typeof body.audience === 'string' ? body.audience : undefined,
+          channels: typeof body.channels === 'string' ? body.channels : undefined,
+          visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+          constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+          evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        })
+      : undefined;
+    const customerDemandGateway = buildRestaurantCustomerDemandGateway({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      commandRoute,
+      capabilityTrainingPlan,
+      providerSetupState,
+    });
+    const safeCommandRoute = commandRoute
+      ? {
+          ...commandRoute,
+          command: commandRoute.extracted.forbiddenHints.length ? '[redacted-sensitive-command]' : commandRoute.command,
+        }
+      : undefined;
+
+    return NextResponse.json({
+      ok: true,
+      voiceOrderConsole: buildRestaurantVoiceOrderConsole({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        customerDemandGateway,
+        providerSetupState,
+      }),
+      customerDemandGateway,
       commandRoute: safeCommandRoute,
       capabilityTrainingPlan,
       providerSetupState,
