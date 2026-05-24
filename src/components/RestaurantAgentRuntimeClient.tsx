@@ -10,6 +10,7 @@ import type { RestaurantBuildQueueReport } from '@/lib/restaurant-agent-build-qu
 import type { RestaurantCallbackSimulatorReport } from '@/lib/restaurant-agent-callback-simulator';
 import type { RestaurantAgentCommandCenter } from '@/lib/restaurant-agent-command-center';
 import type { RestaurantAiEmployeeInbox } from '@/lib/restaurant-ai-employee-inbox';
+import type { RestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
 import type { RestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
 import type { RestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
 import type { RestaurantBusinessSignalReport } from '@/lib/restaurant-agent-business-signals';
@@ -216,6 +217,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawSkillExecutionLedger?: RestaurantClawSkillExecutionLedger;
     clawTrainingBatch?: RestaurantClawTrainingBatch;
     controlledTrialRun?: RestaurantControlledTrialRun;
+    aiOsAuditReport?: RestaurantAiOsAuditReport;
     platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
     operatingInsightReport?: RestaurantOperatingInsightReport;
     platformOperatingSpine?: RestaurantPlatformOperatingSpine;
@@ -784,6 +786,37 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Platform connector matrix is temporarily unavailable.' }));
+    }
+  };
+
+  const inspectAiOsAuditReport = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building restaurant AI OS audit report...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'ai-os-audit-report',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.aiOsAuditReport?.summary?.providerRequired || payload?.aiOsAuditReport?.summary?.blocked ? 'blocked' : 'queued',
+        message: `AI OS audit: ${payload?.aiOsAuditReport?.summary?.usableNow ?? 0} usable now, ${payload?.aiOsAuditReport?.summary?.manualReady ?? 0} manual-ready, ${payload?.aiOsAuditReport?.summary?.providerRequired ?? 0} provider-required.`,
+        aiOsAuditReport: payload?.aiOsAuditReport || previous.aiOsAuditReport,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Restaurant AI OS audit report is temporarily unavailable.' }));
     }
   };
 
@@ -1948,6 +1981,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandProviderLaunchTrainingPack = dispatchState.providerLaunchTrainingPack;
   const commandPlatformConnectorMatrix = dispatchState.platformConnectorMatrix;
+  const commandAiOsAuditReport = dispatchState.aiOsAuditReport;
   const commandAiEmployeeInbox =
     dispatchState.commandCenter?.aiEmployeeInbox ||
     dispatchState.aiEmployeeInbox;
@@ -2185,6 +2219,79 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               type="button"
             >
               Build Activation Cockpit
+            </button>
+          </div>
+          <div className="mt-4 border border-violet-200/30 bg-violet-200/[0.06] p-3">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">AI OS Audit</div>
+                <h4 className="mt-1 text-base font-black text-white">One report for parity, proof and external blockers</h4>
+                <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                  {commandAiOsAuditReport
+                    ? `${commandAiOsAuditReport.payloadShape}: ${commandAiOsAuditReport.verdict}. It combines the trial cockpit, connector matrix, public source harvest and operating insight report.`
+                    : 'Build the audit when a customer asks what this product can really do today, what needs provider keys, and what must stay outside the output boundary.'}
+                </p>
+              </div>
+              <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                <div className="border border-white/10 bg-white/[0.05] p-2">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">usable</div>
+                  <div className="mt-1 font-mono text-white">{commandAiOsAuditReport?.summary.usableNow ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-white/[0.05] p-2">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">manual</div>
+                  <div className="mt-1 font-mono text-white">{commandAiOsAuditReport?.summary.manualReady ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-white/[0.05] p-2">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">provider</div>
+                  <div className="mt-1 font-mono text-white">{commandAiOsAuditReport?.summary.providerRequired ?? commandProviderGates}</div>
+                </div>
+                <div className="border border-white/10 bg-white/[0.05] p-2">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">env keys</div>
+                  <div className="mt-1 font-mono text-white">{commandAiOsAuditReport ? `${commandAiOsAuditReport.summary.configuredEnvKeys}/${commandAiOsAuditReport.summary.totalEnvKeys}` : '0/0'}</div>
+                </div>
+                <div className="border border-white/10 bg-white/[0.05] p-2">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">forbidden</div>
+                  <div className="mt-1 font-mono text-white">{commandAiOsAuditReport?.summary.forbidden ?? 1}</div>
+                </div>
+              </div>
+            </div>
+            {commandAiOsAuditReport ? (
+              <>
+                <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                  {commandAiOsAuditReport.lanes.map(lane => (
+                    <div className="border border-white/10 bg-white/[0.04] p-2" key={lane.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-violet-100/70">{lane.status}</span>
+                      </div>
+                      <p className="mt-1 text-xs font-black text-white">{lane.title}</p>
+                      <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/45">{lane.nextAction}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-white/45">Top actions</div>
+                    {commandAiOsAuditReport.topActions.map(action => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/60" key={`${action.owner}-${action.action}`}>{action.owner}: {action.action}</p>
+                    ))}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-white/45">External required</div>
+                    {(commandAiOsAuditReport.externalRequired.length ? commandAiOsAuditReport.externalRequired : ['No extra provider blocker detected by the audit.']).slice(0, 6).map(item => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/60" key={item}>{item}</p>
+                    ))}
+                  </div>
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/45">{commandAiOsAuditReport.safetyBoundary}</p>
+              </>
+            ) : null}
+            <button
+              className="mt-3 border border-violet-200/60 px-3 py-2 text-xs font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={dispatchState.status === 'loading'}
+              onClick={inspectAiOsAuditReport}
+              type="button"
+            >
+              Build AI OS Audit
             </button>
           </div>
           <div className="mt-4 border border-cyan-200/30 bg-cyan-200/[0.06] p-3">
@@ -2927,6 +3034,30 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         {connector.status}: {connector.platform} · {connector.nextAction}
                       </p>
                     ))}
+                    <button
+                      className="mt-2 border border-sky-200/50 px-2 py-1 text-[11px] font-black text-sky-100 transition hover:bg-sky-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={inspectAiOsAuditReport}
+                      type="button"
+                    >
+                      AI OS Audit
+                    </button>
+                  </div>
+                ) : null}
+                {commandAiOsAuditReport ? (
+                  <div className="border border-violet-200/25 bg-violet-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">restaurant AI OS audit</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandAiOsAuditReport.payloadShape} / {commandAiOsAuditReport.verdict} / lanes {commandAiOsAuditReport.summary.lanes}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/45">
+                      usable {commandAiOsAuditReport.summary.usableNow} / manual {commandAiOsAuditReport.summary.manualReady} / provider {commandAiOsAuditReport.summary.providerRequired} / forbidden {commandAiOsAuditReport.summary.forbidden}
+                    </p>
+                    {commandAiOsAuditReport.topActions.slice(0, 2).map(action => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45" key={`${action.owner}-${action.action}`}>
+                        {action.owner}: {action.action}
+                      </p>
+                    ))}
                   </div>
                 ) : null}
               </div>
@@ -2963,6 +3094,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 type="button"
               >
                 Operating Insight
+              </button>
+              <button
+                className="border border-violet-200/60 px-3 py-2 text-sm font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={dispatchState.status === 'loading'}
+                onClick={inspectAiOsAuditReport}
+                type="button"
+              >
+                AI OS Audit
               </button>
             </div>
           </div>

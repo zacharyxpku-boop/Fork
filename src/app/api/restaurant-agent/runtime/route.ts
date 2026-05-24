@@ -34,6 +34,7 @@ import { forwardRestaurantAgentDispatch, forwardRestaurantAgentExecutionPackage,
 import { buildRestaurantAgentRuntime } from '@/lib/restaurant-agent-runtime';
 import { buildRestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-tool-policy';
 import { buildRestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
+import { buildRestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
 import { buildRestaurantBenchmarkStrategy } from '@/lib/restaurant-benchmark-strategy';
 import { buildRestaurantClawSkillCatalog, buildRestaurantClawTrainingBatch } from '@/lib/restaurant-claw-skill-catalog';
 import { buildRestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-workbench';
@@ -252,6 +253,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       platformConnectorMatrix: buildRestaurantPlatformConnectorMatrix(),
+    });
+  }
+
+  if (body.action === 'ai-os-audit-report') {
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    return NextResponse.json({
+      ok: true,
+      aiOsAuditReport: buildRestaurantAiOsAuditReport({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        runs,
+        receipts,
+      }),
+      runs,
+      receipts,
     });
   }
 
