@@ -144,6 +144,13 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Business Analysis');
     expect(html).toContain('Memory Follow-up');
     expect(html).toContain('provider-gated');
+    expect(html).toContain('Resident AI Employee Loop');
+    expect(html).toContain('Morning Brief');
+    expect(html).toContain('Service Window Watch');
+    expect(html).toContain('Closeout Memory');
+    expect(html).toContain('Run Resident Heartbeat');
+    expect(html).toContain('Build Channel Hub');
+    expect(html).toContain('Build Memory Pack');
     expect(html).toContain('Customer Operating Path');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');

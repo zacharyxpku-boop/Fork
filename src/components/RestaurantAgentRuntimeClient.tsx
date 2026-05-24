@@ -2751,6 +2751,44 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       status: 'ready-internal',
     },
   ];
+  const residentEmployeeLoop = [
+    {
+      title: 'Morning Brief',
+      status: commandTaskWatcher?.summary.blocked ? 'needs-owner' : 'ready-internal',
+      owner: '店长 / 运营',
+      action: '开店前检查昨日回执、阻断任务、Provider 缺口和今日主推套餐。',
+      proof: commandTaskWatcher
+        ? `${commandTaskWatcher.summary.blocked} blocked / ${commandTaskWatcher.summary.wakeups} wakeups`
+        : '等待生成任务队列或运行 Heartbeat',
+    },
+    {
+      title: 'Service Window Watch',
+      status: dispatchState.heartbeat?.watcherPolicy?.summary.highPriority ? 'needs-owner' : 'ready-internal',
+      owner: '常驻 AI 员工',
+      action: '服务中监听发布回执、预约/领券/到店意向、浏览器 session 和外部失败恢复。',
+      proof: dispatchState.heartbeat
+        ? `${dispatchState.heartbeat.followups.length} followups / ${dispatchState.heartbeat.watcherPolicy?.summary.armed ?? 0} watcher lanes`
+        : '未运行 Heartbeat',
+    },
+    {
+      title: 'Closeout Memory',
+      status: dispatchState.heartbeat?.acceptedReceipts ? 'ready-internal' : 'needs-evidence',
+      owner: '运营 / 数据',
+      action: '收盘后只把 accepted 回执和脱敏经营摘要写入门店记忆，生成下一轮动作。',
+      proof: dispatchState.heartbeat
+        ? `${dispatchState.heartbeat.acceptedReceipts ?? 0} accepted receipts / ${dispatchState.heartbeat.watcherPolicy?.summary.memoryUpserts ?? 0} memory upserts`
+        : '需要回执或手工导入',
+    },
+    {
+      title: 'Channel Follow-up',
+      status: commandChannelHub?.summary.missingExternalItems ? 'provider-gated' : 'ready-internal',
+      owner: '社群 / 店长',
+      action: '把店长跟进、社群提醒、员工通知和到期任务变成可审计 channel job。',
+      proof: commandChannelHub
+        ? `${commandChannelHub.summary.channels} channels / ${commandChannelHub.summary.scheduledJobs} jobs`
+        : '等待 Build Channel Hub',
+    },
+  ];
 
   return (
     <section className="border border-stone-200 bg-white p-5 shadow-sm" id="restaurant-agent-runtime">
@@ -3119,6 +3157,69 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       </div>
                     ))}
                   </div>
+                </div>
+                <div className="mt-3 border border-emerald-200/20 bg-emerald-200/[0.04] p-3">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/70">Resident AI Employee Loop</div>
+                      <h4 className="mt-1 text-sm font-black text-white">常驻餐饮 AI 员工：主动巡检、跟进、写记忆</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="border border-emerald-200/50 px-3 py-2 text-xs font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={dispatchState.status === 'loading'}
+                        onClick={runHeartbeat}
+                        type="button"
+                      >
+                        Run Resident Heartbeat
+                      </button>
+                      <button
+                        className="border border-sky-200/50 px-3 py-2 text-xs font-black text-sky-100 transition hover:bg-sky-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={dispatchState.status === 'loading'}
+                        onClick={buildChannelHub}
+                        type="button"
+                      >
+                        Build Channel Hub
+                      </button>
+                      <button
+                        className="border border-violet-200/50 px-3 py-2 text-xs font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={dispatchState.status === 'loading'}
+                        onClick={buildAiEmployeeMemoryPack}
+                        type="button"
+                      >
+                        Build Memory Pack
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2 lg:grid-cols-4">
+                    {residentEmployeeLoop.map(item => (
+                      <div className="border border-white/10 bg-stone-950/50 p-3" key={item.title}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-black text-white">{item.title}</span>
+                          <span className={item.status === 'ready-internal' ? 'text-[11px] text-emerald-100/70' : item.status === 'provider-gated' ? 'text-[11px] text-amber-100/70' : 'text-[11px] text-rose-100/70'}>
+                            {item.status}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-[11px] leading-4 text-white/55">{item.owner}</p>
+                        <p className="mt-2 text-[11px] leading-4 text-white/65">{item.action}</p>
+                        <p className="mt-2 text-[11px] leading-4 text-emerald-100/60">proof: {item.proof}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {dispatchState.heartbeat?.followups?.length ? (
+                    <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                      {dispatchState.heartbeat.followups.slice(0, 3).map(item => (
+                        <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-emerald-100/70">{item.priority}</span>
+                            <span className="text-[10px] text-white/35">{item.owner}</span>
+                          </div>
+                          <p className="mt-1 text-xs leading-5 text-white">{item.nextAction}</p>
+                          <p className="mt-1 text-[11px] leading-4 text-white/40">evidence: {item.evidenceRequired}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <div className="mt-3 grid gap-2 lg:grid-cols-3">
                   <div className="border border-white/10 bg-white/[0.05] p-3">
