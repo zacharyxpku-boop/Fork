@@ -40,6 +40,7 @@ import { buildRestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-w
 import { buildRestaurantClawSkillExecutionLedger, recordRestaurantClawSkillExecution } from '@/lib/restaurant-claw-skill-execution-store';
 import { runRestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
 import { buildRestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
+import { buildRestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
 import { buildRestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
 import { buildRestaurantPosImportReport, type RestaurantPosImportRow } from '@/lib/restaurant-pos-import-validator';
 import { buildRestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
@@ -243,6 +244,13 @@ export async function POST(request: NextRequest) {
       runtimeProbe,
       providerSandboxContract,
       providerSetupState,
+    });
+  }
+
+  if (body.action === 'platform-connector-matrix') {
+    return NextResponse.json({
+      ok: true,
+      platformConnectorMatrix: buildRestaurantPlatformConnectorMatrix(),
     });
   }
 

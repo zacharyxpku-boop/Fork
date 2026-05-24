@@ -25,6 +25,7 @@ import type { RestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-w
 import type { RestaurantClawSkillExecutionLedger, RestaurantClawSkillExecutionRecord } from '@/lib/restaurant-claw-skill-execution-store';
 import type { RestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
 import type { RestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
+import type { RestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
 import type { RestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
 import type { RestaurantExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import type { RestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
@@ -214,6 +215,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawSkillExecutionLedger?: RestaurantClawSkillExecutionLedger;
     clawTrainingBatch?: RestaurantClawTrainingBatch;
     controlledTrialRun?: RestaurantControlledTrialRun;
+    platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
     platformOperatingSpine?: RestaurantPlatformOperatingSpine;
     operatingDataContract?: RestaurantOperatingDataContract;
     providerSetupPack?: RestaurantProviderSetupPack;
@@ -760,6 +762,26 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider launch training pack is temporarily unavailable.' }));
+    }
+  };
+
+  const inspectPlatformConnectorMatrix = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building restaurant platform connector matrix...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'platform-connector-matrix' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.platformConnectorMatrix?.summary?.blocked ? 'blocked' : 'queued',
+        message: `Platform connector matrix: ${payload?.platformConnectorMatrix?.summary?.internalReady ?? 0} internal, ${payload?.platformConnectorMatrix?.summary?.blocked ?? 0} blocked, ${payload?.platformConnectorMatrix?.summary?.configuredEnvKeys ?? 0}/${payload?.platformConnectorMatrix?.summary?.totalEnvKeys ?? 0} env keys configured.`,
+        platformConnectorMatrix: payload?.platformConnectorMatrix || previous.platformConnectorMatrix,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Platform connector matrix is temporarily unavailable.' }));
     }
   };
 
@@ -1884,6 +1906,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandProviderLaunchTrainingPack = dispatchState.providerLaunchTrainingPack;
+  const commandPlatformConnectorMatrix = dispatchState.platformConnectorMatrix;
   const commandAiEmployeeInbox =
     dispatchState.commandCenter?.aiEmployeeInbox ||
     dispatchState.aiEmployeeInbox;
@@ -2842,6 +2865,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         keys: {commandProviderLaunchTrainingPack.providerKeyChecklist.slice(0, 4).join(' / ')}
                       </p>
                     ) : null}
+                    <button
+                      className="mt-2 border border-amber-200/50 px-2 py-1 text-[11px] font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={inspectPlatformConnectorMatrix}
+                      type="button"
+                    >
+                      Connector Matrix
+                    </button>
+                  </div>
+                ) : null}
+                {commandPlatformConnectorMatrix ? (
+                  <div className="border border-sky-200/25 bg-sky-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">platform connector matrix</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandPlatformConnectorMatrix.payloadShape} / {commandPlatformConnectorMatrix.verdict} / env {commandPlatformConnectorMatrix.summary.configuredEnvKeys}/{commandPlatformConnectorMatrix.summary.totalEnvKeys}
+                    </p>
+                    {commandPlatformConnectorMatrix.connectors.slice(0, 3).map(connector => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45" key={connector.id}>
+                        {connector.status}: {connector.platform} · {connector.nextAction}
+                      </p>
+                    ))}
                   </div>
                 ) : null}
               </div>
