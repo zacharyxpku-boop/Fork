@@ -33,6 +33,7 @@ import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setu
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
+import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantExternalReadiness, type RestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
 import type { RestaurantGrantChecklist } from '@/lib/restaurant-agent-grant-checklist';
 import type { RestaurantMerchantGrantManifest } from '@/lib/restaurant-agent-grant-manifest';
@@ -216,6 +217,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerSetupWizard?: RestaurantProviderSetupWizard;
     providerSetupState?: RestaurantProviderSetupStateSummary;
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
+    providerReceiptInbox?: RestaurantProviderReceiptInbox;
     businessSignals?: RestaurantBusinessSignalReport;
     browserSessionHealth?: RestaurantBrowserSessionHealth;
     toolPolicy?: RestaurantAgentToolPolicyReport;
@@ -664,9 +666,35 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         receipts: payload?.receipts,
         readiness: payload?.readiness,
         runHealth: payload?.runHealth,
+        providerReceiptInbox: payload?.providerReceiptInbox,
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Run health 检查暂不可用。' });
+    }
+  };
+
+  const inspectProviderReceiptInbox = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building provider receipt inbox...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'provider-receipt-inbox' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.providerReceiptInbox?.summary?.actionRequired ? 'blocked' : 'queued',
+        message: `Provider receipt inbox: ${payload?.providerReceiptInbox?.summary?.total ?? 0} requests, ${payload?.providerReceiptInbox?.summary?.actionRequired ?? 0} action required.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        readiness: payload?.readiness || previous.readiness,
+        runHealth: payload?.runHealth || previous.runHealth,
+        recovery: payload?.recovery || previous.recovery,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider receipt inbox is temporarily unavailable.' }));
     }
   };
 
@@ -1115,6 +1143,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         receipts: payload?.receipts || previous.receipts,
         taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
         runHealth: payload?.runHealth || previous.runHealth,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         recovery: payload?.recovery || previous.recovery,
         executionTimeline: payload?.executionTimeline || previous.executionTimeline,
       }));
@@ -1759,6 +1788,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandTaskProviderHandoff =
     dispatchState.commandCenter?.taskProviderHandoff ||
     dispatchState.taskProviderHandoff;
+  const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandAiEmployeeInbox =
     dispatchState.commandCenter?.aiEmployeeInbox ||
     dispatchState.aiEmployeeInbox;
@@ -2649,6 +2679,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     >
                       Forward to Runtime
                     </button>
+                    <button
+                      className="ml-2 mt-2 border border-white/20 px-2 py-1 text-[11px] font-black text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={inspectProviderReceiptInbox}
+                      type="button"
+                    >
+                      Receipt Inbox
+                    </button>
+                  </div>
+                ) : null}
+                {commandProviderReceiptInbox ? (
+                  <div className="border border-cyan-200/25 bg-cyan-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">provider receipt inbox</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandProviderReceiptInbox.payloadShape} / waiting {commandProviderReceiptInbox.summary.waitingReceipt} / blocked {commandProviderReceiptInbox.summary.blockedBeforeDispatch} / action {commandProviderReceiptInbox.summary.actionRequired}
+                    </p>
+                    {commandProviderReceiptInbox.requests.slice(0, 1).map(request => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45" key={request.requestId}>
+                        {request.priority}: {request.callback.action} · {request.requiredEvidence.slice(0, 3).join(' / ')}
+                      </p>
+                    ))}
                   </div>
                 ) : null}
               </div>

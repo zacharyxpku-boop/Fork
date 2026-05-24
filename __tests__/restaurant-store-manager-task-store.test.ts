@@ -204,6 +204,8 @@ describe('restaurant store manager task store', () => {
     expect(forwardPayload.run.status).toBe('blocked');
     expect(forwardPayload.run.taskId).toBe('external-runtime-attach');
     expect(forwardPayload.runHealth.ok).toBe(true);
+    expect(forwardPayload.providerReceiptInbox.payloadShape).toBe('restaurant-provider-receipt-inbox-v1');
+    expect(forwardPayload.providerReceiptInbox.summary.actionRequired).toBeGreaterThanOrEqual(1);
     expect(forwardPayload.recovery.ok).toBe(true);
     expect(forwardPayload.executionTimeline.payloadShape).toBe('restaurant-execution-timeline-v1');
     expect(forwardPayload.executionTimeline.summary.runs).toBeGreaterThanOrEqual(1);

@@ -46,6 +46,7 @@ import { buildRestaurantProviderSetupPack } from '@/lib/restaurant-provider-setu
 import { buildRestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import { buildRestaurantProviderSetupStateSummary, recordRestaurantProviderSetupState } from '@/lib/restaurant-provider-setup-state-store';
 import { buildRestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
+import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-profile-intake';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
@@ -125,6 +126,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       runHealth: buildRestaurantRunHealth(runs, receipts, readiness),
+      providerReceiptInbox: buildRestaurantProviderReceiptInbox({ runs, receipts, readiness }),
+      runs,
+      receipts,
+      readiness,
+    });
+  }
+
+  if (body.action === 'provider-receipt-inbox') {
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    return NextResponse.json({
+      ok: true,
+      providerReceiptInbox: buildRestaurantProviderReceiptInbox({ runs, receipts, readiness }),
+      runHealth: buildRestaurantRunHealth(runs, receipts, readiness),
+      recovery: buildRestaurantAgentRecoveryPlan(runs, receipts, readiness),
       runs,
       receipts,
       readiness,
@@ -437,6 +454,7 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
       runHealth: buildRestaurantRunHealth(runs, receipts, readiness),
+      providerReceiptInbox: buildRestaurantProviderReceiptInbox({ runs, receipts, readiness }),
       recovery: buildRestaurantAgentRecoveryPlan(runs, receipts, readiness),
       executionTimeline: buildRestaurantExecutionTimeline({
         runs,

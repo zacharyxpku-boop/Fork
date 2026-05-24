@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { POST } from '@/app/api/restaurant-agent/runtime/route';
 import { buildRestaurantAgentDispatch } from '@/lib/restaurant-agent-dispatch';
 import { buildRestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
+import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantRunHealth } from '@/lib/restaurant-agent-run-health';
 import { clearRestaurantAgentReceiptsForTest, recordRestaurantAgentReceipt } from '@/lib/restaurant-agent-receipt-store';
 import { clearRestaurantAgentRunsForTest, recordRestaurantAgentRun } from '@/lib/restaurant-agent-run-store';
@@ -63,6 +64,22 @@ describe('restaurant agent run health', () => {
     expect(health.summary.blockedAuth).toBe(1);
     expect(health.summary.failed).toBe(1);
     expect(health.summary.queuedLocal).toBe(1);
+    const inbox = buildRestaurantProviderReceiptInbox({
+      runs: [failed, forwarded, blocked, queued],
+      receipts: [acceptedReceipt],
+      readiness: buildRestaurantExternalReadiness({}),
+      now: new Date('2026-05-23T00:31:00.000Z'),
+    });
+    expect(inbox.payloadShape).toBe('restaurant-provider-receipt-inbox-v1');
+    expect(inbox.summary.accepted).toBe(1);
+    expect(inbox.summary.blockedBeforeDispatch).toBe(1);
+    expect(inbox.summary.providerFailed).toBe(1);
+    expect(inbox.requests.find(item => item.eventId === forwarded.eventId)?.safeReceiptDraft).toEqual(expect.objectContaining({
+      action: 'external-receipt',
+      eventId: forwarded.eventId,
+    }));
+    expect(inbox.requests.find(item => item.eventId === blocked.eventId)?.requiredEvidence).toContain('callback secret');
+    expect(inbox.safetyBoundary).toContain('never stores API keys');
     expect(health.items.find(item => item.eventId === forwarded.eventId)).toEqual(expect.objectContaining({
       state: 'accepted',
       evidenceState: 'accepted',
@@ -111,5 +128,20 @@ describe('restaurant agent run health', () => {
       externalBlockedGroups: expect.any(Number),
     }));
     expect(payload.runHealth.safetyBoundary).toContain('私信原文');
+  });
+  it('exposes provider receipt inbox through the runtime API', async () => {
+    const response = await POST(new Request('http://localhost/api/restaurant-agent/runtime', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'provider-receipt-inbox' }),
+    }) as never);
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.providerReceiptInbox.payloadShape).toBe('restaurant-provider-receipt-inbox-v1');
+    expect(payload.providerReceiptInbox.summary).toEqual(expect.objectContaining({
+      total: expect.any(Number),
+      actionRequired: expect.any(Number),
+    }));
+    expect(payload.providerReceiptInbox.safetyBoundary).toContain('private-message raw text');
   });
 });
