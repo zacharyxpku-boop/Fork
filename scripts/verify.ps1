@@ -36,6 +36,10 @@ Invoke-Step "Vitest restaurant post run review pack" {
   npm.cmd run test -- __tests__/restaurant-post-run-review-pack.test.ts
 }
 
+Invoke-Step "Vitest restaurant next loop channel plan" {
+  npm.cmd run test -- __tests__/restaurant-next-loop-channel-plan.test.ts
+}
+
 Invoke-Step "TypeScript noEmit" {
   npx.cmd tsc --noEmit
 }

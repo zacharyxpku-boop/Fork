@@ -49,6 +49,7 @@ import { buildRestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platfor
 import { buildRestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
 import { buildRestaurantPosImportReport, type RestaurantPosImportRow } from '@/lib/restaurant-pos-import-validator';
 import { buildRestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-review-pack';
+import { buildRestaurantNextLoopChannelPlan } from '@/lib/restaurant-next-loop-channel-plan';
 import { buildRestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import { buildRestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import { buildRestaurantProviderSetupStateSummary, recordRestaurantProviderSetupState } from '@/lib/restaurant-provider-setup-state-store';
@@ -772,6 +773,75 @@ export async function POST(request: NextRequest) {
       businessSignals: buildRestaurantBusinessSignals(runs, receipts),
       providerReceiptInbox,
       storeManagerTaskQueue,
+      runtimeProbe,
+      providerReadinessHealth,
+      runs,
+      receipts,
+    });
+  }
+
+  if (body.action === 'next-loop-channel-plan') {
+    const rows = Array.isArray(body.rows) ? body.rows as RestaurantPosImportRow[] : undefined;
+    const posImport = rows ? buildRestaurantPosImportReport({
+      rows,
+      eventId: typeof body.eventId === 'string' ? body.eventId : undefined,
+    }) : undefined;
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const postRunReviewPack = buildRestaurantPostRunReviewPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      queue: storeManagerTaskQueue,
+      runs,
+      receipts,
+      readiness,
+      posImports: posImport ? [posImport] : [],
+      target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+        ? body.runtimeTarget
+        : 'openclaw',
+      runtimeProbe,
+      providerReadinessHealth,
+      providerReceiptInbox,
+    });
+    const channelHub = buildRestaurantAgentChannelHub({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+    });
+    const channelDeliveryReport = buildRestaurantAgentChannelDeliveryReport();
+    return NextResponse.json({
+      ok: true,
+      nextLoopChannelPlan: buildRestaurantNextLoopChannelPlan({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        postRunReviewPack,
+        channelHub,
+        channelDeliveryReport,
+        storeManagerTaskQueue,
+      }),
+      postRunReviewPack,
+      channelHub,
+      channelDeliveryReport,
+      posImport,
+      storeManagerTaskQueue,
+      providerReceiptInbox,
       runtimeProbe,
       providerReadinessHealth,
       runs,

@@ -36,6 +36,7 @@ import type { RestaurantExecutionTimeline } from '@/lib/restaurant-execution-tim
 import type { RestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
 import type { RestaurantFirstRunControlTower } from '@/lib/restaurant-first-run-control-tower';
 import type { RestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-review-pack';
+import type { RestaurantNextLoopChannelPlan } from '@/lib/restaurant-next-loop-channel-plan';
 import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
@@ -238,6 +239,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     firstForwardableRunPack?: RestaurantFirstForwardableRunPack;
     firstRunControlTower?: RestaurantFirstRunControlTower;
     postRunReviewPack?: RestaurantPostRunReviewPack;
+    nextLoopChannelPlan?: RestaurantNextLoopChannelPlan;
     providerLaunchTrainingPack?: RestaurantProviderLaunchTrainingPack;
     businessSignals?: RestaurantBusinessSignalReport;
     browserSessionHealth?: RestaurantBrowserSessionHealth;
@@ -1786,6 +1788,59 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildNextLoopChannelPlan = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building next-loop shift plan from proof, staff channels and operating gates...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'next-loop-channel-plan',
+          runtimeTarget: 'openclaw',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+          rows: [
+            {
+              businessDate: '2026-05-23',
+              storeName: runtimeIntake.restaurant,
+              offerName: runtimeIntake.offer,
+              channel: 'group-buy coupon',
+              couponClaimCount: 38,
+              redemptionCount: 21,
+              grossSales: 2180,
+              orderCount: 24,
+              inventoryUsed: 21,
+            },
+          ],
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.nextLoopChannelPlan?.summary?.providerGatedLanes || payload?.nextLoopChannelPlan?.summary?.providerGatedActions ? 'blocked' : 'queued',
+        message: `Next-loop plan: ${payload?.nextLoopChannelPlan?.verdict || 'unknown'}; ${payload?.nextLoopChannelPlan?.summary?.scheduledActions ?? 0} actions, ${payload?.nextLoopChannelPlan?.summary?.providerGatedActions ?? 0} provider-gated.`,
+        receipts: payload?.receipts || previous.receipts,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        posImport: payload?.posImport || previous.posImport,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        channelHub: payload?.channelHub || previous.channelHub,
+        channelDeliveryReport: payload?.channelDeliveryReport || previous.channelDeliveryReport,
+        postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
+        nextLoopChannelPlan: payload?.nextLoopChannelPlan || previous.nextLoopChannelPlan,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Next-loop channel plan is temporarily unavailable.' }));
+    }
+  };
+
   const recordCapabilityTrainingSample = async () => {
     setDispatchState({ status: 'loading', message: '正在写入 Claw 能力训练样本...' });
     try {
@@ -2191,6 +2246,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandFirstForwardableRunPack = dispatchState.firstForwardableRunPack;
   const commandFirstRunControlTower = dispatchState.firstRunControlTower;
   const commandPostRunReviewPack = dispatchState.postRunReviewPack;
+  const commandNextLoopChannelPlan = dispatchState.nextLoopChannelPlan;
   const commandProviderLaunchTrainingPack = dispatchState.providerLaunchTrainingPack;
   const commandPlatformConnectorMatrix = dispatchState.platformConnectorMatrix;
   const commandAiOsAuditReport = dispatchState.aiOsAuditReport;
@@ -3113,6 +3169,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 >
                   First Run Tower
                 </button>
+                <button
+                  className="shrink-0 border border-cyan-200/60 px-2 py-1 text-xs font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildNextLoopChannelPlan}
+                  type="button"
+                >
+                  Next Loop Plan
+                </button>
               </div>
               <div className="mt-3 space-y-2">
                 {(commandTaskQueue?.tasks.length ? commandTaskQueue.tasks : commandFollowupTasks).slice(0, 2).map(task => (
@@ -3456,6 +3520,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 type="button"
               >
                 Post Run Review
+              </button>
+              <button
+                className="border border-cyan-200/60 px-3 py-2 text-sm font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={dispatchState.status === 'loading'}
+                onClick={buildNextLoopChannelPlan}
+                type="button"
+              >
+                Next Loop Plan
               </button>
               <button
                 className="border border-violet-200/60 px-3 py-2 text-sm font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
@@ -4921,6 +4993,74 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
                     {commandPostRunReviewPack.safetyBoundary}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {commandNextLoopChannelPlan ? (
+              <div className="md:col-span-3">
+                <div className="text-white/45">Next Loop Channel Plan 路 daily shift execution</div>
+                <div className="mt-2 grid gap-2 md:grid-cols-7">
+                  <div className="border border-cyan-200/20 bg-cyan-200/[0.06] p-2 md:col-span-2">
+                    <div className="font-mono text-white">{commandNextLoopChannelPlan.payloadShape}</div>
+                    <p className="mt-1 text-cyan-100/70">{commandNextLoopChannelPlan.verdict}</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandNextLoopChannelPlan.summary.internalReadyLanes}</div>
+                    <p className="mt-1 text-white/60">ready lanes</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandNextLoopChannelPlan.summary.scheduledActions}</div>
+                    <p className="mt-1 text-white/60">actions</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandNextLoopChannelPlan.summary.manualOnlyActions}</div>
+                    <p className="mt-1 text-white/60">manual</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandNextLoopChannelPlan.summary.providerGatedActions}</div>
+                    <p className="mt-1 text-white/60">provider gated</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{commandNextLoopChannelPlan.summary.canRunInternallyNow ? 'yes' : 'no'}</div>
+                    <p className="mt-1 text-white/60">internal run</p>
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                  {commandNextLoopChannelPlan.lanes.map(lane => (
+                    <div className="border border-white/10 bg-white/[0.05] p-2" key={lane.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-white">{lane.title}</span>
+                        <span className="text-[11px] text-cyan-100/70">{lane.status}</span>
+                      </div>
+                      <p className="mt-1 text-white/60">{lane.owner}: {lane.nextAction}</p>
+                      <p className="mt-1 line-clamp-2 text-white/40">{lane.stopLine}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <div className="text-white/45">Shift actions</div>
+                    {commandNextLoopChannelPlan.scheduledActions.slice(0, 6).map(item => (
+                      <div className="border border-white/10 bg-white/[0.05] p-2" key={item.id}>
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-cyan-100/70">
+                          <span>{item.dueWindow}</span>
+                          <span>{item.channel}</span>
+                          <span>{item.status}</span>
+                        </div>
+                        <p className="mt-1 text-white/70">{item.owner}: {item.action}</p>
+                        <p className="mt-1 line-clamp-2 text-white/45">{item.manualFallback}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-white/45">External unlocks</div>
+                    {commandNextLoopChannelPlan.externalRequired.slice(0, 8).map(item => (
+                      <div className="border border-amber-200/20 bg-amber-200/[0.06] p-2 text-amber-100/70" key={item}>{item}</div>
+                    ))}
+                    <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                      {commandNextLoopChannelPlan.safetyBoundary}
+                    </div>
                   </div>
                 </div>
               </div>
