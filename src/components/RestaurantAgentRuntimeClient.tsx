@@ -3081,9 +3081,29 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">Competitor Parity Board</div>
                       <h4 className="mt-1 text-sm font-black text-white">竞品级能力拆成内部可跑 / 外部必接两层</h4>
                     </div>
-                    <p className="max-w-2xl text-[11px] leading-4 text-white/45">
-                      这里不承诺已经自动发布、自动获客或自动核销；只把真正能内部执行的计划、回执、记忆、复盘先跑起来，把必须外部 Provider 的钥匙列清楚。
-                    </p>
+                    <div className="flex flex-col gap-2 lg:items-end">
+                      <p className="max-w-2xl text-[11px] leading-4 text-white/45">
+                        这里不承诺已经自动发布、自动获客或自动核销；只把真正能内部执行的计划、回执、记忆、复盘先跑起来，把必须外部 Provider 的钥匙列清楚。
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          className="border border-cyan-200/50 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildExternalUnlockRequestPack}
+                          type="button"
+                        >
+                          External Unlock Requests
+                        </button>
+                        <button
+                          className="border border-amber-200/50 px-3 py-2 text-xs font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildProviderSetupPack}
+                          type="button"
+                        >
+                          Provider Setup Pack
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <div className="mt-3 grid gap-2 lg:grid-cols-3">
                     {competitorParityLanes.map(lane => (
