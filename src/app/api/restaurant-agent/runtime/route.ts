@@ -424,6 +424,9 @@ export async function POST(request: NextRequest) {
       runtimeTarget: 'local',
     });
     const run = recordRestaurantAgentRun(dispatch, runtimeTarget, bridge);
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
 
     return NextResponse.json({
       ok: bridge.ok,
@@ -431,6 +434,16 @@ export async function POST(request: NextRequest) {
       bridge,
       run,
       taskProviderHandoff,
+      runs,
+      receipts,
+      runHealth: buildRestaurantRunHealth(runs, receipts, readiness),
+      recovery: buildRestaurantAgentRecoveryPlan(runs, receipts, readiness),
+      executionTimeline: buildRestaurantExecutionTimeline({
+        runs,
+        receipts,
+        readiness,
+        browserSessions: listRestaurantBrowserSessions(),
+      }),
     }, { status: bridge.ok ? 202 : 409 });
   }
 

@@ -1090,6 +1090,39 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const forwardTaskProviderHandoff = async () => {
+    const selected = commandTaskProviderHandoff?.packages[0] || commandTaskProviderHandoff?.blockedPackages[0];
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Forwarding task provider handoff to runtime bridge...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'task-provider-forward',
+          runtimeTarget: 'openclaw',
+          handoffId: selected?.handoffId,
+          taskMemoryId: selected?.taskMemoryId,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: response.ok ? 'queued' : 'blocked',
+        eventId: payload?.run?.eventId || previous.eventId,
+        tenantId: payload?.run?.tenantId || previous.tenantId,
+        message: payload?.bridge?.message || 'Provider forward attempt recorded.',
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
+        runHealth: payload?.runHealth || previous.runHealth,
+        recovery: payload?.recovery || previous.recovery,
+        executionTimeline: payload?.executionTimeline || previous.executionTimeline,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Task provider forward is temporarily unavailable.' }));
+    }
+  };
+
   const importPosRedemptionSample = async () => {
     setDispatchState({ status: 'loading', message: 'Validating sanitized POS redemption rows...' });
     try {
@@ -2608,6 +2641,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         Move one task to ready-for-provider after evidence review; this creates a sanitized package for OpenClaw/Hermes/Lobu.
                       </p>
                     )}
+                    <button
+                      className="mt-2 border border-fuchsia-200/50 px-2 py-1 text-[11px] font-black text-fuchsia-100 transition hover:bg-fuchsia-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading' || (!commandTaskProviderHandoff.packages.length && !commandTaskProviderHandoff.blockedPackages.length)}
+                      onClick={forwardTaskProviderHandoff}
+                      type="button"
+                    >
+                      Forward to Runtime
+                    </button>
                   </div>
                 ) : null}
               </div>

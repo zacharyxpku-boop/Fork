@@ -203,6 +203,10 @@ describe('restaurant store manager task store', () => {
     expect(forwardPayload.bridge.audit.secretExposed).toBe(false);
     expect(forwardPayload.run.status).toBe('blocked');
     expect(forwardPayload.run.taskId).toBe('external-runtime-attach');
+    expect(forwardPayload.runHealth.ok).toBe(true);
+    expect(forwardPayload.recovery.ok).toBe(true);
+    expect(forwardPayload.executionTimeline.payloadShape).toBe('restaurant-execution-timeline-v1');
+    expect(forwardPayload.executionTimeline.summary.runs).toBeGreaterThanOrEqual(1);
     expect(JSON.stringify(forwardPayload)).not.toContain('secret-api-key');
   });
 
