@@ -135,6 +135,15 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('waiting for accepted receipt');
     expect(html).toContain('Refresh Center');
     expect(html).toContain('restaurant-agent-command-center-v1');
+    expect(html).toContain('Restaurant AI Cockpit');
+    expect(html).toContain('Competitor Parity Board');
+    expect(html).toContain('Persistent Browser Agent');
+    expect(html).toContain('Auto Publish');
+    expect(html).toContain('Auto Lead Capture');
+    expect(html).toContain('Coupon Redemption');
+    expect(html).toContain('Business Analysis');
+    expect(html).toContain('Memory Follow-up');
+    expect(html).toContain('provider-gated');
     expect(html).toContain('Customer Operating Path');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');

@@ -2713,6 +2713,44 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerGated: commandCockpitZones.filter(zone => zone.status === 'provider-gated').length,
     canClaimAutomation: false,
   };
+  const competitorParityLanes = [
+    {
+      title: 'Persistent Browser Agent',
+      internal: '能生成隔离浏览器 session manifest、runbook、回调合同和失败恢复队列。',
+      external: '需要真实浏览器 profile、商户授权 grant、平台登录态和停止条件。',
+      status: 'provider-gated',
+    },
+    {
+      title: 'Auto Publish',
+      internal: '能生成大众点评/小红书/抖音/微信社群发布包、验收清单和截图回执要求。',
+      external: '需要平台账号授权、发布 API 或受控浏览器执行器回执。',
+      status: 'provider-gated',
+    },
+    {
+      title: 'Auto Lead Capture',
+      internal: '能把预约、领券、私信咨询、到店意向整理成店长任务和社群跟进话术。',
+      external: '需要私域/社群/平台消息回调；未授权时不读取私信和手机号。',
+      status: 'provider-gated',
+    },
+    {
+      title: 'Coupon Redemption',
+      internal: '能校验脱敏券码/核销/POS 聚合字段，生成核销异常和复盘动作。',
+      external: '需要团购券、POS、会员或收银系统数据合同，不能写回生产系统。',
+      status: 'provider-gated',
+    },
+    {
+      title: 'Business Analysis',
+      internal: '能基于公开回执、手工导入和脱敏汇总做经营信号、备货和下一轮计划。',
+      external: '需要真实订单、库存、毛利、核销、会员复购的脱敏聚合导入。',
+      status: 'ready-internal',
+    },
+    {
+      title: 'Memory Follow-up',
+      internal: '能沉淀门店偏好、负责人、证据、失败原因和下一次执行计划。',
+      external: '需要员工通知通道、日程权限或企业微信/飞书/短信 Provider。',
+      status: 'ready-internal',
+    },
+  ];
 
   return (
     <section className="border border-stone-200 bg-white p-5 shadow-sm" id="restaurant-agent-runtime">
@@ -3036,6 +3074,31 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <p className="mt-1 text-[11px] leading-4 text-white/35">gate: {zone.providerGate}</p>
                     </div>
                   ))}
+                </div>
+                <div className="mt-3 border border-cyan-200/20 bg-cyan-200/[0.04] p-3">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">Competitor Parity Board</div>
+                      <h4 className="mt-1 text-sm font-black text-white">竞品级能力拆成内部可跑 / 外部必接两层</h4>
+                    </div>
+                    <p className="max-w-2xl text-[11px] leading-4 text-white/45">
+                      这里不承诺已经自动发布、自动获客或自动核销；只把真正能内部执行的计划、回执、记忆、复盘先跑起来，把必须外部 Provider 的钥匙列清楚。
+                    </p>
+                  </div>
+                  <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                    {competitorParityLanes.map(lane => (
+                      <div className="border border-white/10 bg-stone-950/50 p-3" key={lane.title}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-black text-white">{lane.title}</span>
+                          <span className={lane.status === 'ready-internal' ? 'text-[11px] text-emerald-100/70' : 'text-[11px] text-amber-100/70'}>
+                            {lane.status}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-[11px] leading-4 text-white/60">internal: {lane.internal}</p>
+                        <p className="mt-2 text-[11px] leading-4 text-amber-100/60">external: {lane.external}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="mt-3 grid gap-2 lg:grid-cols-3">
                   <div className="border border-white/10 bg-white/[0.05] p-3">
