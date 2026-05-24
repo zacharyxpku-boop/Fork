@@ -64,6 +64,10 @@ Invoke-Step "Vitest restaurant AI consultant copilot" {
   npm.cmd run test -- __tests__/restaurant-ai-consultant-copilot.test.ts
 }
 
+Invoke-Step "Vitest restaurant store operating plan" {
+  npm.cmd run test -- __tests__/restaurant-store-operating-plan.test.ts
+}
+
 Invoke-Step "TypeScript noEmit" {
   npx.cmd tsc --noEmit
 }

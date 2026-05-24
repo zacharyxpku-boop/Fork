@@ -67,6 +67,7 @@ import type { RestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-
 import type { RestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
 import type { RestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
 import type { RestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
+import type { RestaurantStoreOperatingPlan } from '@/lib/restaurant-store-operating-plan';
 import type { RestaurantAgentOpsConsole } from '@/lib/restaurant-agent-ops-console';
 import type { RestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import type { RestaurantStoreManagerTaskQueue } from '@/lib/restaurant-store-manager-task-store';
@@ -258,6 +259,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     publicSourceHarvestPack?: RestaurantPublicSourceHarvestPack;
     publicTrialSeed?: RestaurantPublicTrialSeed;
     dayZeroMissionPack?: RestaurantDayZeroMissionPack;
+    storeOperatingPlan?: RestaurantStoreOperatingPlan;
     opsConsole?: RestaurantAgentOpsConsole;
     commandCenter?: RestaurantAgentCommandCenter;
     aiConsultantCopilot?: RestaurantAiConsultantCopilot;
@@ -2466,6 +2468,45 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildStoreOperatingPlan = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Store Operating Plan...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'store-operating-plan',
+          command: restaurantCommand,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.storeOperatingPlan?.summary?.canRunTodayInternally ? 'queued' : 'blocked',
+        message: `Store operating plan: ${payload?.storeOperatingPlan?.summary?.timeBlocks ?? 0} time blocks, ${payload?.storeOperatingPlan?.summary?.readyInternal ?? 0} internal-ready, ${payload?.storeOperatingPlan?.summary?.providerGated ?? 0} provider-gated.`,
+        storeOperatingPlan: payload?.storeOperatingPlan || previous.storeOperatingPlan,
+        aiConsultantCopilot: payload?.aiConsultantCopilot || previous.aiConsultantCopilot,
+        customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
+        voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
+        providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
+        dayZeroMissionPack: payload?.dayZeroMissionPack || previous.dayZeroMissionPack,
+        commandRoute: payload?.commandRoute || previous.commandRoute,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Store Operating Plan is temporarily unavailable.' }));
+    }
+  };
+
   const commandMode =
     dispatchState.commandCenter?.mode ||
     dispatchState.executionTimeline?.mode ||
@@ -2524,6 +2565,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandProviderLaunchBoard = dispatchState.providerLaunchBoard;
   const commandAiConsultantCopilot = dispatchState.aiConsultantCopilot;
+  const commandStoreOperatingPlan = dispatchState.storeOperatingPlan;
   const commandFirstForwardableRunPack = dispatchState.firstForwardableRunPack;
   const commandFirstRunControlTower = dispatchState.firstRunControlTower;
   const commandPostRunReviewPack = dispatchState.postRunReviewPack;
@@ -2736,6 +2778,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   type="button"
                 >
                   AI Consultant
+                </button>
+                <button
+                  className="mt-2 w-full border border-lime-200/60 px-3 py-2 text-sm font-black text-lime-100 transition hover:bg-lime-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildStoreOperatingPlan}
+                  type="button"
+                >
+                  Operating Plan
                 </button>
                 <button
                   className="mt-2 w-full border border-emerald-200/60 px-3 py-2 text-sm font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
@@ -2996,6 +3046,90 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       {commandAiConsultantCopilot.providerUnlocks.slice(0, 12).join(' / ') || 'none'}
                     </p>
                     <p className="mt-3 text-[11px] leading-4 text-white/40">{commandAiConsultantCopilot.safetyBoundary}</p>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {commandStoreOperatingPlan ? (
+              <div className="mt-3 border border-lime-200/30 bg-lime-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/70">Store Operating Plan</div>
+                    <h4 className="mt-1 text-base font-black text-white">{commandStoreOperatingPlan.payloadShape}</h4>
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                      {commandStoreOperatingPlan.restaurant} / {commandStoreOperatingPlan.offer}: today plan, weekly focus, manager standup, staff talk tracks, evidence board and provider unlocks.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-5 lg:min-w-[620px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandStoreOperatingPlan.verdict}</div>
+                      <p className="mt-1 text-white/55">verdict</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandStoreOperatingPlan.summary.timeBlocks}</div>
+                      <p className="mt-1 text-white/55">time blocks</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandStoreOperatingPlan.summary.readyInternal}</div>
+                      <p className="mt-1 text-white/55">internal</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandStoreOperatingPlan.summary.providerGated}</div>
+                      <p className="mt-1 text-white/55">provider gated</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandStoreOperatingPlan.summary.canClaimAutomation ? 'ready' : 'blocked'}</div>
+                      <p className="mt-1 text-white/55">automation claim</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  {commandStoreOperatingPlan.dayPlan.map(block => (
+                    <div className="border border-white/10 bg-white/[0.05] p-3" key={block.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-white">{block.window}</span>
+                        <span className="text-[11px] text-lime-100/70">{block.owner} / {block.status}</span>
+                      </div>
+                      <p className="mt-2 text-sm font-black text-white">{block.title}</p>
+                      <p className="mt-1 text-xs leading-5 text-white/60">{block.action}</p>
+                      <p className="mt-2 text-[11px] leading-4 text-amber-100/60">check: {block.checklist.slice(0, 5).join(' / ') || 'none'}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-lime-100/60">evidence: {block.evidenceRequired.slice(0, 4).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">gate: {block.providerGate}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">week plan</div>
+                    <div className="mt-2 space-y-2">
+                      {commandStoreOperatingPlan.weekPlan.map(block => (
+                        <div className="border border-white/10 bg-white/[0.04] p-2" key={block.id}>
+                          <div className="font-mono text-xs text-white">{block.window} / {block.status}</div>
+                          <p className="mt-1 text-[11px] leading-4 text-white/55">{block.title}</p>
+                          <p className="mt-1 text-[11px] leading-4 text-white/35">{block.action}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">manager standup</div>
+                    {commandStoreOperatingPlan.managerStandup.map(line => (
+                      <p className="mt-2 text-[11px] leading-4 text-lime-100/65" key={line}>{line}</p>
+                    ))}
+                    <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">staff talk tracks</div>
+                    {commandStoreOperatingPlan.staffTalkTracks.map(line => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/55" key={line}>{line}</p>
+                    ))}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">evidence and provider unlocks</div>
+                    <p className="mt-2 text-xs leading-5 text-white/55">
+                      evidence: {commandStoreOperatingPlan.evidenceBoard.slice(0, 10).join(' / ') || 'none'}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-amber-100/65">
+                      provider: {commandStoreOperatingPlan.providerUnlocks.slice(0, 10).join(' / ') || 'none'}
+                    </p>
+                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandStoreOperatingPlan.safetyBoundary}</p>
                   </div>
                 </div>
               </div>
