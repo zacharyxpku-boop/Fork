@@ -33,6 +33,7 @@ import type { RestaurantExecutionPackage } from '@/lib/restaurant-agent-executio
 import type { RestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
 import type { RestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import type { RestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
+import type { RestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
 import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
@@ -232,6 +233,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
+    firstForwardableRunPack?: RestaurantFirstForwardableRunPack;
     providerLaunchTrainingPack?: RestaurantProviderLaunchTrainingPack;
     businessSignals?: RestaurantBusinessSignalReport;
     browserSessionHealth?: RestaurantBrowserSessionHealth;
@@ -741,6 +743,33 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider sandbox contract is temporarily unavailable.' }));
+    }
+  };
+
+  const buildFirstForwardableRunPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building first forwardable run preflight...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'first-forwardable-run-pack', runtimeTarget: 'openclaw' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.firstForwardableRunPack?.summary?.canForwardFirstRun ? 'queued' : 'blocked',
+        message: `First forwardable run: ${payload?.firstForwardableRunPack?.verdict || 'unknown'}; ${payload?.firstForwardableRunPack?.summary?.passedStages ?? 0}/${payload?.firstForwardableRunPack?.stages?.length ?? 0} stages passed.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        firstForwardableRunPack: payload?.firstForwardableRunPack || previous.firstForwardableRunPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'First forwardable run preflight is temporarily unavailable.' }));
     }
   };
 
@@ -2077,6 +2106,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dispatchState.taskProviderHandoff;
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
+  const commandFirstForwardableRunPack = dispatchState.firstForwardableRunPack;
   const commandProviderLaunchTrainingPack = dispatchState.providerLaunchTrainingPack;
   const commandPlatformConnectorMatrix = dispatchState.platformConnectorMatrix;
   const commandAiOsAuditReport = dispatchState.aiOsAuditReport;
@@ -2983,6 +3013,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 >
                   Provider Handoff
                 </button>
+                <button
+                  className="shrink-0 border border-lime-200/60 px-2 py-1 text-xs font-black text-lime-100 transition hover:bg-lime-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildFirstForwardableRunPack}
+                  type="button"
+                >
+                  First Forwardable Run
+                </button>
               </div>
               <div className="mt-3 space-y-2">
                 {(commandTaskQueue?.tasks.length ? commandTaskQueue.tasks : commandFollowupTasks).slice(0, 2).map(task => (
@@ -3171,6 +3209,33 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     >
                       Launch Training Pack
                     </button>
+                  </div>
+                ) : null}
+                {commandFirstForwardableRunPack ? (
+                  <div className="border border-lime-200/25 bg-lime-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/70">first forwardable run</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandFirstForwardableRunPack.payloadShape} / {commandFirstForwardableRunPack.verdict} / forwardable {commandFirstForwardableRunPack.summary.forwardable} / handoff-only {commandFirstForwardableRunPack.summary.handoffOnly}
+                    </p>
+                    {commandFirstForwardableRunPack.selectedPackage ? (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">
+                        {commandFirstForwardableRunPack.selectedPackage.runtimeTarget}: {commandFirstForwardableRunPack.selectedPackage.requestedAction} / {commandFirstForwardableRunPack.selectedPackage.canForward ? 'ready' : commandFirstForwardableRunPack.selectedPackage.blockedReasons[0]}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">
+                        No provider package selected. Mark one reviewed task as Provider Ready, then rebuild this preflight.
+                      </p>
+                    )}
+                    <div className="mt-2 grid gap-1">
+                      {commandFirstForwardableRunPack.stages.slice(0, 3).map(stage => (
+                        <p className="text-[11px] leading-4 text-white/45" key={stage.id}>
+                          {stage.status}: {stage.id} / {stage.nextAction}
+                        </p>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[11px] leading-4 text-white/35">
+                      automation claim: {commandFirstForwardableRunPack.summary.canClaimAutomation ? 'ready' : 'blocked'} / callback: {commandFirstForwardableRunPack.selectedPackage?.callbackHeader || 'x-restaurant-agent-signature'}
+                    </p>
                   </div>
                 ) : null}
                 {commandProviderLaunchTrainingPack ? (

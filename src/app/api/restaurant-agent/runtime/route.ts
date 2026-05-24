@@ -21,6 +21,7 @@ import { buildRestaurantExternalReadiness } from '@/lib/restaurant-agent-externa
 import { buildRestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
 import { buildRestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import { buildRestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
+import { buildRestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
 import { buildRestaurantGrantChecklist } from '@/lib/restaurant-agent-grant-checklist';
 import { buildRestaurantMerchantGrantManifest } from '@/lib/restaurant-agent-grant-manifest';
 import { buildRestaurantAgentHeartbeat } from '@/lib/restaurant-agent-heartbeat';
@@ -196,6 +197,39 @@ export async function POST(request: NextRequest) {
       runtimeProbe,
       providerReadinessHealth,
       taskProviderHandoff,
+      providerReceiptInbox,
+      storeManagerTaskQueue,
+      providerSetupState,
+      runs,
+      receipts,
+    });
+  }
+
+  if (body.action === 'first-forwardable-run-pack') {
+    const runtimeTarget = body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+      ? body.runtimeTarget
+      : 'openclaw';
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    return NextResponse.json({
+      ok: true,
+      firstForwardableRunPack: buildRestaurantFirstForwardableRunPack({
+        queue: storeManagerTaskQueue,
+        target: runtimeTarget,
+        runtimeProbe,
+        providerReadinessHealth,
+        providerReceiptInbox,
+      }),
+      runtimeProbe,
+      providerReadinessHealth,
       providerReceiptInbox,
       storeManagerTaskQueue,
       providerSetupState,

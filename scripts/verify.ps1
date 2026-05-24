@@ -24,6 +24,10 @@ Invoke-Step "Vitest restaurant task queue" {
   npm.cmd run test -- __tests__/restaurant-store-manager-task-store.test.ts
 }
 
+Invoke-Step "Vitest restaurant first forwardable run" {
+  npm.cmd run test -- __tests__/restaurant-first-forwardable-run-pack.test.ts
+}
+
 Invoke-Step "TypeScript noEmit" {
   npx.cmd tsc --noEmit
 }
