@@ -2033,7 +2033,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dispatchState.clawSkillExecutionLedger;
 
   return (
-    <section className="border border-stone-200 bg-white p-5 shadow-sm">
+    <section className="border border-stone-200 bg-white p-5 shadow-sm" id="restaurant-agent-runtime">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Agent Runtime Layer</p>

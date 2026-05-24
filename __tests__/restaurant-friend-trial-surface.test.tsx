@@ -50,6 +50,12 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('证据回执');
     expect(html).toContain('经营导入');
     expect(html).toContain('浏览器执行');
+    expect(html).toContain('AI OS Audit');
+    expect(html).toContain('先看哪些能力能跑、哪些必须接 Provider');
+    expect(html).toContain('Run Trial');
+    expect(html).toContain('Provider Setup');
+    expect(html).toContain('Operating Insight');
+    expect(html).toContain('restaurant-agent-runtime');
     expect(html).toContain('20 模块 / 200 技能 / 60 工具，逐项标注能否现在执行');
     expect(html).toContain('Claw Skill Catalog');
     expect(html).toContain('模块 / 技能 / 工具');

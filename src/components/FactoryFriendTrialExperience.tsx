@@ -278,6 +278,20 @@ export function FactoryFriendTrialExperience({
                       </Link>
                     </div>
 
+                    <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                      {[
+                        { label: 'AI OS Audit', body: '先看哪些能力能跑、哪些必须接 Provider', href: '#restaurant-agent-runtime' },
+                        { label: 'Run Trial', body: '生成一张受控试单和签名回执', href: '#restaurant-agent-runtime' },
+                        { label: 'Provider Setup', body: '列出自动发布/核销/数据分析的钥匙', href: '#restaurant-agent-runtime' },
+                        { label: 'Operating Insight', body: '只用回执和脱敏 POS 聚合做经营判断', href: '#restaurant-agent-runtime' },
+                      ].map(item => (
+                        <a className="border border-white/10 bg-white/[0.055] px-3 py-2 text-left transition hover:border-emerald-200/40 hover:bg-emerald-200/10" href={item.href} key={item.label}>
+                          <span className="block text-xs font-black text-white">{item.label}</span>
+                          <span className="mt-1 block text-[11px] leading-4 text-stone-400">{item.body}</span>
+                        </a>
+                      ))}
+                    </div>
+
                     <div className="mt-7 grid gap-3 md:grid-cols-5">
                       {CLAW_FEATURES.map(item => (
                         <article className="rounded-2xl border border-white/10 bg-white/[0.055] p-3 backdrop-blur" key={item.title}>
