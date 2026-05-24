@@ -1,4 +1,5 @@
 import { appendRestaurantAgentLedgerEntry, clearRestaurantAgentLedgerKindForTest, listRestaurantAgentLedgerEntries } from '@/lib/restaurant-agent-ledger-store';
+import type { RestaurantDayZeroMissionPack, RestaurantDayZeroMissionStatus } from '@/lib/restaurant-day-zero-mission-pack';
 import type { RestaurantClawSkillExecutionRecord } from '@/lib/restaurant-claw-skill-execution-store';
 import type { RestaurantStoreManagerFollowupTask } from '@/lib/restaurant-store-manager-followup';
 
@@ -9,7 +10,7 @@ export type RestaurantStoreManagerTaskRecord = RestaurantStoreManagerFollowupTas
   status: RestaurantStoreManagerTaskStatus;
   createdAt: string;
   updatedAt: string;
-  source: 'followup-pack' | 'manual' | 'claw-skill-execution';
+  source: 'followup-pack' | 'manual' | 'claw-skill-execution' | 'day-zero-mission-pack';
   auditNote: string;
   externalRequired: string[];
 };
@@ -126,6 +127,74 @@ function priorityFromSkillStatus(status: RestaurantClawSkillExecutionRecord['sta
 
 function taskStatusFromSkillStatus(status: RestaurantClawSkillExecutionRecord['status']): RestaurantStoreManagerTaskStatus {
   return status === 'ready-now' ? 'needs-evidence' : status === 'needs-training' ? 'open' : 'blocked';
+}
+
+function taskStatusFromMissionStatus(status: RestaurantDayZeroMissionStatus): RestaurantStoreManagerTaskStatus {
+  if (status === 'ready-internal') return 'open';
+  if (status === 'needs-merchant-evidence') return 'needs-evidence';
+  return 'blocked';
+}
+
+function priorityFromMissionStatus(status: RestaurantDayZeroMissionStatus): RestaurantStoreManagerFollowupTask['priority'] {
+  if (status === 'ready-internal') return 'today';
+  if (status === 'needs-merchant-evidence') return 'next-shift';
+  return 'blocked';
+}
+
+function taskOwnerFromMissionOwner(owner: string): RestaurantStoreManagerFollowupTask['owner'] {
+  if (owner === 'ops') return 'community-ops';
+  if (owner === 'runtime-admin') return owner;
+  if (owner === 'data-ops') return 'shift-lead';
+  return 'store-manager';
+}
+
+export function recordRestaurantStoreManagerTasksFromDayZeroMissionPack(
+  pack: RestaurantDayZeroMissionPack,
+  now = new Date(pack.generatedAt),
+): RestaurantStoreManagerTaskRecord[] {
+  return pack.missions.map(mission => {
+    const task: RestaurantStoreManagerFollowupTask = {
+      id: mission.id,
+      owner: taskOwnerFromMissionOwner(mission.owner),
+      priority: priorityFromMissionStatus(mission.status),
+      restaurant: pack.restaurant,
+      offer: pack.offer,
+      signal: mission.status === 'external-gated' ? 'setup-gap' : 'visit-intent',
+      action: mission.nextAction,
+      talkTrack: `${mission.title}: ${mission.action}`,
+      evidenceRequired: mission.evidenceRequired,
+      dueWindow: mission.status === 'ready-internal'
+        ? 'today before content review'
+        : mission.status === 'needs-merchant-evidence'
+          ? 'today before closeout'
+          : 'after provider unlock',
+      stopLine: 'Do not publish, contact customers, redeem coupons, read private messages, expose PII, pull raw POS rows or claim operating impact from this Day-0 task.',
+    };
+    const taskMemoryId = `store-task-${stableId([task.id, task.restaurant, task.offer, task.evidenceRequired])}`;
+    const previous = listRestaurantStoreManagerTasks().find(item => item.taskMemoryId === taskMemoryId);
+    const record: RestaurantStoreManagerTaskRecord = {
+      ...task,
+      taskMemoryId,
+      status: previous?.status || taskStatusFromMissionStatus(mission.status),
+      createdAt: previous?.createdAt || now.toISOString(),
+      updatedAt: now.toISOString(),
+      source: 'day-zero-mission-pack',
+      auditNote: 'Generated from Day-0 Mission Pack. It is an internal owner task; external publish, customer contact, redemption, private-message access and POS pulls remain gated.',
+      externalRequired: mission.status === 'external-gated'
+        ? pack.providerUnlocks.slice(0, 5)
+        : [
+            'Merchant confirms evidence before public proof closeout.',
+            'Accepted receipt or screenshot before marking done.',
+          ],
+    };
+
+    const previousIndex = memoryTasks.findIndex(item => item.taskMemoryId === record.taskMemoryId);
+    if (previousIndex >= 0) memoryTasks.splice(previousIndex, 1);
+    memoryTasks.unshift(record);
+    memoryTasks.splice(MAX_TASKS);
+    appendRestaurantAgentLedgerEntry('store-manager-task', record, now);
+    return record;
+  });
 }
 
 export function recordRestaurantStoreManagerTasksFromClawExecution(

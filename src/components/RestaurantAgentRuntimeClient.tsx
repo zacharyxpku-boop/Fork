@@ -1891,6 +1891,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'day-zero-mission-pack',
+          recordTasks: true,
           sampleId: 'osm-node-600243400',
           restaurant: runtimeIntake.restaurant,
           offer: runtimeIntake.offer,
@@ -1904,6 +1905,11 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         status: payload?.dayZeroMissionPack?.summary?.externalGated ? 'blocked' : 'queued',
         message: `Day-0 mission pack: ${payload?.dayZeroMissionPack?.summary?.readyInternal ?? 0} internal-ready, ${payload?.dayZeroMissionPack?.summary?.needsMerchantEvidence ?? 0} need merchant evidence, ${payload?.dayZeroMissionPack?.summary?.externalGated ?? 0} external-gated.`,
         dayZeroMissionPack: payload?.dayZeroMissionPack || previous.dayZeroMissionPack,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        storeManagerTaskWatcher: payload?.storeManagerTaskWatcher || previous.storeManagerTaskWatcher,
+        staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
+        staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.staffNotificationDeliveryBridge,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Day-0 mission pack is temporarily unavailable.' }));

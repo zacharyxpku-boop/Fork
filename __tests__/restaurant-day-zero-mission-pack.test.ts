@@ -54,6 +54,11 @@ describe('restaurant day zero mission pack', () => {
     expect(response.status).toBe(200);
     expect(payload.dayZeroMissionPack.payloadShape).toBe('restaurant-day-zero-mission-pack-v1');
     expect(payload.dayZeroMissionPack.summary.missions).toBe(7);
+    expect(payload.storeManagerTaskRecords).toEqual([]);
+    expect(payload.storeManagerTaskQueue.payloadShape).toBe('restaurant-store-manager-task-queue-v1');
+    expect(payload.storeManagerTaskWatcher.payloadShape).toBe('restaurant-store-manager-task-watcher-v1');
+    expect(payload.staffNotificationHandoff.payloadShape).toBe('restaurant-staff-notification-handoff-v1');
+    expect(payload.taskProviderHandoff.payloadShape).toBe('restaurant-task-provider-handoff-v1');
     expect(payload.dayZeroMissionPack.missions[0]).toEqual(expect.objectContaining({
       owner: expect.any(String),
       evidenceRequired: expect.any(String),

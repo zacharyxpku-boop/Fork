@@ -3,10 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import { POST } from '@/app/api/restaurant-agent/runtime/route';
 import { buildRestaurantAgentDispatch } from '@/lib/restaurant-agent-dispatch';
+import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import { clearRestaurantAgentReceiptsForTest, recordRestaurantAgentReceipt } from '@/lib/restaurant-agent-receipt-store';
 import { clearRestaurantAgentRunsForTest, recordRestaurantAgentRun } from '@/lib/restaurant-agent-run-store';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
-import { buildRestaurantStoreManagerTaskQueue, clearRestaurantStoreManagerTasksForTest, recordRestaurantStoreManagerTasks, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
+import { buildRestaurantStoreManagerTaskQueue, clearRestaurantStoreManagerTasksForTest, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromDayZeroMissionPack, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
 import { buildRestaurantStoreManagerTaskWatcher } from '@/lib/restaurant-store-manager-task-watcher';
 import { buildRestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
 import { buildRestaurantStaffNotificationAuditLog, clearRestaurantStaffNotificationAuditEventsForTest, recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge, recordRestaurantStaffNotificationAuditEventsFromHandoff } from '@/lib/restaurant-staff-notification-audit-store';
@@ -14,6 +15,25 @@ import { buildRestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-
 import { buildRestaurantStaffNotificationDeliveryBridge } from '@/lib/restaurant-staff-notification-delivery-bridge';
 
 describe('restaurant store manager task store', () => {
+  it('records day zero missions as internal store manager tasks', () => {
+    clearRestaurantStoreManagerTasksForTest();
+
+    const pack = buildRestaurantDayZeroMissionPack({
+      restaurant: 'Mission Bistro',
+      offer: 'Dinner tasting set',
+      now: new Date('2026-05-24T13:00:00.000Z'),
+    });
+    const records = recordRestaurantStoreManagerTasksFromDayZeroMissionPack(pack, new Date('2026-05-24T13:01:00.000Z'));
+
+    expect(records).toHaveLength(pack.summary.missions);
+    expect(records.map(item => item.source)).toEqual(records.map(() => 'day-zero-mission-pack'));
+    expect(records.map(item => item.status)).toEqual(expect.arrayContaining(['open', 'needs-evidence', 'blocked']));
+    expect(records[0].auditNote).toContain('Day-0 Mission Pack');
+    expect(records[0].stopLine).toContain('Do not publish');
+    expect(JSON.stringify(records)).not.toContain('token=');
+    expect(JSON.stringify(records)).not.toContain('cookie=');
+  });
+
   it('persists followup tasks as an operating queue without executing external actions', () => {
     clearRestaurantAgentRunsForTest();
     clearRestaurantAgentReceiptsForTest();

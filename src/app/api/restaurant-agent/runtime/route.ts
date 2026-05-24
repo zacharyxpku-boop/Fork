@@ -58,7 +58,7 @@ import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-
 import { buildRestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
 import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
-import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
+import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, recordRestaurantStoreManagerTasksFromDayZeroMissionPack, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
 import { buildRestaurantStoreManagerTaskWatcher } from '@/lib/restaurant-store-manager-task-watcher';
 import { buildRestaurantStaffNotificationAuditLog, recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge, recordRestaurantStaffNotificationAuditEventsFromHandoff } from '@/lib/restaurant-staff-notification-audit-store';
 import { buildRestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-notification-handoff';
@@ -1096,20 +1096,37 @@ export async function POST(request: NextRequest) {
   }
 
   if (body.action === 'day-zero-mission-pack') {
+    const dayZeroMissionPack = buildRestaurantDayZeroMissionPack({
+      sampleId: typeof body.sampleId === 'string' ? body.sampleId : undefined,
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      city: typeof body.city === 'string' ? body.city : undefined,
+      area: typeof body.area === 'string' ? body.area : undefined,
+      cuisine: typeof body.cuisine === 'string' ? body.cuisine : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      sourceUrl: typeof body.sourceUrl === 'string' ? body.sourceUrl : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      manualText: typeof body.manualText === 'string' ? body.manualText : undefined,
+    });
+    const shouldRecordTasks = body.recordTasks === true;
+    const storeManagerTaskRecords = shouldRecordTasks
+      ? recordRestaurantStoreManagerTasksFromDayZeroMissionPack(dayZeroMissionPack)
+      : [];
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const storeManagerTaskWatcher = buildRestaurantStoreManagerTaskWatcher(storeManagerTaskQueue);
+    const staffNotificationHandoff = buildRestaurantStaffNotificationHandoff(storeManagerTaskWatcher);
+    const staffNotificationDeliveryBridge = buildRestaurantStaffNotificationDeliveryBridge({
+      handoff: staffNotificationHandoff,
+    });
     return NextResponse.json({
       ok: true,
-      dayZeroMissionPack: buildRestaurantDayZeroMissionPack({
-        sampleId: typeof body.sampleId === 'string' ? body.sampleId : undefined,
-        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
-        city: typeof body.city === 'string' ? body.city : undefined,
-        area: typeof body.area === 'string' ? body.area : undefined,
-        cuisine: typeof body.cuisine === 'string' ? body.cuisine : undefined,
-        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
-        sourceUrl: typeof body.sourceUrl === 'string' ? body.sourceUrl : undefined,
-        offer: typeof body.offer === 'string' ? body.offer : undefined,
-        audience: typeof body.audience === 'string' ? body.audience : undefined,
-        manualText: typeof body.manualText === 'string' ? body.manualText : undefined,
-      }),
+      dayZeroMissionPack,
+      storeManagerTaskRecords,
+      storeManagerTaskQueue,
+      storeManagerTaskWatcher,
+      staffNotificationHandoff,
+      staffNotificationDeliveryBridge,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({ queue: storeManagerTaskQueue }),
     });
   }
 
