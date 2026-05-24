@@ -94,6 +94,8 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Controlled Trial Run');
     expect(html).toContain('Execution Timeline');
     expect(html).toContain('Agent Command Center');
+    expect(html).toContain('AI employee command router');
+    expect(html).toContain('Route Command');
     expect(html).toContain('architecture decision');
     expect(html).toContain('kuaizi-platform-spine-plus-claw-agent-layer');
     expect(html).toContain('Activation Cockpit');

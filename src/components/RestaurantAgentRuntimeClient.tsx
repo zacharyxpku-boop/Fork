@@ -2233,6 +2233,49 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const runRoutedCommandAction = async () => {
+    const clientAction = dispatchState.commandRoute?.primaryAction.clientAction;
+    if (!clientAction || clientAction === 'manual-sanitize') {
+      setDispatchState(previous => ({
+        ...previous,
+        status: 'blocked',
+        message: 'Routed command is blocked until it is rewritten without private data, secrets, raw POS rows or customer-contact instructions.',
+      }));
+      return;
+    }
+    if (clientAction === 'controlled-trial-run') {
+      await runControlledTrialRun();
+      return;
+    }
+    if (clientAction === 'post-run-review-pack') {
+      await buildPostRunReviewPack();
+      return;
+    }
+    if (clientAction === 'next-loop-channel-plan') {
+      await buildNextLoopChannelPlan();
+      return;
+    }
+    if (clientAction === 'store-manager-followup') {
+      await buildStoreManagerFollowup();
+      return;
+    }
+    if (clientAction === 'operating-insight-report') {
+      await inspectOperatingInsightReport();
+      return;
+    }
+    if (clientAction === 'provider-setup-wizard') {
+      await buildProviderSetupWizard();
+      return;
+    }
+    if (clientAction === 'channel-schedule-run') {
+      await runChannelSchedule();
+      return;
+    }
+    if (clientAction === 'channel-hub') {
+      await buildChannelHub();
+    }
+  };
+
   const commandMode =
     dispatchState.commandCenter?.mode ||
     dispatchState.executionTimeline?.mode ||
@@ -2550,6 +2593,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-2 text-[11px] leading-4 text-amber-100/60">
                     external: {(commandRoute.externalRequired.length ? commandRoute.externalRequired : ['none for internal routing']).slice(0, 4).join(' / ')}
                   </p>
+                  <button
+                    className="mt-3 w-full border border-cyan-200/60 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={dispatchState.status === 'loading' || commandRoute.primaryAction.clientAction === 'manual-sanitize'}
+                    onClick={runRoutedCommandAction}
+                    type="button"
+                  >
+                    Run Routed Action
+                  </button>
                 </div>
               </div>
             ) : null}
