@@ -8,6 +8,7 @@ import { clearRestaurantAgentRunsForTest, recordRestaurantAgentRun } from '@/lib
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import { buildRestaurantStoreManagerTaskQueue, clearRestaurantStoreManagerTasksForTest, recordRestaurantStoreManagerTasks, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
 import { buildRestaurantStoreManagerTaskWatcher } from '@/lib/restaurant-store-manager-task-watcher';
+import { buildRestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
 import { buildRestaurantStaffNotificationAuditLog, clearRestaurantStaffNotificationAuditEventsForTest, recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge, recordRestaurantStaffNotificationAuditEventsFromHandoff } from '@/lib/restaurant-staff-notification-audit-store';
 import { buildRestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-notification-handoff';
 import { buildRestaurantStaffNotificationDeliveryBridge } from '@/lib/restaurant-staff-notification-delivery-bridge';
@@ -139,6 +140,20 @@ describe('restaurant store manager task store', () => {
     });
     const queue = buildRestaurantStoreManagerTaskQueue(new Date('2026-05-24T03:03:00.000Z'));
     const watcher = buildRestaurantStoreManagerTaskWatcher(queue, new Date('2026-05-24T03:04:00.000Z'));
+    const handoff = buildRestaurantTaskProviderHandoff({
+      queue,
+      target: 'hermes',
+      env: {
+        RESTAURANT_AGENT_HERMES_RUNTIME_URL: 'https://hermes.example/runs',
+        RESTAURANT_AGENT_HERMES_API_KEY: 'secret-api-key',
+        RESTAURANT_AGENT_BROWSER_PROFILE_ID: 'profile-1',
+        RESTAURANT_AGENT_CALLBACK_SECRET: 'callback-secret',
+        RESTAURANT_AGENT_GRANT_EXPIRES_AT: '2026-06-24T03:05:00.000Z',
+        RESTAURANT_AGENT_OPERATOR_APPROVAL: 'approved',
+        RESTAURANT_DIANPING_AUTH_STATUS: 'authorized',
+      },
+      now: new Date('2026-05-24T03:05:00.000Z'),
+    });
 
     expect(needsEvidence?.status).toBe('needs-evidence');
     expect(readyForProvider?.status).toBe('ready-for-provider');
@@ -148,6 +163,67 @@ describe('restaurant store manager task store', () => {
     const wakeup = watcher.wakeups.find(item => item.taskMemoryId === records[0].taskMemoryId);
     expect(wakeup?.nextAction).toContain('Review provider gates');
     expect(wakeup?.escalation).toContain('runtime-admin');
+    expect(handoff.payloadShape).toBe('restaurant-task-provider-handoff-v1');
+    expect(handoff.summary.readyTasks).toBe(1);
+    expect(handoff.summary.forwardable).toBe(1);
+    expect(handoff.packages[0]).toEqual(expect.objectContaining({
+      status: 'ready-to-forward',
+      runtimeTarget: 'hermes',
+      requestedAction: 'capture_public_receipt',
+      canForward: true,
+    }));
+    expect(handoff.packages[0].safePayload).toEqual(expect.objectContaining({
+      restaurant: 'Evidence Bistro',
+      offer: 'Dinner set',
+      owner: 'runtime-admin',
+    }));
+    expect(handoff.packages[0].executionPackage.audit).toEqual(expect.objectContaining({
+      secretsIncluded: false,
+      privateDataIncluded: false,
+      browserProfileExposed: false,
+    }));
+    expect(JSON.stringify(handoff)).not.toContain('secret-api-key');
+    expect(JSON.stringify(handoff)).not.toContain('callback-secret');
+    expect(JSON.stringify(handoff)).not.toContain('profile-1');
+  });
+
+  it('blocks provider handoff for tasks that are not ready-for-provider', () => {
+    clearRestaurantStoreManagerTasksForTest();
+
+    recordRestaurantStoreManagerTasks([{
+      id: 'manual-provider-blocked',
+      owner: 'runtime-admin',
+      priority: 'today',
+      restaurant: 'Blocked Bistro',
+      offer: 'Lunch set',
+      signal: 'setup-gap',
+      action: 'Prepare provider handoff after evidence review.',
+      talkTrack: 'Internal task only.',
+      evidenceRequired: 'public proof link or signed callback',
+      dueWindow: 'today',
+      stopLine: 'No external execution without merchant authorization.',
+    }], new Date('2026-05-24T04:00:00.000Z'));
+
+    const queue = buildRestaurantStoreManagerTaskQueue(new Date('2026-05-24T04:01:00.000Z'));
+    const handoff = buildRestaurantTaskProviderHandoff({
+      queue,
+      target: 'openclaw',
+      env: {
+        RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL: 'https://openclaw.example/tasks',
+        RESTAURANT_AGENT_OPENCLAW_API_KEY: 'secret-api-key',
+        RESTAURANT_AGENT_BROWSER_PROFILE_ID: 'profile-1',
+        RESTAURANT_AGENT_CALLBACK_SECRET: 'callback-secret',
+        RESTAURANT_AGENT_GRANT_EXPIRES_AT: '2026-06-24T04:02:00.000Z',
+        RESTAURANT_AGENT_OPERATOR_APPROVAL: 'approved',
+        RESTAURANT_DIANPING_AUTH_STATUS: 'authorized',
+      },
+      now: new Date('2026-05-24T04:02:00.000Z'),
+    });
+
+    expect(handoff.summary.readyTasks).toBe(0);
+    expect(handoff.summary.forwardable).toBe(0);
+    expect(handoff.blockedPackages[0].blockedReasons[0]).toContain('only ready-for-provider tasks');
+    expect(handoff.safetyBoundary).toContain('does not log in');
   });
 
   it('records the queue through the followup API and returns it in command center', async () => {
@@ -199,6 +275,7 @@ describe('restaurant store manager task store', () => {
     expect(closePayload.storeManagerTaskWatcher.summary.wakeups).toBe(0);
     expect(closePayload.staffNotificationHandoff.summary.drafts).toBe(0);
     expect(closePayload.staffNotificationDeliveryBridge.summary.items).toBe(0);
+    expect(closePayload.taskProviderHandoff.payloadShape).toBe('restaurant-task-provider-handoff-v1');
     expect(closePayload.staffNotificationAuditLog.summary.total).toBeGreaterThanOrEqual(1);
   });
 });

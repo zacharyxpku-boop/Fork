@@ -54,6 +54,7 @@ import type { RestaurantStoreManagerTaskWatcher } from '@/lib/restaurant-store-m
 import type { RestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-notification-handoff';
 import type { RestaurantStaffNotificationDeliveryBridge } from '@/lib/restaurant-staff-notification-delivery-bridge';
 import type { RestaurantStaffNotificationAuditLog } from '@/lib/restaurant-staff-notification-audit-store';
+import type { RestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
 import type { RestaurantTrialWorkflowPack } from '@/lib/restaurant-trial-workflow-pack';
 import type { RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
 
@@ -234,6 +235,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     staffNotificationHandoff?: RestaurantStaffNotificationHandoff;
     staffNotificationDeliveryBridge?: RestaurantStaffNotificationDeliveryBridge;
     staffNotificationAuditLog?: RestaurantStaffNotificationAuditLog;
+    taskProviderHandoff?: RestaurantTaskProviderHandoff;
     trialWorkflowPack?: RestaurantTrialWorkflowPack;
   }>({ status: 'idle' });
   const [selectedClawWorkbenchPreset, setSelectedClawWorkbenchPreset] = useState(clawWorkbenchPresets[0]);
@@ -936,6 +938,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         staffNotificationHandoff: payload?.staffNotificationHandoff || payload?.commandCenter?.staffNotificationHandoff,
         staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || payload?.commandCenter?.staffNotificationDeliveryBridge,
         staffNotificationAuditLog: payload?.staffNotificationAuditLog || payload?.commandCenter?.staffNotificationAuditLog,
+        taskProviderHandoff: payload?.taskProviderHandoff || payload?.commandCenter?.taskProviderHandoff,
       });
     } catch {
       setDispatchState({ status: 'failed', message: '店长跟进任务暂不可用。' });
@@ -969,6 +972,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
         staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.staffNotificationDeliveryBridge,
         staffNotificationAuditLog: payload?.staffNotificationAuditLog || previous.staffNotificationAuditLog,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
         commandCenter: previous.commandCenter
           ? {
               ...previous.commandCenter,
@@ -977,6 +981,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               staffNotificationHandoff: payload?.staffNotificationHandoff || previous.commandCenter.staffNotificationHandoff,
               staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.commandCenter.staffNotificationDeliveryBridge,
               staffNotificationAuditLog: payload?.staffNotificationAuditLog || previous.commandCenter.staffNotificationAuditLog,
+              taskProviderHandoff: payload?.taskProviderHandoff || previous.commandCenter.taskProviderHandoff,
             }
           : previous.commandCenter,
       }));
@@ -1007,6 +1012,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
         staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.staffNotificationDeliveryBridge,
         staffNotificationAuditLog: payload?.staffNotificationAuditLog || previous.staffNotificationAuditLog,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
         commandCenter: previous.commandCenter
           ? {
               ...previous.commandCenter,
@@ -1015,6 +1021,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               staffNotificationHandoff: payload?.staffNotificationHandoff || previous.commandCenter.staffNotificationHandoff,
               staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.commandCenter.staffNotificationDeliveryBridge,
               staffNotificationAuditLog: payload?.staffNotificationAuditLog || previous.commandCenter.staffNotificationAuditLog,
+              taskProviderHandoff: payload?.taskProviderHandoff || previous.commandCenter.taskProviderHandoff,
             }
           : previous.commandCenter,
       }));
@@ -1043,9 +1050,43 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
         staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.staffNotificationDeliveryBridge,
         staffNotificationAuditLog: payload?.staffNotificationAuditLog || previous.staffNotificationAuditLog,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Staff notification delivery bridge is temporarily unavailable.' }));
+    }
+  };
+
+  const buildTaskProviderHandoff = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building task provider handoff package...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'task-provider-handoff',
+          runtimeTarget: 'openclaw',
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: response.ok && payload?.taskProviderHandoff?.summary?.blocked === 0 ? 'queued' : 'blocked',
+        message: response.ok
+          ? `Task provider handoff built: ${payload?.taskProviderHandoff?.summary?.packages ?? 0} packages, ${payload?.taskProviderHandoff?.summary?.forwardable ?? 0} forwardable.`
+          : 'Task provider handoff unavailable.',
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
+        commandCenter: previous.commandCenter
+          ? {
+              ...previous.commandCenter,
+              storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.commandCenter.storeManagerTaskQueue,
+              taskProviderHandoff: payload?.taskProviderHandoff || previous.commandCenter.taskProviderHandoff,
+            }
+          : previous.commandCenter,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Task provider handoff is temporarily unavailable.' }));
     }
   };
 
@@ -1682,6 +1723,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandStaffNotificationAuditLog =
     dispatchState.commandCenter?.staffNotificationAuditLog ||
     dispatchState.staffNotificationAuditLog;
+  const commandTaskProviderHandoff =
+    dispatchState.commandCenter?.taskProviderHandoff ||
+    dispatchState.taskProviderHandoff;
   const commandAiEmployeeInbox =
     dispatchState.commandCenter?.aiEmployeeInbox ||
     dispatchState.aiEmployeeInbox;
@@ -2393,7 +2437,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <p className="mt-2 text-xs leading-5 text-white/50">{commandEvidence}</p>
             </div>
             <div className="border border-teal-200/30 bg-teal-200/[0.06] p-3">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-100/70">store manager today</div>
                   <p className="mt-1 text-sm font-black text-white">
@@ -2425,6 +2469,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   type="button"
                 >
                   Delivery Bridge
+                </button>
+                <button
+                  className="shrink-0 border border-fuchsia-200/60 px-2 py-1 text-xs font-black text-fuchsia-100 transition hover:bg-fuchsia-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={buildTaskProviderHandoff}
+                  type="button"
+                >
+                  Provider Handoff
                 </button>
               </div>
               <div className="mt-3 space-y-2">
@@ -2539,6 +2591,23 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         {event.eventType}: {event.nextAction}
                       </p>
                     ))}
+                  </div>
+                ) : null}
+                {commandTaskProviderHandoff ? (
+                  <div className="border border-fuchsia-200/25 bg-fuchsia-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fuchsia-100/70">provider handoff</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandTaskProviderHandoff.payloadShape} / packages {commandTaskProviderHandoff.summary.packages} / forwardable {commandTaskProviderHandoff.summary.forwardable} / blocked {commandTaskProviderHandoff.summary.blocked}
+                    </p>
+                    {(commandTaskProviderHandoff.packages[0] || commandTaskProviderHandoff.blockedPackages[0]) ? (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">
+                        {(commandTaskProviderHandoff.packages[0] || commandTaskProviderHandoff.blockedPackages[0]).status}: {(commandTaskProviderHandoff.packages[0] || commandTaskProviderHandoff.blockedPackages[0]).nextAction}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">
+                        Move one task to ready-for-provider after evidence review; this creates a sanitized package for OpenClaw/Hermes/Lobu.
+                      </p>
+                    )}
                   </div>
                 ) : null}
               </div>

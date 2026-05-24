@@ -8,6 +8,7 @@ import { buildRestaurantStoreManagerTaskWatcher, type RestaurantStoreManagerTask
 import { buildRestaurantStaffNotificationHandoff, type RestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-notification-handoff';
 import { buildRestaurantStaffNotificationDeliveryBridge, type RestaurantStaffNotificationDeliveryBridge } from '@/lib/restaurant-staff-notification-delivery-bridge';
 import { buildRestaurantStaffNotificationAuditLog, type RestaurantStaffNotificationAuditLog } from '@/lib/restaurant-staff-notification-audit-store';
+import { buildRestaurantTaskProviderHandoff, type RestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
 import { buildRestaurantAiEmployeeInbox, type RestaurantAiEmployeeInbox } from '@/lib/restaurant-ai-employee-inbox';
 import { buildRestaurantAgentChannelHub, type RestaurantAgentChannelHub } from '@/lib/restaurant-agent-channel-hub';
 import { buildRestaurantAgentChannelDeliveryReport, type RestaurantAgentChannelDeliveryReport } from '@/lib/restaurant-agent-channel-delivery-store';
@@ -83,6 +84,7 @@ export type RestaurantAgentCommandCenter = {
   staffNotificationHandoff: Pick<RestaurantStaffNotificationHandoff, 'payloadShape' | 'summary' | 'drafts' | 'operatorChecklist' | 'externalRequired' | 'safetyBoundary'>;
   staffNotificationDeliveryBridge: Pick<RestaurantStaffNotificationDeliveryBridge, 'payloadShape' | 'summary' | 'items' | 'externalRequired' | 'safetyBoundary'>;
   staffNotificationAuditLog: Pick<RestaurantStaffNotificationAuditLog, 'payloadShape' | 'summary' | 'latest' | 'externalRequired' | 'safetyBoundary'>;
+  taskProviderHandoff: Pick<RestaurantTaskProviderHandoff, 'payloadShape' | 'summary' | 'packages' | 'blockedPackages' | 'providerContract' | 'operatorChecklist' | 'externalRequired' | 'safetyBoundary'>;
   providerSetup: Pick<RestaurantProviderSetupPack, 'payloadShape' | 'summary' | 'priorityRequests' | 'copyForMerchant' | 'safetyBoundary'>;
   providerSetupWizard: Pick<RestaurantProviderSetupWizard, 'payloadShape' | 'summary' | 'sections' | 'handoffPayload' | 'externalRequired' | 'safetyBoundary'>;
   providerSetupState: Pick<RestaurantProviderSetupStateSummary, 'payloadShape' | 'summary' | 'provided' | 'latest' | 'safetyBoundary'>;
@@ -225,6 +227,12 @@ export async function buildRestaurantAgentCommandCenter(input: RestaurantTrialIn
   const staffNotificationHandoff = buildRestaurantStaffNotificationHandoff(storeManagerTaskWatcher, now);
   const staffNotificationDeliveryBridge = buildRestaurantStaffNotificationDeliveryBridge({ handoff: staffNotificationHandoff, now });
   const staffNotificationAuditLog = buildRestaurantStaffNotificationAuditLog(now);
+  const taskProviderHandoff = buildRestaurantTaskProviderHandoff({
+    queue: storeManagerTaskQueue,
+    target: 'openclaw',
+    env: input.env,
+    now,
+  });
   const channelDeliveryReport = buildRestaurantAgentChannelDeliveryReport(now);
   const publicIntelligenceBrief = buildRestaurantPublicIntelligenceBrief({
     restaurant,
@@ -404,6 +412,16 @@ export async function buildRestaurantAgentCommandCenter(input: RestaurantTrialIn
       latest: staffNotificationAuditLog.latest.slice(0, 4),
       externalRequired: staffNotificationAuditLog.externalRequired,
       safetyBoundary: staffNotificationAuditLog.safetyBoundary,
+    },
+    taskProviderHandoff: {
+      payloadShape: taskProviderHandoff.payloadShape,
+      summary: taskProviderHandoff.summary,
+      packages: taskProviderHandoff.packages.slice(0, 4),
+      blockedPackages: taskProviderHandoff.blockedPackages.slice(0, 4),
+      providerContract: taskProviderHandoff.providerContract,
+      operatorChecklist: taskProviderHandoff.operatorChecklist,
+      externalRequired: taskProviderHandoff.externalRequired,
+      safetyBoundary: taskProviderHandoff.safetyBoundary,
     },
     channelDeliveryReport: {
       payloadShape: channelDeliveryReport.payloadShape,

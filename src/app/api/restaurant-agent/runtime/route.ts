@@ -54,6 +54,7 @@ import { buildRestaurantStoreManagerTaskWatcher } from '@/lib/restaurant-store-m
 import { buildRestaurantStaffNotificationAuditLog, recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge, recordRestaurantStaffNotificationAuditEventsFromHandoff } from '@/lib/restaurant-staff-notification-audit-store';
 import { buildRestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-notification-handoff';
 import { buildRestaurantStaffNotificationDeliveryBridge } from '@/lib/restaurant-staff-notification-delivery-bridge';
+import { buildRestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
 import { buildRestaurantTrialWorkflowPack } from '@/lib/restaurant-trial-workflow-pack';
 
 function readBusinessSignalType(value: unknown): RestaurantBusinessSignalType | undefined {
@@ -170,6 +171,7 @@ export async function POST(request: NextRequest) {
       storeManagerTaskWatcher,
       staffNotificationHandoff,
       staffNotificationDeliveryBridge,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({ queue: storeManagerTaskQueue }),
       staffNotificationAuditLog,
       commandCenter: await buildRestaurantAgentCommandCenter({
         restaurant,
@@ -197,6 +199,12 @@ export async function POST(request: NextRequest) {
       storeManagerTaskWatcher,
       staffNotificationHandoff,
       staffNotificationDeliveryBridge,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({
+        queue: storeManagerTaskQueue,
+        target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+          ? body.runtimeTarget
+          : undefined,
+      }),
       staffNotificationAuditLog: (() => {
         recordRestaurantStaffNotificationAuditEventsFromHandoff(staffNotificationHandoff);
         recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge(staffNotificationDeliveryBridge);
@@ -218,6 +226,12 @@ export async function POST(request: NextRequest) {
       storeManagerTaskWatcher,
       staffNotificationHandoff,
       staffNotificationDeliveryBridge,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({
+        queue: storeManagerTaskQueue,
+        target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+          ? body.runtimeTarget
+          : undefined,
+      }),
       staffNotificationAuditLog: (() => {
         recordRestaurantStaffNotificationAuditEventsFromHandoff(staffNotificationHandoff);
         recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge(staffNotificationDeliveryBridge);
@@ -237,6 +251,12 @@ export async function POST(request: NextRequest) {
       ok: true,
       staffNotificationHandoff,
       staffNotificationDeliveryBridge,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({
+        queue: storeManagerTaskQueue,
+        target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+          ? body.runtimeTarget
+          : undefined,
+      }),
       staffNotificationAuditLog: (() => {
         recordRestaurantStaffNotificationAuditEventsFromHandoff(staffNotificationHandoff);
         recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge(staffNotificationDeliveryBridge);
@@ -270,6 +290,12 @@ export async function POST(request: NextRequest) {
       storeManagerTaskWatcher,
       staffNotificationHandoff,
       staffNotificationDeliveryBridge,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({
+        queue: storeManagerTaskQueue,
+        target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+          ? body.runtimeTarget
+          : undefined,
+      }),
       staffNotificationAuditLog: (() => {
         recordRestaurantStaffNotificationAuditEventsFromHandoff(staffNotificationHandoff);
         recordRestaurantStaffNotificationAuditEventsFromDeliveryBridge(staffNotificationDeliveryBridge);
@@ -342,6 +368,21 @@ export async function POST(request: NextRequest) {
       storeManagerTaskWatcher,
       staffNotificationHandoff,
       staffNotificationDeliveryBridge,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({ queue: storeManagerTaskQueue }),
+    });
+  }
+
+  if (body.action === 'task-provider-handoff') {
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    return NextResponse.json({
+      ok: true,
+      storeManagerTaskQueue,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({
+        queue: storeManagerTaskQueue,
+        target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+          ? body.runtimeTarget
+          : undefined,
+      }),
     });
   }
 
