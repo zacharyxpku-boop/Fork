@@ -25,6 +25,7 @@ import type { RestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-w
 import type { RestaurantClawSkillExecutionLedger, RestaurantClawSkillExecutionRecord } from '@/lib/restaurant-claw-skill-execution-store';
 import type { RestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
 import type { RestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
+import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import type { RestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
 import type { RestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
 import type { RestaurantExecutionPackage } from '@/lib/restaurant-agent-execution-package';
@@ -216,6 +217,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawTrainingBatch?: RestaurantClawTrainingBatch;
     controlledTrialRun?: RestaurantControlledTrialRun;
     platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
+    operatingInsightReport?: RestaurantOperatingInsightReport;
     platformOperatingSpine?: RestaurantPlatformOperatingSpine;
     operatingDataContract?: RestaurantOperatingDataContract;
     providerSetupPack?: RestaurantProviderSetupPack;
@@ -1562,6 +1564,45 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Operating data contract is temporarily unavailable.' });
+    }
+  };
+
+  const inspectOperatingInsightReport = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building operating insight report from sanitized aggregate data...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'operating-insight-report',
+          rows: [
+            {
+              businessDate: '2026-05-23',
+              storeName: runtimeIntake.restaurant,
+              offerName: runtimeIntake.offer,
+              channel: 'group-buy coupon',
+              couponClaimCount: 38,
+              redemptionCount: 21,
+              grossSales: 2180,
+              orderCount: 24,
+              inventoryUsed: 21,
+            },
+          ],
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.operatingInsightReport?.summary?.canClaimTrueOperatingAnalysis ? 'queued' : 'blocked',
+        message: `Operating insight report: ${payload?.operatingInsightReport?.summary?.measured ?? 0} measured, ${payload?.operatingInsightReport?.summary?.directional ?? 0} directional, ${payload?.operatingInsightReport?.summary?.blocked ?? 0} blocked.`,
+        receipts: payload?.receipts || previous.receipts,
+        posImport: payload?.posImport || previous.posImport,
+        businessSignals: payload?.businessSignals || previous.businessSignals,
+        operatingDataContract: payload?.operatingDataContract || previous.operatingDataContract,
+        operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Operating insight report is temporarily unavailable.' }));
     }
   };
 
@@ -2915,6 +2956,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               >
                 Setup Gates
               </button>
+              <button
+                className="border border-orange-200/60 px-3 py-2 text-sm font-black text-orange-100 transition hover:bg-orange-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={dispatchState.status === 'loading'}
+                onClick={inspectOperatingInsightReport}
+                type="button"
+              >
+                Operating Insight
+              </button>
             </div>
           </div>
           <div className="mt-3 flex flex-col gap-2 border border-white/10 bg-white/[0.04] p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -4267,6 +4316,61 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
                 <div className="mt-2 border border-white/10 bg-white/[0.05] p-2 text-white/60">
                   {dispatchState.operatingDataContract.safetyBoundary}
+                </div>
+                <button
+                  className="mt-2 border border-emerald-200/50 px-3 py-2 text-xs font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={inspectOperatingInsightReport}
+                  type="button"
+                >
+                  Operating Insight Report
+                </button>
+              </div>
+            ) : null}
+            {dispatchState.operatingInsightReport ? (
+              <div className="md:col-span-3">
+                <div className="text-white/45">Operating Insight Report · evidence-backed KPIs</div>
+                <div className="mt-2 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-white/[0.05] p-2 md:col-span-2">
+                    <div className="font-mono text-white">{dispatchState.operatingInsightReport.payloadShape}</div>
+                    <p className="mt-1 text-white/60">{dispatchState.operatingInsightReport.verdict}</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.operatingInsightReport.summary.measured}</div>
+                    <p className="mt-1 text-white/60">measured</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.operatingInsightReport.summary.directional}</div>
+                    <p className="mt-1 text-white/60">directional</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.operatingInsightReport.summary.blocked}</div>
+                    <p className="mt-1 text-white/60">blocked</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.operatingInsightReport.summary.canClaimTrueOperatingAnalysis ? 'ready' : 'blocked'}</div>
+                    <p className="mt-1 text-white/60">true analysis</p>
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                  {dispatchState.operatingInsightReport.insights.map(item => (
+                    <div className="border border-white/10 bg-white/[0.05] p-2" key={item.id}>
+                      <div className="font-mono text-white">{item.label}</div>
+                      <p className="mt-1 text-white/60">{item.status} · {item.value}</p>
+                      <p className="mt-1 line-clamp-3 text-white/45">{item.interpretation}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="text-white/45">Store manager actions</div>
+                    {dispatchState.operatingInsightReport.storeManagerActions.map(item => (
+                      <p className="mt-1 text-white/60" key={`${item.owner}-${item.action}`}>{item.owner}: {item.action}</p>
+                    ))}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    {dispatchState.operatingInsightReport.safetyBoundary}
+                  </div>
                 </div>
               </div>
             ) : null}

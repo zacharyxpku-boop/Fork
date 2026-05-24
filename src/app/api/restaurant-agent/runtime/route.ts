@@ -40,6 +40,7 @@ import { buildRestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-w
 import { buildRestaurantClawSkillExecutionLedger, recordRestaurantClawSkillExecution } from '@/lib/restaurant-claw-skill-execution-store';
 import { runRestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
 import { buildRestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
+import { buildRestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import { buildRestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
 import { buildRestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
 import { buildRestaurantPosImportReport, type RestaurantPosImportRow } from '@/lib/restaurant-pos-import-validator';
@@ -600,6 +601,34 @@ export async function POST(request: NextRequest) {
         readiness: buildRestaurantExternalReadiness(),
       }),
       posImport,
+      receipts,
+    });
+  }
+
+  if (body.action === 'operating-insight-report') {
+    const rows = Array.isArray(body.rows) ? body.rows as RestaurantPosImportRow[] : undefined;
+    const posImport = rows ? buildRestaurantPosImportReport({
+      rows,
+      eventId: typeof body.eventId === 'string' ? body.eventId : undefined,
+    }) : undefined;
+    const receipts = listRestaurantAgentReceipts();
+    const runs = listRestaurantAgentRuns();
+    const operatingDataContract = buildRestaurantOperatingDataContract({
+      receipts,
+      posImports: posImport ? [posImport] : [],
+      readiness: buildRestaurantExternalReadiness(),
+    });
+    const businessSignals = buildRestaurantBusinessSignals(runs, receipts);
+    return NextResponse.json({
+      ok: true,
+      operatingInsightReport: buildRestaurantOperatingInsightReport({
+        posImports: posImport ? [posImport] : [],
+        operatingDataContract,
+        businessSignals,
+      }),
+      operatingDataContract,
+      posImport,
+      businessSignals,
       receipts,
     });
   }
