@@ -2,7 +2,7 @@ import { appendRestaurantAgentLedgerEntry, clearRestaurantAgentLedgerKindForTest
 import type { RestaurantClawSkillExecutionRecord } from '@/lib/restaurant-claw-skill-execution-store';
 import type { RestaurantStoreManagerFollowupTask } from '@/lib/restaurant-store-manager-followup';
 
-export type RestaurantStoreManagerTaskStatus = 'open' | 'blocked' | 'done';
+export type RestaurantStoreManagerTaskStatus = 'open' | 'needs-evidence' | 'ready-for-provider' | 'blocked' | 'done';
 
 export type RestaurantStoreManagerTaskRecord = RestaurantStoreManagerFollowupTask & {
   taskMemoryId: string;
@@ -11,6 +11,7 @@ export type RestaurantStoreManagerTaskRecord = RestaurantStoreManagerFollowupTas
   updatedAt: string;
   source: 'followup-pack' | 'manual' | 'claw-skill-execution';
   auditNote: string;
+  externalRequired: string[];
 };
 
 export type RestaurantStoreManagerTaskQueue = {
@@ -21,6 +22,8 @@ export type RestaurantStoreManagerTaskQueue = {
     total: number;
     open: number;
     blocked: number;
+    needsEvidence: number;
+    readyForProvider: number;
     done: number;
     today: number;
     nextShift: number;
@@ -59,6 +62,14 @@ function statusFromTask(task: RestaurantStoreManagerFollowupTask): RestaurantSto
   return task.priority === 'blocked' ? 'blocked' : 'open';
 }
 
+function isTaskStatus(value: unknown): value is RestaurantStoreManagerTaskStatus {
+  return value === 'open'
+    || value === 'needs-evidence'
+    || value === 'ready-for-provider'
+    || value === 'blocked'
+    || value === 'done';
+}
+
 function dedupeTasks(records: RestaurantStoreManagerTaskRecord[]): RestaurantStoreManagerTaskRecord[] {
   const seen = new Set<string>();
   return records
@@ -86,6 +97,11 @@ export function recordRestaurantStoreManagerTasks(
       updatedAt: now.toISOString(),
       source: 'followup-pack',
       auditNote: 'Generated from accepted public receipts or a blocked bootstrap gap. No customer contact, coupon redemption, POS pull, or private-message read is executed by this queue.',
+      externalRequired: [
+        'Merchant approval for customer-facing follow-up.',
+        'Public proof or signed receipt before closeout.',
+        'Sanitized aggregate POS/coupon export before operating analysis.',
+      ],
     };
 
     const previousIndex = memoryTasks.findIndex(item => item.taskMemoryId === record.taskMemoryId);
@@ -108,10 +124,18 @@ function priorityFromSkillStatus(status: RestaurantClawSkillExecutionRecord['sta
   return status === 'ready-now' ? 'today' : status === 'needs-training' ? 'next-shift' : 'blocked';
 }
 
+function taskStatusFromSkillStatus(status: RestaurantClawSkillExecutionRecord['status']): RestaurantStoreManagerTaskStatus {
+  return status === 'ready-now' ? 'needs-evidence' : status === 'needs-training' ? 'open' : 'blocked';
+}
+
 export function recordRestaurantStoreManagerTasksFromClawExecution(
   record: RestaurantClawSkillExecutionRecord,
   now = new Date(record.createdAt),
 ): RestaurantStoreManagerTaskRecord[] {
+  const statusByTaskId = new Map(record.deliverables.map(deliverable => [
+    `claw-${record.recordId}-${deliverable.id}`,
+    deliverable.status,
+  ]));
   const tasks: RestaurantStoreManagerFollowupTask[] = record.deliverables.map(deliverable => ({
     id: `claw-${record.recordId}-${deliverable.id}`,
     owner: ownerFromSkillOwner(deliverable.owner),
@@ -140,7 +164,11 @@ export function recordRestaurantStoreManagerTasksFromClawExecution(
       updatedAt: now.toISOString(),
       source: 'claw-skill-execution',
       auditNote: 'Generated from a remembered Claw Skill Workbench execution pack. It is an internal owner task only; external publish, contact, redemption, private-message access and POS pulls remain gated.',
+      externalRequired: record.externalRequired.length
+        ? record.externalRequired
+        : ['Provider health ready', 'Merchant authorization', 'Signed callback or public proof receipt'],
     };
+    taskRecord.status = previous?.status || taskStatusFromSkillStatus(statusByTaskId.get(task.id) || 'provider-gated');
 
     const previousIndex = memoryTasks.findIndex(item => item.taskMemoryId === taskRecord.taskMemoryId);
     if (previousIndex >= 0) memoryTasks.splice(previousIndex, 1);
@@ -166,9 +194,7 @@ export function updateRestaurantStoreManagerTaskStatus(input: {
   now?: Date;
 }): RestaurantStoreManagerTaskRecord | undefined {
   const taskMemoryId = typeof input.taskMemoryId === 'string' ? input.taskMemoryId : '';
-  const status = input.status === 'open' || input.status === 'blocked' || input.status === 'done'
-    ? input.status
-    : undefined;
+  const status = isTaskStatus(input.status) ? input.status : undefined;
   const existing = listRestaurantStoreManagerTasks().find(task => task.taskMemoryId === taskMemoryId);
   if (!existing || !status) return undefined;
 
@@ -193,9 +219,12 @@ export function buildRestaurantStoreManagerTaskQueue(now = new Date()): Restaura
   const tasks = listRestaurantStoreManagerTasks();
   const open = tasks.filter(task => task.status === 'open').length;
   const blocked = tasks.filter(task => task.status === 'blocked').length;
+  const needsEvidence = tasks.filter(task => task.status === 'needs-evidence').length;
+  const readyForProvider = tasks.filter(task => task.status === 'ready-for-provider').length;
   const done = tasks.filter(task => task.status === 'done').length;
-  const today = tasks.filter(task => task.priority === 'today' && task.status === 'open').length;
-  const nextShift = tasks.filter(task => task.priority === 'next-shift' && task.status === 'open').length;
+  const activeStatuses: RestaurantStoreManagerTaskStatus[] = ['open', 'needs-evidence', 'ready-for-provider'];
+  const today = tasks.filter(task => task.priority === 'today' && activeStatuses.includes(task.status)).length;
+  const nextShift = tasks.filter(task => task.priority === 'next-shift' && activeStatuses.includes(task.status)).length;
 
   return {
     ok: true,
@@ -205,6 +234,8 @@ export function buildRestaurantStoreManagerTaskQueue(now = new Date()): Restaura
       total: tasks.length,
       open,
       blocked,
+      needsEvidence,
+      readyForProvider,
       done,
       today,
       nextShift,

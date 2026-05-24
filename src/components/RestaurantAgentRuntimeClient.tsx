@@ -942,8 +942,12 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
-  const closeStoreManagerTask = async (taskMemoryId: string) => {
-    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Closing store-manager task with an audit note...' }));
+  const updateStoreManagerTask = async (
+    taskMemoryId: string,
+    taskStatus: 'needs-evidence' | 'ready-for-provider' | 'blocked' | 'done',
+    auditNote: string,
+  ) => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: `Updating store-manager task to ${taskStatus}...` }));
     try {
       const response = await fetch('/api/restaurant-agent/runtime', {
         method: 'POST',
@@ -951,15 +955,15 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         body: JSON.stringify({
           action: 'store-manager-task-status',
           taskMemoryId,
-          status: 'done',
-          auditNote: 'Closed from friend-trial command center after owner reviewed evidence and stop line.',
+          status: taskStatus,
+          auditNote,
         }),
       });
       const payload = await response.json();
       setDispatchState(previous => ({
         ...previous,
         status: response.ok ? 'queued' : 'blocked',
-        message: response.ok ? 'Store-manager task closed in task memory.' : 'Task closeout failed; refresh the task queue and try again.',
+        message: response.ok ? `Store-manager task moved to ${taskStatus}.` : 'Task status update failed; refresh the task queue and try again.',
         storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
         storeManagerTaskWatcher: payload?.storeManagerTaskWatcher || previous.storeManagerTaskWatcher,
         staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
@@ -977,7 +981,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
           : previous.commandCenter,
       }));
     } catch {
-      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Store-manager task closeout is temporarily unavailable.' }));
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Store-manager task status update is temporarily unavailable.' }));
     }
   };
 
@@ -2434,15 +2438,44 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     </div>
                     <p className="mt-1 text-xs leading-5 text-white">{task.action}</p>
                     <p className="mt-1 text-[11px] leading-4 text-white/45">evidence: {task.evidenceRequired}</p>
+                    {'externalRequired' in task && Array.isArray(task.externalRequired) && task.externalRequired.length ? (
+                      <p className="mt-1 text-[11px] leading-4 text-amber-100/55">external gates: {task.externalRequired.slice(0, 2).join(' / ')}</p>
+                    ) : null}
                     {'taskMemoryId' in task && typeof task.taskMemoryId === 'string' && 'status' in task && task.status !== 'done' ? (
-                      <button
-                        className="mt-2 border border-white/20 px-2 py-1 text-[11px] font-black text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
-                        disabled={dispatchState.status === 'loading'}
-                        onClick={() => closeStoreManagerTask(String(task.taskMemoryId))}
-                        type="button"
-                      >
-                        Mark Done
-                      </button>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          className="border border-amber-200/40 px-2 py-1 text-[11px] font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'needs-evidence', 'Owner must attach accepted evidence before closeout or provider handoff.')}
+                          type="button"
+                        >
+                          Need Evidence
+                        </button>
+                        <button
+                          className="border border-sky-200/40 px-2 py-1 text-[11px] font-black text-sky-100 transition hover:bg-sky-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'ready-for-provider', 'Owner reviewed internal evidence; runtime-admin must verify provider gates before external forwarding.')}
+                          type="button"
+                        >
+                          Provider Ready
+                        </button>
+                        <button
+                          className="border border-rose-200/40 px-2 py-1 text-[11px] font-black text-rose-100 transition hover:bg-rose-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'blocked', 'Blocked until merchant authorization, public proof, signed callback, or sanitized aggregate data is supplied.')}
+                          type="button"
+                        >
+                          Block
+                        </button>
+                        <button
+                          className="border border-white/20 px-2 py-1 text-[11px] font-black text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'done', 'Closed from friend-trial command center after owner reviewed evidence and stop line.')}
+                          type="button"
+                        >
+                          Mark Done
+                        </button>
+                      </div>
                     ) : null}
                   </div>
                 ))}
@@ -2453,7 +2486,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 ) : null}
                 {commandTaskQueue ? (
                   <p className="border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/45">
-                    Task memory: {commandTaskQueue.payloadShape} / open {commandTaskQueue.summary.open} / blocked {commandTaskQueue.summary.blocked}
+                    Task memory: {commandTaskQueue.payloadShape} / open {commandTaskQueue.summary.open} / evidence {commandTaskQueue.summary.needsEvidence} / provider {commandTaskQueue.summary.readyForProvider} / blocked {commandTaskQueue.summary.blocked}
                   </p>
                 ) : null}
                 {commandTaskWatcher ? (

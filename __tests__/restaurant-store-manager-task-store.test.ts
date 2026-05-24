@@ -68,6 +68,9 @@ describe('restaurant store manager task store', () => {
     }));
     expect(queue.payloadShape).toBe('restaurant-store-manager-task-queue-v1');
     expect(queue.summary.open).toBe(1);
+    expect(queue.summary.needsEvidence).toBe(0);
+    expect(queue.summary.readyForProvider).toBe(0);
+    expect(queue.tasks[0].externalRequired.length).toBeGreaterThan(0);
     expect(queue.tasks[0].auditNote).toContain('No customer contact');
     expect(queue.safetyBoundary).toContain('does not contact customers');
     expect(watcher.payloadShape).toBe('restaurant-store-manager-task-watcher-v1');
@@ -102,7 +105,49 @@ describe('restaurant store manager task store', () => {
 
     expect(closed?.status).toBe('done');
     expect(closedQueue.summary.done).toBe(1);
-    expect(closedQueue.summary.open).toBe(0);
+    expect(closedQueue.tasks.find(task => task.taskMemoryId === records[0].taskMemoryId)?.status).toBe('done');
+  });
+
+  it('tracks evidence and provider handoff states before done closeout', () => {
+    clearRestaurantStoreManagerTasksForTest();
+
+    const records = recordRestaurantStoreManagerTasks([{
+      id: 'manual-provider-readiness',
+      owner: 'runtime-admin',
+      priority: 'today',
+      restaurant: 'Evidence Bistro',
+      offer: 'Dinner set',
+      signal: 'setup-gap',
+      action: 'Prepare provider handoff after evidence review.',
+      talkTrack: 'Internal task only.',
+      evidenceRequired: 'public proof link or signed callback',
+      dueWindow: 'today',
+      stopLine: 'No external execution without merchant authorization.',
+    }], new Date('2026-05-24T03:00:00.000Z'));
+
+    const needsEvidence = updateRestaurantStoreManagerTaskStatus({
+      taskMemoryId: records[0].taskMemoryId,
+      status: 'needs-evidence',
+      auditNote: 'Need public proof before provider handoff.',
+      now: new Date('2026-05-24T03:01:00.000Z'),
+    });
+    const readyForProvider = updateRestaurantStoreManagerTaskStatus({
+      taskMemoryId: records[0].taskMemoryId,
+      status: 'ready-for-provider',
+      auditNote: 'Evidence reviewed; runtime-admin must verify provider gates.',
+      now: new Date('2026-05-24T03:02:00.000Z'),
+    });
+    const queue = buildRestaurantStoreManagerTaskQueue(new Date('2026-05-24T03:03:00.000Z'));
+    const watcher = buildRestaurantStoreManagerTaskWatcher(queue, new Date('2026-05-24T03:04:00.000Z'));
+
+    expect(needsEvidence?.status).toBe('needs-evidence');
+    expect(readyForProvider?.status).toBe('ready-for-provider');
+    expect(queue.tasks.find(task => task.taskMemoryId === records[0].taskMemoryId)?.status).toBe('ready-for-provider');
+    expect(queue.summary.readyForProvider).toBeGreaterThanOrEqual(1);
+    expect(watcher.summary.readyForProvider).toBeGreaterThanOrEqual(1);
+    const wakeup = watcher.wakeups.find(item => item.taskMemoryId === records[0].taskMemoryId);
+    expect(wakeup?.nextAction).toContain('Review provider gates');
+    expect(wakeup?.escalation).toContain('runtime-admin');
   });
 
   it('records the queue through the followup API and returns it in command center', async () => {
@@ -123,7 +168,7 @@ describe('restaurant store manager task store', () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(['open', 'blocked']).toContain(payload.storeManagerTaskRecords[0].status);
+    expect(['open', 'needs-evidence', 'ready-for-provider', 'blocked']).toContain(payload.storeManagerTaskRecords[0].status);
     expect(payload.storeManagerTaskQueue.payloadShape).toBe('restaurant-store-manager-task-queue-v1');
     expect(payload.storeManagerTaskWatcher.payloadShape).toBe('restaurant-store-manager-task-watcher-v1');
     expect(payload.staffNotificationHandoff.payloadShape).toBe('restaurant-staff-notification-handoff-v1');

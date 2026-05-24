@@ -20,6 +20,8 @@ export type RestaurantStoreManagerTaskWatcher = {
     wakeups: number;
     highPriority: number;
     blocked: number;
+    needsEvidence: number;
+    readyForProvider: number;
     staleOpen: number;
     done: number;
   };
@@ -50,6 +52,8 @@ function hoursSince(iso: string, now: Date): number {
 
 function priorityFor(task: RestaurantStoreManagerTaskRecord, now: Date): RestaurantStoreManagerTaskWatcherWakeup['priority'] {
   if (task.status === 'blocked') return 'high';
+  if (task.status === 'needs-evidence') return 'high';
+  if (task.status === 'ready-for-provider') return 'medium';
   if (task.status === 'done') return 'low';
   const ageHours = hoursSince(task.updatedAt || task.createdAt, now);
   if (task.priority === 'today' && ageHours >= 4) return 'high';
@@ -63,6 +67,8 @@ function wakeupFor(task: RestaurantStoreManagerTaskRecord, now: Date): Restauran
   const priority = priorityFor(task, now);
   const ageHours = Math.round(hoursSince(task.updatedAt || task.createdAt, now));
   const blocked = task.status === 'blocked';
+  const needsEvidence = task.status === 'needs-evidence';
+  const readyForProvider = task.status === 'ready-for-provider';
   return {
     id: `task-watch-${stableId(`${task.taskMemoryId}:${task.status}:${ageHours}`)}`,
     priority,
@@ -70,13 +76,25 @@ function wakeupFor(task: RestaurantStoreManagerTaskRecord, now: Date): Restauran
     owner: task.owner,
     reason: blocked
       ? 'Task is blocked because required public proof, authorization, or sanitized operating data is missing.'
+      : needsEvidence
+        ? 'Task needs accepted evidence before it can be closed or forwarded.'
+        : readyForProvider
+          ? 'Task is ready for provider handoff after owner review; verify external gates before forwarding.'
       : `Task is still ${task.status} after about ${ageHours} hours; owner should either close it with evidence or refresh the next action.`,
     nextAction: blocked
       ? task.action
+      : needsEvidence
+        ? `Attach accepted evidence first: ${task.evidenceRequired}`
+        : readyForProvider
+          ? `Review provider gates before handoff: ${task.externalRequired.join(' / ') || task.evidenceRequired}`
       : `Review stop line, complete the owner action, then mark done with evidence: ${task.evidenceRequired}`,
     evidenceRequired: task.evidenceRequired,
     escalation: blocked
       ? 'Escalate to runtime-admin or merchant owner for the missing gate; do not invent operating impact.'
+      : needsEvidence
+        ? 'Escalate to the owner for public proof, screenshot id, signed callback, or sanitized aggregate evidence.'
+        : readyForProvider
+          ? 'Escalate to runtime-admin only after merchant authorization, provider health and callback evidence are ready.'
       : `Escalate to ${task.owner} before ${task.dueWindow}; if evidence is unavailable, mark blocked instead of claiming completion.`,
   };
 }
@@ -95,6 +113,8 @@ export function buildRestaurantStoreManagerTaskWatcher(
     .slice(0, 8);
   const highPriority = wakeups.filter(wakeup => wakeup.priority === 'high').length;
   const blocked = queue.tasks.filter(task => task.status === 'blocked').length;
+  const needsEvidence = queue.tasks.filter(task => task.status === 'needs-evidence').length;
+  const readyForProvider = queue.tasks.filter(task => task.status === 'ready-for-provider').length;
   const done = queue.tasks.filter(task => task.status === 'done').length;
   const staleOpen = queue.tasks.filter(task => task.status === 'open' && hoursSince(task.updatedAt || task.createdAt, now) >= 4).length;
 
@@ -107,6 +127,8 @@ export function buildRestaurantStoreManagerTaskWatcher(
       wakeups: wakeups.length,
       highPriority,
       blocked,
+      needsEvidence,
+      readyForProvider,
       staleOpen,
       done,
     },

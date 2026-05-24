@@ -70,6 +70,8 @@ describe('restaurant claw skill workbench', () => {
     expect(tasks).toHaveLength(3);
     expect(tasks.map(item => item.source)).toEqual(['claw-skill-execution', 'claw-skill-execution', 'claw-skill-execution']);
     expect(tasks.map(item => item.status)).toContain('blocked');
+    expect(tasks.map(item => item.status)).toContain('needs-evidence');
+    expect(tasks[0].externalRequired.length).toBeGreaterThan(0);
     expect(tasks[0].auditNote).toContain('remembered Claw Skill Workbench');
     expect(queue.summary.total).toBe(3);
     expect(queue.tasks[0].evidenceRequired).toContain(record.recordId);

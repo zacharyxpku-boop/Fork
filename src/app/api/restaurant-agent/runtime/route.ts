@@ -248,7 +248,13 @@ export async function POST(request: NextRequest) {
   if (body.action === 'store-manager-task-status') {
     const task = updateRestaurantStoreManagerTaskStatus({
       taskMemoryId: typeof body.taskMemoryId === 'string' ? body.taskMemoryId : undefined,
-      status: body.status === 'open' || body.status === 'blocked' || body.status === 'done' ? body.status : undefined,
+      status: body.status === 'open'
+        || body.status === 'needs-evidence'
+        || body.status === 'ready-for-provider'
+        || body.status === 'blocked'
+        || body.status === 'done'
+        ? body.status
+        : undefined,
       auditNote: typeof body.auditNote === 'string' ? body.auditNote : undefined,
     });
     const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
