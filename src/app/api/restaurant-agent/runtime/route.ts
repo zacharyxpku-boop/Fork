@@ -6,6 +6,7 @@ import { buildRestaurantAgentChannelDeliveryReport, executeRestaurantAgentChanne
 import { buildRestaurantAgentChannelHub } from '@/lib/restaurant-agent-channel-hub';
 import { runRestaurantAgentChannelSchedule } from '@/lib/restaurant-agent-channel-scheduler';
 import { buildRestaurantAgentCommandCenter } from '@/lib/restaurant-agent-command-center';
+import { buildRestaurantCommandRoute } from '@/lib/restaurant-command-router';
 import { buildRestaurantBrowserRunnerCallbackContract } from '@/lib/restaurant-agent-browser-runner-contract';
 import { buildRestaurantBrowserRunnerEventHealth, listRestaurantBrowserRunnerEvents, recordRestaurantBrowserRunnerEvent } from '@/lib/restaurant-agent-browser-runner-event-store';
 import { buildRestaurantBrowserRunbookPackage } from '@/lib/restaurant-agent-browser-runbook';
@@ -970,6 +971,41 @@ export async function POST(request: NextRequest) {
         readiness: buildRestaurantExternalReadiness(),
         browserSessions: listRestaurantBrowserSessions(),
       }),
+      runs,
+      receipts,
+    });
+  }
+
+  if (body.action === 'command-route') {
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const commandCenter = await buildRestaurantAgentCommandCenter({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      runs,
+      receipts,
+      readiness: buildRestaurantExternalReadiness(),
+      browserSessions: listRestaurantBrowserSessions(),
+    });
+    return NextResponse.json({
+      ok: true,
+      commandRoute: buildRestaurantCommandRoute({
+        command: typeof body.command === 'string' ? body.command : undefined,
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        commandCenter,
+      }),
+      commandCenter,
       runs,
       receipts,
     });

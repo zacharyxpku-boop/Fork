@@ -9,6 +9,7 @@ import type { RestaurantAgentChannelScheduleRun } from '@/lib/restaurant-agent-c
 import type { RestaurantBuildQueueReport } from '@/lib/restaurant-agent-build-queue';
 import type { RestaurantCallbackSimulatorReport } from '@/lib/restaurant-agent-callback-simulator';
 import type { RestaurantAgentCommandCenter } from '@/lib/restaurant-agent-command-center';
+import type { RestaurantCommandRoute } from '@/lib/restaurant-command-router';
 import type { RestaurantAiEmployeeInbox } from '@/lib/restaurant-ai-employee-inbox';
 import type { RestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
 import type { RestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
@@ -251,6 +252,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dayZeroMissionPack?: RestaurantDayZeroMissionPack;
     opsConsole?: RestaurantAgentOpsConsole;
     commandCenter?: RestaurantAgentCommandCenter;
+    commandRoute?: RestaurantCommandRoute;
     aiEmployeeInbox?: RestaurantAiEmployeeInbox;
     channelHub?: RestaurantAgentChannelHub;
     channelDeliveryAttempt?: RestaurantAgentChannelDeliveryAttempt;
@@ -266,6 +268,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     taskProviderHandoff?: RestaurantTaskProviderHandoff;
     trialWorkflowPack?: RestaurantTrialWorkflowPack;
   }>({ status: 'idle' });
+  const [restaurantCommand, setRestaurantCommand] = useState(`今晚把 ${runtimeIntake.offer} 做成大众点评和小红书可发布版本，发完要截图回执，收盘后看核销和库存异常。`);
   const [selectedClawWorkbenchPreset, setSelectedClawWorkbenchPreset] = useState(clawWorkbenchPresets[0]);
   const browserConnector = runtime.connectors.find(item => item.id === 'local-browser-plan');
   const memoryConnector = runtime.connectors.find(item => item.id === 'restaurant-memory');
@@ -2187,6 +2190,49 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const routeRestaurantCommand = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'command-route',
+          command: restaurantCommand,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.commandRoute?.verdict === 'blocked-sensitive'
+          ? 'blocked'
+          : payload?.commandRoute?.verdict === 'provider-gated'
+            ? 'blocked'
+            : 'queued',
+        message: `Command route: ${payload?.commandRoute?.intent || 'unknown'} -> ${payload?.commandRoute?.primaryAction?.clientAction || 'manual'}; ${payload?.commandRoute?.verdict || 'unknown'}.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        commandRoute: payload?.commandRoute || previous.commandRoute,
+        commandCenter: payload?.commandCenter || previous.commandCenter,
+        aiEmployeeInbox: payload?.commandCenter?.aiEmployeeInbox || previous.aiEmployeeInbox,
+        storeManagerTaskQueue: payload?.commandCenter?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        storeManagerTaskWatcher: payload?.commandCenter?.storeManagerTaskWatcher || previous.storeManagerTaskWatcher,
+        staffNotificationHandoff: payload?.commandCenter?.staffNotificationHandoff || previous.staffNotificationHandoff,
+        staffNotificationDeliveryBridge: payload?.commandCenter?.staffNotificationDeliveryBridge || previous.staffNotificationDeliveryBridge,
+        staffNotificationAuditLog: payload?.commandCenter?.staffNotificationAuditLog || previous.staffNotificationAuditLog,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Restaurant command router is temporarily unavailable.' }));
+    }
+  };
+
   const commandMode =
     dispatchState.commandCenter?.mode ||
     dispatchState.executionTimeline?.mode ||
@@ -2299,6 +2345,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandClawSkillExecutionLedger =
     dispatchState.commandCenter?.clawSkillExecutionLedger ||
     dispatchState.clawSkillExecutionLedger;
+  const commandRoute = dispatchState.commandRoute;
 
   return (
     <section className="border border-stone-200 bg-white p-5 shadow-sm" id="restaurant-agent-runtime">
@@ -2412,6 +2459,100 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="mt-1 text-[10px] text-white/35">{commandChannelAttempts} attempts / {commandChannelBlocked} blocked / {commandChannelAcknowledged} ack</div>
               </div>
             </div>
+          </div>
+          <div className="mt-4 border border-amber-200/25 bg-amber-200/[0.05] p-3">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">AI employee command router</div>
+                <h4 className="mt-1 text-base font-black text-white">一句门店指令到内部动作 / 证据 / Provider 门槛</h4>
+                <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                  输入店长会真的说的话，系统只做可审计路由：能内部生成的先生成，需要截图、链接、POS 聚合或商户授权的会拆成证据要求，不会把私信、核销、发布和经营分析伪装成已自动完成。
+                </p>
+                <textarea
+                  className="mt-3 h-24 w-full resize-none border border-white/15 bg-stone-950/80 p-3 text-xs leading-5 text-white outline-none transition placeholder:text-white/25 focus:border-amber-200/60"
+                  onChange={event => setRestaurantCommand(event.target.value)}
+                  value={restaurantCommand}
+                />
+              </div>
+              <div className="w-full xl:w-[360px]">
+                <button
+                  className="w-full border border-amber-200 bg-amber-200 px-3 py-2 text-sm font-black text-stone-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
+                  onClick={routeRestaurantCommand}
+                  type="button"
+                >
+                  Route Command
+                </button>
+                <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    className="border border-white/15 px-2 py-2 text-left text-white/70 transition hover:bg-white/10"
+                    onClick={() => setRestaurantCommand(`今晚把 ${runtimeIntake.offer} 做成大众点评和小红书可发布版本，发完要截图回执。`)}
+                    type="button"
+                  >
+                    发布证明
+                  </button>
+                  <button
+                    className="border border-white/15 px-2 py-2 text-left text-white/70 transition hover:bg-white/10"
+                    onClick={() => setRestaurantCommand(`收盘后看 ${runtimeIntake.offer} 的核销、库存和明天备货异常，只能用脱敏汇总。`)}
+                    type="button"
+                  >
+                    经营复盘
+                  </button>
+                  <button
+                    className="border border-white/15 px-2 py-2 text-left text-white/70 transition hover:bg-white/10"
+                    onClick={() => setRestaurantCommand(`把今天领券、预约和到店意向整理成店长明天跟进任务，不要导出客户联系方式。`)}
+                    type="button"
+                  >
+                    店长跟进
+                  </button>
+                  <button
+                    className="border border-white/15 px-2 py-2 text-left text-white/70 transition hover:bg-white/10"
+                    onClick={() => setRestaurantCommand('接入 OpenClaw/Lobu/Hermes runtime、回调、隔离浏览器和商户授权，告诉我缺哪些 Provider key。')}
+                    type="button"
+                  >
+                    外部接入
+                  </button>
+                </div>
+              </div>
+            </div>
+            {commandRoute ? (
+              <div className="mt-3 grid gap-2 lg:grid-cols-[1.1fr_1fr_1fr]">
+                <div className="border border-white/10 bg-white/[0.05] p-3">
+                  <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase tracking-[0.12em] text-amber-100/70">
+                    <span>{commandRoute.payloadShape}</span>
+                    <span>{commandRoute.intent}</span>
+                    <span>{commandRoute.verdict}</span>
+                    <span>{commandRoute.confidence}</span>
+                  </div>
+                  <p className="mt-2 text-sm font-black text-white">{commandRoute.primaryAction.label}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/55">{commandRoute.primaryAction.reason}</p>
+                  <p className="mt-2 text-[11px] leading-4 text-white/40">{commandRoute.primaryAction.stopLine}</p>
+                </div>
+                <div className="border border-white/10 bg-white/[0.05] p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">extracted evidence</div>
+                  <p className="mt-2 text-xs leading-5 text-white/60">
+                    channels: {commandRoute.extracted.channels.join(' / ') || 'not specified'}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-white/60">
+                    window: {commandRoute.extracted.serviceWindow || 'not specified'}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-white/60">
+                    evidence: {commandRoute.extracted.evidenceHints.join(' / ') || commandRoute.primaryAction.evidenceRequired.slice(0, 3).join(' / ')}
+                  </p>
+                  {commandRoute.extracted.forbiddenHints.length ? (
+                    <p className="mt-1 text-xs leading-5 text-rose-100/70">blocked: {commandRoute.extracted.forbiddenHints.join(' / ')}</p>
+                  ) : null}
+                </div>
+                <div className="border border-white/10 bg-white/[0.05] p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">routed action</div>
+                  <p className="mt-2 text-sm font-black text-white">{commandRoute.primaryAction.clientAction}</p>
+                  <p className="mt-1 text-xs leading-5 text-white/55">{commandRoute.primaryAction.owner} / {commandRoute.primaryAction.status}</p>
+                  <p className="mt-2 text-[11px] leading-4 text-amber-100/60">
+                    external: {(commandRoute.externalRequired.length ? commandRoute.externalRequired : ['none for internal routing']).slice(0, 4).join(' / ')}
+                  </p>
+                </div>
+              </div>
+            ) : null}
           </div>
           <div className="mt-4 border border-amber-200/25 bg-amber-200/[0.05] p-3">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
