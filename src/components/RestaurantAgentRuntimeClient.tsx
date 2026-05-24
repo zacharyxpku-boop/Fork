@@ -9,6 +9,7 @@ import type { RestaurantAgentChannelScheduleRun } from '@/lib/restaurant-agent-c
 import type { RestaurantBuildQueueReport } from '@/lib/restaurant-agent-build-queue';
 import type { RestaurantCallbackSimulatorReport } from '@/lib/restaurant-agent-callback-simulator';
 import type { RestaurantAgentCommandCenter } from '@/lib/restaurant-agent-command-center';
+import type { RestaurantAiCockpit } from '@/lib/restaurant-ai-cockpit';
 import type { RestaurantAiConsultantCopilot } from '@/lib/restaurant-ai-consultant-copilot';
 import type { RestaurantAiEmployeeMemoryPack } from '@/lib/restaurant-ai-employee-memory-pack';
 import type { RestaurantCommandRoute } from '@/lib/restaurant-command-router';
@@ -262,6 +263,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     storeOperatingPlan?: RestaurantStoreOperatingPlan;
     opsConsole?: RestaurantAgentOpsConsole;
     commandCenter?: RestaurantAgentCommandCenter;
+    aiCockpit?: RestaurantAiCockpit;
     aiConsultantCopilot?: RestaurantAiConsultantCopilot;
     aiEmployeeMemoryPack?: RestaurantAiEmployeeMemoryPack;
     commandRoute?: RestaurantCommandRoute;
@@ -2507,6 +2509,46 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildAiCockpit = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Restaurant AI Cockpit...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'ai-cockpit',
+          command: restaurantCommand,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.aiCockpit?.summary?.canClaimAutomation ? 'queued' : 'blocked',
+        message: `AI Cockpit: ${payload?.aiCockpit?.summary?.zones ?? 0} zones, ${payload?.aiCockpit?.summary?.readyInternal ?? 0} internal-ready, ${payload?.aiCockpit?.summary?.providerGated ?? 0} provider-gated.`,
+        aiCockpit: payload?.aiCockpit || previous.aiCockpit,
+        storeOperatingPlan: payload?.storeOperatingPlan || previous.storeOperatingPlan,
+        aiConsultantCopilot: payload?.aiConsultantCopilot || previous.aiConsultantCopilot,
+        customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
+        voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
+        providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
+        dayZeroMissionPack: payload?.dayZeroMissionPack || previous.dayZeroMissionPack,
+        commandRoute: payload?.commandRoute || previous.commandRoute,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Restaurant AI Cockpit is temporarily unavailable.' }));
+    }
+  };
+
   const commandMode =
     dispatchState.commandCenter?.mode ||
     dispatchState.executionTimeline?.mode ||
@@ -2566,6 +2608,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderLaunchBoard = dispatchState.providerLaunchBoard;
   const commandAiConsultantCopilot = dispatchState.aiConsultantCopilot;
   const commandStoreOperatingPlan = dispatchState.storeOperatingPlan;
+  const commandAiCockpit = dispatchState.aiCockpit;
   const commandFirstForwardableRunPack = dispatchState.firstForwardableRunPack;
   const commandFirstRunControlTower = dispatchState.firstRunControlTower;
   const commandPostRunReviewPack = dispatchState.postRunReviewPack;
@@ -2758,6 +2801,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <button
                   className="w-full border border-amber-200 bg-amber-200 px-3 py-2 text-sm font-black text-stone-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={dispatchState.status === 'loading'}
+                  onClick={buildAiCockpit}
+                  type="button"
+                >
+                  AI Cockpit
+                </button>
+                <button
+                  className="mt-2 w-full border border-amber-200/70 px-3 py-2 text-sm font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={dispatchState.status === 'loading'}
                   onClick={routeRestaurantCommand}
                   type="button"
                 >
@@ -2886,6 +2937,72 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   >
                     Run Routed Action
                   </button>
+                </div>
+              </div>
+            ) : null}
+            {commandAiCockpit ? (
+              <div className="mt-3 border border-amber-200/40 bg-amber-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">Restaurant AI Cockpit</div>
+                    <h4 className="mt-1 text-base font-black text-white">{commandAiCockpit.payloadShape}</h4>
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                      {commandAiCockpit.restaurant} / {commandAiCockpit.offer}: Today Operations, AI Consultant, Automation Launch and Evidence Review in one cockpit.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-5 lg:min-w-[620px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiCockpit.verdict}</div>
+                      <p className="mt-1 text-white/55">verdict</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiCockpit.summary.zones}</div>
+                      <p className="mt-1 text-white/55">zones</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiCockpit.summary.readyInternal}</div>
+                      <p className="mt-1 text-white/55">internal</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiCockpit.summary.providerGated}</div>
+                      <p className="mt-1 text-white/55">provider gated</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandAiCockpit.summary.canClaimAutomation ? 'ready' : 'blocked'}</div>
+                      <p className="mt-1 text-white/55">automation claim</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-4">
+                  {commandAiCockpit.zones.map(zone => (
+                    <div className="border border-white/10 bg-white/[0.05] p-3" key={zone.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-white">{zone.title}</span>
+                        <span className="text-[11px] text-amber-100/70">{zone.status}</span>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-white/60">{zone.answer}</p>
+                      <p className="mt-2 text-[11px] leading-4 text-amber-100/60">action: {zone.primaryAction}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">proof: {zone.visibleProof.slice(0, 3).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">gate: {zone.providerGate}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">primary runbook</div>
+                    {commandAiCockpit.primaryRunbook.map(line => (
+                      <p className="mt-2 text-[11px] leading-4 text-amber-100/65" key={line}>{line}</p>
+                    ))}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">evidence board</div>
+                    <p className="mt-2 text-xs leading-5 text-white/55">{commandAiCockpit.evidenceBoard.slice(0, 12).join(' / ') || 'none'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider unlocks</div>
+                    <p className="mt-2 text-xs leading-5 text-amber-100/65">{commandAiCockpit.providerUnlocks.slice(0, 12).join(' / ') || 'none'}</p>
+                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandAiCockpit.safetyBoundary}</p>
+                  </div>
                 </div>
               </div>
             ) : null}
