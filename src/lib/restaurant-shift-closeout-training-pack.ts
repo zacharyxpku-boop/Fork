@@ -1,7 +1,7 @@
 import type { RestaurantAgentRecoveryPlan } from '@/lib/restaurant-agent-recovery';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-review-pack';
-import type { RestaurantCapabilityTrainingPlan, RestaurantCapabilityTrainingRecordInput } from '@/lib/restaurant-capability-training';
+import type { RestaurantCapabilityTrainingPlan, RestaurantCapabilityTrainingRecord, RestaurantCapabilityTrainingRecordInput } from '@/lib/restaurant-capability-training';
 
 export type RestaurantShiftCloseoutTrainingLane = {
   id: 'receipt-watch' | 'recovery' | 'post-run-review' | 'capability-training' | 'next-loop';
@@ -36,6 +36,28 @@ export type RestaurantShiftCloseoutTrainingPack = {
   capabilityTrainingPlan: Pick<RestaurantCapabilityTrainingPlan, 'payloadShape' | 'summary' | 'items' | 'safetyBoundary'>;
   operatorRunbook: string[];
   externalRequired: string[];
+  safetyBoundary: string;
+};
+
+export type RestaurantShiftCloseoutTrainingRecordAttempt = {
+  ok: boolean;
+  payloadShape: 'restaurant-shift-closeout-training-record-attempt-v1';
+  generatedAt: string;
+  verdict: 'recorded' | 'blocked-waiting-proof' | 'partially-recorded';
+  summary: {
+    drafts: number;
+    recordableDrafts: number;
+    recorded: number;
+    rejected: number;
+    canClaimExternalAutomation: false;
+  };
+  records: RestaurantCapabilityTrainingRecord[];
+  rejectedDrafts: Array<{
+    capabilityId: string;
+    name: string;
+    reason: string;
+  }>;
+  nextAction: string;
   safetyBoundary: string;
 };
 
@@ -103,6 +125,54 @@ function buildTrainingDrafts(input: {
   }
 
   return drafts;
+}
+
+export function selectRecordableShiftTrainingDrafts(pack: RestaurantShiftCloseoutTrainingPack): RestaurantShiftCloseoutTrainingPack['trainingDrafts'] {
+  if (!pack.summary.canRecordTraining) return [];
+  return pack.trainingDrafts.filter(draft => !/^waiting/i.test(draft.evidenceSummary || ''));
+}
+
+export function buildRestaurantShiftCloseoutTrainingRecordAttempt(input: {
+  pack: RestaurantShiftCloseoutTrainingPack;
+  records: RestaurantCapabilityTrainingRecord[];
+  now?: Date;
+}): RestaurantShiftCloseoutTrainingRecordAttempt {
+  const now = input.now || new Date();
+  const recordableDrafts = selectRecordableShiftTrainingDrafts(input.pack);
+  const rejectedDrafts = input.pack.trainingDrafts
+    .filter(draft => !recordableDrafts.includes(draft))
+    .map(draft => ({
+      capabilityId: draft.capabilityId || 'unknown-capability',
+      name: draft.name || 'unnamed draft',
+      reason: input.pack.summary.canRecordTraining ? draft.blockedWhen : 'Closeout proof or recovery gate is not ready.',
+    }));
+  const rejected = input.records.filter(record => !record.accepted).length + rejectedDrafts.length;
+  const accepted = input.records.filter(record => record.accepted).length;
+  const verdict: RestaurantShiftCloseoutTrainingRecordAttempt['verdict'] = accepted > 0 && rejected > 0
+    ? 'partially-recorded'
+    : accepted > 0
+      ? 'recorded'
+      : 'blocked-waiting-proof';
+
+  return {
+    ok: accepted > 0,
+    payloadShape: 'restaurant-shift-closeout-training-record-attempt-v1',
+    generatedAt: now.toISOString(),
+    verdict,
+    summary: {
+      drafts: input.pack.trainingDrafts.length,
+      recordableDrafts: recordableDrafts.length,
+      recorded: accepted,
+      rejected,
+      canClaimExternalAutomation: false,
+    },
+    records: input.records,
+    rejectedDrafts,
+    nextAction: accepted > 0
+      ? 'Rebuild capability training plan and use only accepted training records for the next controlled loop.'
+      : input.pack.externalRequired[0] || 'Accept public proof or sanitized aggregate data before recording training.',
+    safetyBoundary: 'Shift Closeout Training Record Attempt writes only accepted closeout training records. It never records secrets, cookies, private messages, customer identifiers, coupon codes, payment ids, raw POS rows, or unverified performance claims.',
+  };
 }
 
 export function buildRestaurantShiftCloseoutTrainingPack(input: {

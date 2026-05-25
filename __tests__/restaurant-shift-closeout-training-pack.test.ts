@@ -13,7 +13,7 @@ import { buildRestaurantCapabilityTrainingPlanFromLedger, clearRestaurantCapabil
 import { buildRestaurantPosImportReport } from '@/lib/restaurant-pos-import-validator';
 import { buildRestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-review-pack';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
-import { buildRestaurantShiftCloseoutTrainingPack } from '@/lib/restaurant-shift-closeout-training-pack';
+import { buildRestaurantShiftCloseoutTrainingPack, buildRestaurantShiftCloseoutTrainingRecordAttempt, selectRecordableShiftTrainingDrafts } from '@/lib/restaurant-shift-closeout-training-pack';
 import { buildRestaurantStoreManagerTaskQueue, clearRestaurantStoreManagerTasksForTest } from '@/lib/restaurant-store-manager-task-store';
 
 describe('restaurant shift closeout training pack', () => {
@@ -140,6 +140,71 @@ describe('restaurant shift closeout training pack', () => {
     expect(serialized).not.toContain('13800000000');
   });
 
+  it('records only accepted closeout drafts into capability training', () => {
+    const dispatch = buildRestaurantAgentDispatch({
+      taskId: 'browser-publish-check',
+      restaurant: 'Record Bistro',
+      offer: 'Dinner set',
+      owner: 'ops',
+    });
+    const run = recordRestaurantAgentRun(dispatch, 'openclaw', undefined, new Date('2026-05-24T14:20:00.000Z'));
+    const receipt = recordRestaurantAgentReceipt({
+      eventId: run.eventId,
+      channel: 'Dianping',
+      evidenceUrl: 'https://www.dianping.com/shop/123/review/789',
+      screenshotId: 'shot-record-proof',
+      operator: 'ops',
+      summary: 'Public proof accepted.',
+    }, new Date('2026-05-24T14:21:00.000Z'));
+    const runs = [run];
+    const receipts = [receipt];
+    const readiness = buildRestaurantExternalReadiness({});
+    const postRunReviewPack = buildRestaurantPostRunReviewPack({
+      restaurant: 'Record Bistro',
+      offer: 'Dinner set',
+      queue: buildRestaurantStoreManagerTaskQueue(new Date('2026-05-24T14:22:00.000Z')),
+      runs,
+      receipts,
+      readiness,
+      now: new Date('2026-05-24T14:23:00.000Z'),
+    });
+    const pack = buildRestaurantShiftCloseoutTrainingPack({
+      providerReceiptInbox: buildRestaurantProviderReceiptInbox({
+        runs,
+        receipts,
+        readiness,
+        now: new Date('2026-05-24T14:24:00.000Z'),
+      }),
+      recovery: buildRestaurantAgentRecoveryPlan(runs, receipts, readiness, new Date('2026-05-24T14:25:00.000Z')),
+      postRunReviewPack,
+      capabilityTrainingPlan: buildRestaurantCapabilityTrainingPlanFromLedger(),
+      now: new Date('2026-05-24T14:26:00.000Z'),
+    });
+    const recordableDrafts = selectRecordableShiftTrainingDrafts(pack);
+    const records = recordableDrafts.map(draft => ({
+      recordId: `test-${draft.capabilityId}`,
+      kind: draft.kind || 'material',
+      capabilityId: draft.capabilityId || 'unknown',
+      name: draft.name || 'unknown',
+      owner: draft.owner || 'ops',
+      source: draft.source || 'manual',
+      evidenceSummary: draft.evidenceSummary || 'accepted',
+      accepted: true,
+      createdAt: '2026-05-24T14:27:00.000Z',
+    }));
+    const attempt = buildRestaurantShiftCloseoutTrainingRecordAttempt({
+      pack,
+      records,
+      now: new Date('2026-05-24T14:28:00.000Z'),
+    });
+
+    expect(recordableDrafts.map(draft => draft.capabilityId)).toContain('auto-publish-receipts');
+    expect(recordableDrafts.map(draft => draft.capabilityId)).not.toContain('real-operating-analysis');
+    expect(attempt.verdict).toBe('partially-recorded');
+    expect(attempt.summary.recorded).toBe(1);
+    expect(attempt.rejectedDrafts.map(draft => draft.capabilityId)).toContain('real-operating-analysis');
+  });
+
   it('is exposed through the runtime API as a guarded closeout pack', async () => {
     const response = await POST(new NextRequest('http://localhost/api/restaurant-agent/runtime', {
       method: 'POST',
@@ -156,5 +221,23 @@ describe('restaurant shift closeout training pack', () => {
     expect(payload.shiftCloseoutTrainingPack.payloadShape).toBe('restaurant-shift-closeout-training-pack-v1');
     expect(payload.shiftCloseoutTrainingPack.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.shiftCloseoutTrainingPack.safetyBoundary).toContain('does not auto-publish');
+  });
+
+  it('exposes guarded training record through the runtime API', async () => {
+    const response = await POST(new NextRequest('http://localhost/api/restaurant-agent/runtime', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'shift-closeout-record-training',
+        restaurant: 'API Record Bistro',
+        offer: 'Dinner set',
+      }),
+    }));
+    const payload = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(payload.shiftCloseoutTrainingRecordAttempt.payloadShape).toBe('restaurant-shift-closeout-training-record-attempt-v1');
+    expect(payload.shiftCloseoutTrainingRecordAttempt.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.shiftCloseoutTrainingRecordAttempt.safetyBoundary).toContain('writes only accepted closeout training records');
   });
 });

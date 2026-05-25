@@ -70,7 +70,7 @@ import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-
 import { buildRestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
 import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import { buildRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
-import { buildRestaurantShiftCloseoutTrainingPack } from '@/lib/restaurant-shift-closeout-training-pack';
+import { buildRestaurantShiftCloseoutTrainingPack, buildRestaurantShiftCloseoutTrainingRecordAttempt, selectRecordableShiftTrainingDrafts } from '@/lib/restaurant-shift-closeout-training-pack';
 import { listRestaurantShiftAutopilotRuns, runRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot-run-store';
 import { buildRestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
 import { buildRestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
@@ -1355,6 +1355,77 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
     }, { status: shiftCloseoutTrainingPack.summary.canRecordTraining ? 200 : 409 });
+  }
+
+  if (body.action === 'shift-closeout-record-training') {
+    const rows = Array.isArray(body.rows) ? body.rows as RestaurantPosImportRow[] : undefined;
+    const posImport = rows ? buildRestaurantPosImportReport({
+      rows,
+      eventId: typeof body.eventId === 'string' ? body.eventId : undefined,
+    }) : undefined;
+    const now = new Date();
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+      runtimeProbe,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness, now });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue(now);
+    const postRunReviewPack = buildRestaurantPostRunReviewPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      queue: storeManagerTaskQueue,
+      runs,
+      receipts,
+      readiness,
+      posImports: posImport ? [posImport] : [],
+      target: body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+        ? body.runtimeTarget
+        : 'openclaw',
+      runtimeProbe,
+      providerReadinessHealth,
+      providerReceiptInbox,
+      now,
+    });
+    const recovery = buildRestaurantAgentRecoveryPlan(runs, receipts, readiness, now);
+    const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger();
+    const shiftCloseoutTrainingPack = buildRestaurantShiftCloseoutTrainingPack({
+      providerReceiptInbox,
+      recovery,
+      postRunReviewPack,
+      capabilityTrainingPlan,
+      now,
+    });
+    const records = selectRecordableShiftTrainingDrafts(shiftCloseoutTrainingPack)
+      .map(draft => recordRestaurantCapabilityTrainingRecord(draft, now));
+    const shiftCloseoutTrainingRecordAttempt = buildRestaurantShiftCloseoutTrainingRecordAttempt({
+      pack: shiftCloseoutTrainingPack,
+      records,
+      now,
+    });
+
+    return NextResponse.json({
+      ok: shiftCloseoutTrainingRecordAttempt.ok,
+      shiftCloseoutTrainingRecordAttempt,
+      shiftCloseoutTrainingPack,
+      trainingRecords: listRestaurantCapabilityTrainingRecords(),
+      capabilityTrainingPlan: buildRestaurantCapabilityTrainingPlanFromLedger(),
+      postRunReviewPack,
+      providerReceiptInbox,
+      recovery,
+      posImport,
+      runs,
+      receipts,
+    }, { status: shiftCloseoutTrainingRecordAttempt.ok ? 201 : 409 });
   }
 
   if (body.action === 'command-route') {

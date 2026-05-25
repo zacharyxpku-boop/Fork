@@ -51,7 +51,7 @@ import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-u
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-autopilot-run-store';
-import type { RestaurantShiftCloseoutTrainingPack } from '@/lib/restaurant-shift-closeout-training-pack';
+import type { RestaurantShiftCloseoutTrainingPack, RestaurantShiftCloseoutTrainingRecordAttempt } from '@/lib/restaurant-shift-closeout-training-pack';
 import type { RestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
 import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
 import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shift-sandbox-forward';
@@ -262,6 +262,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftAutopilot?: RestaurantShiftAutopilot;
     shiftAutopilotRun?: RestaurantShiftAutopilotRunRecord;
     shiftCloseoutTrainingPack?: RestaurantShiftCloseoutTrainingPack;
+    shiftCloseoutTrainingRecordAttempt?: RestaurantShiftCloseoutTrainingRecordAttempt;
     shiftFirstForwardableRun?: RestaurantShiftFirstForwardableRun;
     shiftProviderHandoff?: RestaurantShiftProviderHandoff;
     shiftSandboxAcceptance?: RestaurantShiftSandboxAcceptance;
@@ -2446,6 +2447,58 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const recordShiftCloseoutTraining = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Recording accepted Shift Closeout training...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'shift-closeout-record-training',
+          runtimeTarget: 'openclaw',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+          rows: [
+            {
+              businessDate: '2026-05-23',
+              storeName: runtimeIntake.restaurant,
+              offerName: runtimeIntake.offer,
+              channel: 'group-buy coupon',
+              couponClaimCount: 38,
+              redemptionCount: 21,
+              grossSales: 2180,
+              orderCount: 24,
+              inventoryUsed: 21,
+            },
+          ],
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftCloseoutTrainingRecordAttempt?.ok ? 'queued' : 'blocked',
+        message: `Shift Closeout Training Record: ${payload?.shiftCloseoutTrainingRecordAttempt?.verdict || 'unknown'}; recorded ${payload?.shiftCloseoutTrainingRecordAttempt?.summary?.recorded ?? 0}, rejected ${payload?.shiftCloseoutTrainingRecordAttempt?.summary?.rejected ?? 0}.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        posImport: payload?.posImport || previous.posImport,
+        shiftCloseoutTrainingPack: payload?.shiftCloseoutTrainingPack || previous.shiftCloseoutTrainingPack,
+        shiftCloseoutTrainingRecordAttempt: payload?.shiftCloseoutTrainingRecordAttempt || previous.shiftCloseoutTrainingRecordAttempt,
+        postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        recovery: payload?.recovery || previous.recovery,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        capabilityTrainingRecords: payload?.trainingRecords || previous.capabilityTrainingRecords,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift Closeout training record is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -2998,6 +3051,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     } satisfies Pick<RestaurantShiftAutopilot, 'payloadShape' | 'summary' | 'steps' | 'nowQueue' | 'nextWakeups' | 'providerQueue' | 'evidenceQueue' | 'operatingPolicy' | 'safetyBoundary'>;
   const commandShiftAutopilotRun = dispatchState.shiftAutopilotRun;
   const commandShiftCloseoutTrainingPack = dispatchState.shiftCloseoutTrainingPack;
+  const commandShiftCloseoutTrainingRecordAttempt = dispatchState.shiftCloseoutTrainingRecordAttempt;
   const commandShiftFirstForwardableRun = dispatchState.shiftFirstForwardableRun;
   const commandShiftProviderHandoff = dispatchState.shiftProviderHandoff;
   const commandShiftSandboxAcceptance = dispatchState.shiftSandboxAcceptance;
@@ -3588,6 +3642,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Closeout + Train
                         </button>
+                        <button
+                          className="ml-2 mt-3 border border-emerald-200/70 px-3 py-2 text-xs font-black text-emerald-100 transition hover:bg-emerald-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={recordShiftCloseoutTraining}
+                          type="button"
+                        >
+                          Record Training
+                        </button>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
                         <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -3956,6 +4018,48 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                           ))}
                         </div>
                         <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftCloseoutTrainingPack.safetyBoundary}</p>
+                      </div>
+                    ) : null}
+                    {commandShiftCloseoutTrainingRecordAttempt ? (
+                      <div className="mt-3 border border-emerald-200/25 bg-emerald-200/[0.05] p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/70">shift closeout training record</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftCloseoutTrainingRecordAttempt.verdict}</h5>
+                            <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                              {commandShiftCloseoutTrainingRecordAttempt.payloadShape} / {commandShiftCloseoutTrainingRecordAttempt.nextAction}
+                            </p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-4 xl:min-w-[520px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingRecordAttempt.summary.recordableDrafts}</div>
+                              <p className="mt-1 text-white/55">recordable</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingRecordAttempt.summary.recorded}</div>
+                              <p className="mt-1 text-white/55">recorded</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingRecordAttempt.summary.rejected}</div>
+                              <p className="mt-1 text-white/55">rejected</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingRecordAttempt.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">claim</p>
+                            </div>
+                          </div>
+                        </div>
+                        {commandShiftCloseoutTrainingRecordAttempt.records.slice(0, 3).map(record => (
+                          <p className="mt-2 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/65" key={record.recordId}>
+                            {record.accepted ? 'accepted' : 'rejected'}: {record.capabilityId} / {record.name}
+                          </p>
+                        ))}
+                        {commandShiftCloseoutTrainingRecordAttempt.rejectedDrafts.slice(0, 2).map(draft => (
+                          <p className="mt-2 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-amber-100/60" key={`${draft.capabilityId}-${draft.name}`}>
+                            waiting: {draft.capabilityId} / {draft.reason}
+                          </p>
+                        ))}
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftCloseoutTrainingRecordAttempt.safetyBoundary}</p>
                       </div>
                     ) : null}
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>
