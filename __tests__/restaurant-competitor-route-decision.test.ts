@@ -19,6 +19,17 @@ describe('restaurant competitor route decision', () => {
     expect(decision.summary.trainingItems).toBeGreaterThan(0);
     expect(decision.summary.externalRequired).toBeGreaterThan(0);
     expect(decision.summary.canClaimFullCompetitorParity).toBe(false);
+    expect(decision.referenceModels.map(model => model.id)).toEqual([
+      'kuaizi-platform',
+      'shaozi-claw-cloud',
+      'lobu-browser-agent',
+    ]);
+    expect(decision.finalShape.productBase).toBe('kuaizi-style-platform-spine');
+    expect(decision.finalShape.operatorLayer).toBe('shaozi-claw-cloud-style-ai-employee-workbench');
+    expect(decision.finalShape.runtimeLayer).toBe('lobu-openclaw-hermes-browser-agent');
+    expect(decision.finalShape.reason).toContain('纯龙虾更 fancy 但不够产品化');
+    expect(decision.finalShape.firstScreenRule).toContain('填什么');
+    expect(decision.referenceModels.find(model => model.id === 'shaozi-claw-cloud')?.uiUxToReplicate).toContain('单击默认路径');
     expect(decision.options.map(option => option.id)).toEqual([
       'platform-spine',
       'claw-experience',
@@ -49,6 +60,8 @@ describe('restaurant competitor route decision', () => {
     expect(payload.competitorRouteDecision.payloadShape).toBe('restaurant-competitor-route-decision-v1');
     expect(payload.competitorRouteDecision.summary.canClaimFullCompetitorParity).toBe(false);
     expect(payload.competitorRouteDecision.options.find((item: { id: string }) => item.id === 'claw-experience')).toBeTruthy();
+    expect(payload.competitorRouteDecision.referenceModels.find((item: { id: string }) => item.id === 'lobu-browser-agent').recommendedUse).toBe('runtime-tool');
+    expect(payload.competitorRouteDecision.finalShape.productBase).toBe('kuaizi-style-platform-spine');
     expect(serialized).not.toContain('secret-value');
     expect(serialized).not.toContain('cookie');
     expect(serialized).not.toContain('token');

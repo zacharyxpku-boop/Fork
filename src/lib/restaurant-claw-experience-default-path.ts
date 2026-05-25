@@ -41,7 +41,7 @@ export type RestaurantClawExperienceDefaultPath = {
   customerVisibleProof: string[];
   trainingNow: string[];
   providerNeeded: string[];
-  routeDecision: Pick<RestaurantCompetitorRouteDecision, 'payloadShape' | 'finalTarget' | 'answerForOwner' | 'summary' | 'providerKeyChecklist' | 'merchantInputsNeeded' | 'safetyBoundary'>;
+  routeDecision: Pick<RestaurantCompetitorRouteDecision, 'payloadShape' | 'finalTarget' | 'answerForOwner' | 'summary' | 'referenceModels' | 'finalShape' | 'providerKeyChecklist' | 'merchantInputsNeeded' | 'safetyBoundary'>;
   skillWorkbench: Pick<RestaurantClawSkillWorkbench, 'payloadShape' | 'mode' | 'summary' | 'deliverables' | 'externalRequired' | 'safetyBoundary'>;
   trialWorkflow: Pick<RestaurantTrialWorkflowPack, 'payloadShape' | 'summary' | 'decisionBrief' | 'evidenceChecklist' | 'trainingQueue' | 'externalUnlocks' | 'safetyBoundary'>;
   activationCockpit: Pick<RestaurantActivationCockpit, 'payloadShape' | 'summary' | 'answerForCustomer' | 'safetyBoundary'>;
@@ -199,6 +199,8 @@ export async function buildRestaurantClawExperienceDefaultPath(input: Restaurant
       finalTarget: routeDecision.finalTarget,
       answerForOwner: routeDecision.answerForOwner,
       summary: routeDecision.summary,
+      referenceModels: routeDecision.referenceModels,
+      finalShape: routeDecision.finalShape,
       providerKeyChecklist: routeDecision.providerKeyChecklist,
       merchantInputsNeeded: routeDecision.merchantInputsNeeded,
       safetyBoundary: routeDecision.safetyBoundary,

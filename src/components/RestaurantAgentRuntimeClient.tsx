@@ -4909,6 +4909,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <p className="mt-2 max-w-4xl text-[11px] leading-4 text-white/50">
                         Decide what to copy exactly, what to upgrade, what can ship internally, and which Provider keys or merchant data contracts are still required.
                       </p>
+                      <p className="mt-2 max-w-4xl text-[11px] leading-4 text-fuchsia-100/60">
+                        final product shape: product base = kuaizi-style-platform-spine, operator layer = shaozi-claw-cloud-style-ai-employee-workbench, runtime layer = lobu-openclaw-hermes-browser-agent. do not copy a pure fancy browser agent; copy the UI/UX of one-click default path, capability cards, evidence receipts and provider gates.
+                      </p>
                     </div>
                     <button
                       className="border border-fuchsia-200/50 px-3 py-2 text-xs font-black text-fuchsia-100 transition hover:bg-fuchsia-200/10 disabled:cursor-not-allowed disabled:opacity-60"
@@ -4944,6 +4947,43 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         </div>
                       </div>
                       <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-xs leading-5 text-fuchsia-100/70">{dispatchState.competitorRouteDecision.answerForOwner}</p>
+                      <div className="mt-3 border border-white/10 bg-white/[0.04] p-3">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">final product shape</div>
+                        <p className="mt-2 text-xs leading-5 text-fuchsia-100/75">{dispatchState.competitorRouteDecision.finalShape.reason}</p>
+                        <div className="mt-3 grid gap-2 text-[11px] md:grid-cols-4">
+                          <div className="border border-white/10 bg-stone-950/45 p-2">
+                            <div className="font-mono text-white">{dispatchState.competitorRouteDecision.finalShape.productBase}</div>
+                            <p className="mt-1 text-white/45">product base</p>
+                          </div>
+                          <div className="border border-white/10 bg-stone-950/45 p-2">
+                            <div className="font-mono text-white">{dispatchState.competitorRouteDecision.finalShape.operatorLayer}</div>
+                            <p className="mt-1 text-white/45">operator layer</p>
+                          </div>
+                          <div className="border border-white/10 bg-stone-950/45 p-2">
+                            <div className="font-mono text-white">{dispatchState.competitorRouteDecision.finalShape.runtimeLayer}</div>
+                            <p className="mt-1 text-white/45">runtime layer</p>
+                          </div>
+                          <div className="border border-white/10 bg-stone-950/45 p-2">
+                            <div className="font-mono text-white">{dispatchState.competitorRouteDecision.finalShape.dataLayer}</div>
+                            <p className="mt-1 text-white/45">data layer</p>
+                          </div>
+                        </div>
+                        <p className="mt-3 text-[11px] leading-4 text-amber-100/65">{dispatchState.competitorRouteDecision.finalShape.firstScreenRule}</p>
+                      </div>
+                      <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                        {dispatchState.competitorRouteDecision.referenceModels.map(model => (
+                          <div className="border border-white/10 bg-stone-950/50 p-3" key={model.id}>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-xs font-black text-white">{model.label}</span>
+                              <span className="text-[11px] text-fuchsia-100/70">{model.recommendedUse} / {model.fitScore}</span>
+                            </div>
+                            <p className="mt-2 text-[11px] leading-4 text-emerald-100/60">adopt: {model.adopt.slice(0, 3).join(' / ')}</p>
+                            <p className="mt-1 text-[11px] leading-4 text-rose-100/60">do not copy: {model.doNotCopyBlindly.slice(0, 2).join(' / ')}</p>
+                            <p className="mt-1 text-[11px] leading-4 text-cyan-100/60">UI/UX: {model.uiUxToReplicate.slice(0, 3).join(' / ')}</p>
+                            <p className="mt-1 text-[11px] leading-4 text-amber-100/60">external: {model.externalRequired.slice(0, 3).join(' / ')}</p>
+                          </div>
+                        ))}
+                      </div>
                       <div className="mt-3 grid gap-2 lg:grid-cols-4">
                         {dispatchState.competitorRouteDecision.options.map(option => (
                           <div className="border border-white/10 bg-stone-950/50 p-3" key={option.id}>

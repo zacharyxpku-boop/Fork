@@ -18,6 +18,19 @@ export type RestaurantCompetitorRouteDecisionOption = {
   acceptanceProof: string[];
 };
 
+export type RestaurantCompetitorReferenceModel = {
+  id: 'kuaizi-platform' | 'shaozi-claw-cloud' | 'lobu-browser-agent';
+  label: string;
+  recommendedUse: 'product-base' | 'operator-experience' | 'runtime-tool';
+  fitScore: number;
+  adopt: string[];
+  doNotCopyBlindly: string[];
+  uiUxToReplicate: string[];
+  capabilityToOwn: string[];
+  internalTraining: string[];
+  externalRequired: string[];
+};
+
 export type RestaurantCompetitorRouteDecision = {
   ok: true;
   payloadShape: 'restaurant-competitor-route-decision-v1';
@@ -35,6 +48,15 @@ export type RestaurantCompetitorRouteDecision = {
     canClaimFullCompetitorParity: false;
   };
   options: RestaurantCompetitorRouteDecisionOption[];
+  referenceModels: RestaurantCompetitorReferenceModel[];
+  finalShape: {
+    productBase: 'kuaizi-style-platform-spine';
+    operatorLayer: 'shaozi-claw-cloud-style-ai-employee-workbench';
+    runtimeLayer: 'lobu-openclaw-hermes-browser-agent';
+    dataLayer: 'restaurant-pos-redemption-member-contracts';
+    reason: string;
+    firstScreenRule: string;
+  };
   nextBuildOrder: Array<{
     id: string;
     owner: 'product' | 'runtime-admin' | 'ops' | 'merchant';
@@ -59,6 +81,10 @@ function unique(values: string[], limit = 18): string[] {
 
 function countUnique(options: RestaurantCompetitorRouteDecisionOption[], field: 'internalCanShipNow' | 'needsTraining' | 'externalRequired') {
   return unique(options.flatMap(item => item[field]), 99).length;
+}
+
+function countUniqueReference(referenceModels: RestaurantCompetitorReferenceModel[], field: 'internalTraining' | 'externalRequired') {
+  return unique(referenceModels.flatMap(item => item[field]), 99).length;
 }
 
 function providerKeysFrom(external: string[]): string[] {
@@ -153,8 +179,48 @@ export async function buildRestaurantCompetitorRouteDecision(input: RestaurantTr
     },
   ];
 
+  const referenceModels: RestaurantCompetitorReferenceModel[] = [
+    {
+      id: 'kuaizi-platform',
+      label: '筷子科技式平台级经营工厂',
+      recommendedUse: 'product-base',
+      fitScore: 92,
+      adopt: ['任务流水线', '批量生产/分发/回流结构', '客户审核与结果入库', '平台级权限和审计'],
+      doNotCopyBlindly: ['不要把视频工厂范式硬套到餐厅经营分析', '不要用大数字包装未接入的自动化'],
+      uiUxToReplicate: ['多列任务看板', '状态/负责人/证据/下一步', 'Provider gate 明确可见', '结果回写入口'],
+      capabilityToOwn: ['门店经营链路', '内容到发布证明', '团购/核销/POS 回流', '多角色交付'],
+      internalTraining: ['餐饮任务模板', '门店活动生产队列', '证据回写规范'],
+      externalRequired: ['平台账号授权', '发布/分发 provider', '真实回流数据源'],
+    },
+    {
+      id: 'shaozi-claw-cloud',
+      label: '勺子 Claw / Cloud 式 AI 员工工作台',
+      recommendedUse: 'operator-experience',
+      fitScore: 88,
+      adopt: ['AI 员工感', '常驻任务/记忆/工具', '一键生成并推进下一步', '可见训练和能力缺口'],
+      doNotCopyBlindly: ['不要只做炫技聊天框', '不要让用户猜下一步点哪里', '不要把未授权外部动作显示成已执行'],
+      uiUxToReplicate: ['命令输入区', '能力卡片', '训练/Provider 缺口', '回执和记忆状态', '单击默认路径'],
+      capabilityToOwn: ['Claw-style skill workbench', 'resident agent mission control', 'memory follow-up', 'provider receipt lifecycle'],
+      internalTraining: ['餐饮技能样例', '拒绝/阻断样例', '店长跟进任务样例', '回执入库样例'],
+      externalRequired: ['浏览器 runtime', 'callback secret', '商户账号授权', '安全隔离 profile'],
+    },
+    {
+      id: 'lobu-browser-agent',
+      label: '龙虾/Lobu/OpenClaw 式常驻浏览器 Agent',
+      recommendedUse: 'runtime-tool',
+      fitScore: 74,
+      adopt: ['隔离浏览器', '任务执行事件', '截图证明', '失败恢复', '主动跟进'],
+      doNotCopyBlindly: ['不要把 runtime 当完整产品', '不要让客户直接面对 agent 技术细节', '不要绕过平台授权或验证码/登录边界'],
+      uiUxToReplicate: ['runner health', 'sandbox submit', 'signed callback', 'receipt inbox', 'failure recovery'],
+      capabilityToOwn: ['browser gateway pack', 'runner loop pack', 'sandbox submit workbench', 'receipt lifecycle'],
+      internalTraining: ['运行事件样例', '失败恢复样例', '截图证明样例'],
+      externalRequired: ['runtime URL', 'runtime API key', 'browser profile id', 'merchant platform login', 'callback signature secret'],
+    },
+  ];
+
   const allExternal = unique([
     ...options.flatMap(item => item.externalRequired),
+    ...referenceModels.flatMap(item => item.externalRequired),
     ...trainingBlueprint.externalRequired,
     ...trainingPlan.externalSetupRequests.map(item => item.provider),
   ], 32);
@@ -170,12 +236,21 @@ export async function buildRestaurantCompetitorRouteDecision(input: RestaurantTr
     summary: {
       options: options.length,
       internalCanShipNow: countUnique(options, 'internalCanShipNow'),
-      trainingItems: countUnique(options, 'needsTraining'),
+      trainingItems: countUnique(options, 'needsTraining') + countUniqueReference(referenceModels, 'internalTraining'),
       externalRequired: allExternal.length,
       setupRecordsRemembered: setupState.summary.records,
       canClaimFullCompetitorParity: false,
     },
     options,
+    referenceModels,
+    finalShape: {
+      productBase: 'kuaizi-style-platform-spine',
+      operatorLayer: 'shaozi-claw-cloud-style-ai-employee-workbench',
+      runtimeLayer: 'lobu-openclaw-hermes-browser-agent',
+      dataLayer: 'restaurant-pos-redemption-member-contracts',
+      reason: '餐饮客户先要稳定经营闭环，再要 AI 员工体验，最后才需要常驻浏览器执行。纯龙虾更 fancy 但不够产品化；纯平台后台更稳但缺少 AI 员工吸引力；纯 Claw 体验如果没有数据和回执会变成演示。',
+      firstScreenRule: '第一屏必须让客户一眼看到：填什么、点哪个默认路径、内部马上产出什么、哪些外部 Provider/key/授权会阻断真实自动化。',
+    },
     nextBuildOrder: [
       {
         id: 'owner-route-board',

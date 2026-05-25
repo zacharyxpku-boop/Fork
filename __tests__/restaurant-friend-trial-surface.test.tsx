@@ -157,6 +157,12 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Competitor Route Decision');
     expect(html).toContain('Build Route Decision');
     expect(html).toContain('Platform spine + Claw experience + runtime/data contracts');
+    expect(html).toContain('final product shape');
+    expect(html).toContain('product base');
+    expect(html).toContain('operator layer');
+    expect(html).toContain('runtime layer');
+    expect(html).toContain('do not copy');
+    expect(html).toContain('UI/UX');
     expect(html).toContain('Competitor Parity Board');
     expect(html).toContain('Persistent Browser Agent');
     expect(html).toContain('Auto Publish');

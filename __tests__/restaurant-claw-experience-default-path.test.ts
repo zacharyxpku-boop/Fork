@@ -34,6 +34,12 @@ describe('restaurant claw experience default path', () => {
     ]);
     expect(path.quickActions.map(action => action.action)).toContain('claw-skill-workbench');
     expect(path.routeDecision.finalTarget).toBe('platform-spine-plus-claw-experience-plus-restaurant-data-contracts');
+    expect(path.routeDecision.referenceModels.map(model => model.id)).toEqual([
+      'kuaizi-platform',
+      'shaozi-claw-cloud',
+      'lobu-browser-agent',
+    ]);
+    expect(path.routeDecision.finalShape.reason).toContain('纯龙虾更 fancy 但不够产品化');
     expect(path.skillWorkbench.summary.runnableNow).toBeGreaterThan(0);
     expect(path.trialWorkflow.summary.canAutoExecuteExternally).toBe(false);
     expect(path.providerNeeded.length).toBeGreaterThan(0);
