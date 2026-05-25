@@ -933,6 +933,16 @@ export async function POST(request: NextRequest) {
       constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
       evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
     });
+    const controlledTrialRun = await runRestaurantControlledTrialRun({
+      target: 'openclaw',
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      owner: 'restaurant-ops',
+      signalType: 'visit-intent',
+      reservationCount: 3,
+      couponClaimCount: 9,
+      visitIntentCount: 6,
+    });
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -955,6 +965,9 @@ export async function POST(request: NextRequest) {
       taskProviderHandoff: buildRestaurantTaskProviderHandoff({ queue: storeManagerTaskQueue }),
       providerSetupPack,
       externalUnlockRequestPack,
+      controlledTrialRun,
+      runs: listRestaurantAgentRuns(),
+      receipts: listRestaurantAgentReceipts(),
     });
   }
 

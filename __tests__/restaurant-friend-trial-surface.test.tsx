@@ -202,6 +202,11 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Ready inside');
     expect(html).toContain('Provider gated');
     expect(html).toContain('Data gated');
+    expect(html).toContain('controlled run receipt');
+    expect(html).toContain('Start Default Path also runs one local simulator receipt.');
+    expect(html).toContain('callback');
+    expect(html).toContain('run health');
+    expect(html).toContain('business signal');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');

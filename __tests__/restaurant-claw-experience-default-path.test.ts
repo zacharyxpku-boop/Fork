@@ -63,6 +63,10 @@ describe('restaurant claw experience default path', () => {
     expect(payload.staffNotificationHandoff.payloadShape).toBe('restaurant-staff-notification-handoff-v1');
     expect(payload.providerSetupPack.payloadShape).toBe('restaurant-provider-setup-pack-v1');
     expect(payload.externalUnlockRequestPack.payloadShape).toBe('restaurant-external-unlock-request-pack-v1');
+    expect(payload.controlledTrialRun.payloadShape).toBe('restaurant-controlled-trial-run-v1');
+    expect(payload.controlledTrialRun.mode).toBe('local-simulator');
+    expect(payload.controlledTrialRun.simulation.receipt.status).toBe('accepted');
+    expect(payload.receipts.length).toBeGreaterThan(0);
     expect(payload.providerSetupPack.summary.readyForExternalExecution).toBe(false);
     expect(payload.externalUnlockRequestPack.summary.canClaimExternalAutomation).toBe(false);
     expect(serialized).not.toContain('secret-value');

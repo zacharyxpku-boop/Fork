@@ -449,6 +449,11 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
         providerSetupPack: payload?.providerSetupPack || previous.providerSetupPack,
         externalUnlockRequestPack: payload?.externalUnlockRequestPack || previous.externalUnlockRequestPack,
+        controlledTrialRun: payload?.controlledTrialRun || previous.controlledTrialRun,
+        runHealth: payload?.controlledTrialRun?.runHealth || previous.runHealth,
+        businessSignals: payload?.controlledTrialRun?.businessSignals || previous.businessSignals,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Default Claw-style path is temporarily unavailable.' }));
@@ -6832,6 +6837,50 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={item.label}>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">{item.label}</div>
                     <div className={`mt-1 text-xs font-black ${item.tone}`}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 border border-emerald-200/15 bg-emerald-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/65">controlled run receipt</div>
+                  <p className="mt-1 text-xs font-black text-white">Start Default Path also runs one local simulator receipt.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This proves the internal callback, receipt, run health and business-signal loop without logging in, publishing, redeeming coupons or claiming real operating results.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-5">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.controlledTrialRun?.verdict || 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">callback</div>
+                  <div className="mt-1 text-xs font-black text-cyan-100/75">{dispatchState.controlledTrialRun?.simulation.callback.signatureVerified ? 'verified' : 'pending'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">receipt</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.controlledTrialRun?.simulation.receipt.status || 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">run health</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.controlledTrialRun?.runHealth.summary.accepted ?? 0} accepted</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">business signal</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.controlledTrialRun?.businessSignals.summary.visitIntent ?? 0} visit intent</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.controlledTrialRun?.operatorCloseout || [
+                  { owner: 'restaurant-ops', action: 'created after Start Default Path: review the accepted simulated receipt and decide the next provider unlock.', evidence: 'local simulator receipt' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={`${item.owner}-${item.evidence}`}>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">{item.owner}</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/60">{item.action}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-emerald-100/55">evidence: {item.evidence}</p>
                   </div>
                 ))}
               </div>
