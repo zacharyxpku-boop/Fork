@@ -116,5 +116,8 @@ describe('restaurant provider setup state store', () => {
     expect(center.providerSetupState.provided.envKeys).toEqual(expect.arrayContaining(pack.setupStateProjection.configuredEnvKeys.slice(0, 2)));
     expect(center.providerSetupWizard.summary.configured).toBeGreaterThan(0);
     expect(center.providerSetupWizard.handoffPayload.configuredEnvKeys).toEqual(expect.arrayContaining(pack.setupStateProjection.configuredEnvKeys.slice(0, 2)));
+    expect(center.providerUnlockLadder.summary.setupEvidenceSigned).toBeGreaterThan(0);
+    expect(center.providerUnlockLadder.items.map(item => item.stage)).toContain('setup-evidence-signed');
+    expect(center.providerUnlockLadder.summary.canClaimExternalAutomation).toBe(false);
   });
 });

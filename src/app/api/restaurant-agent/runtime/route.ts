@@ -59,6 +59,7 @@ import { buildRestaurantProviderSetupPack } from '@/lib/restaurant-provider-setu
 import { buildRestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import { buildRestaurantProviderSetupStateSummary, recordRestaurantProviderSetupState } from '@/lib/restaurant-provider-setup-state-store';
 import { buildRestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
+import { buildRestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
@@ -1616,12 +1617,17 @@ export async function POST(request: NextRequest) {
 
   if (body.action === 'provider-readiness-health') {
     const stateSummary = buildRestaurantProviderSetupStateSummary();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState: stateSummary,
+    });
     return NextResponse.json({
       ok: true,
-      providerReadinessHealth: await buildRestaurantProviderReadinessHealth({
-        providerSetupState: stateSummary,
-      }),
+      providerReadinessHealth,
       providerSetupState: stateSummary,
+      providerUnlockLadder: buildRestaurantProviderUnlockLadder({
+        setupState: stateSummary,
+        health: providerReadinessHealth,
+      }),
     });
   }
 
@@ -1694,6 +1700,9 @@ export async function POST(request: NextRequest) {
       notes: Array.isArray(body.notes) ? body.notes : undefined,
       submittedBy: typeof body.submittedBy === 'string' ? body.submittedBy : undefined,
     });
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState: result.summary,
+    });
     return NextResponse.json({
       ok: true,
       providerSetupStateRecord: result.record,
@@ -1703,8 +1712,10 @@ export async function POST(request: NextRequest) {
         offer: typeof body.offer === 'string' ? body.offer : undefined,
         provided: result.summary.provided,
       }),
-      providerReadinessHealth: await buildRestaurantProviderReadinessHealth({
-        providerSetupState: result.summary,
+      providerReadinessHealth,
+      providerUnlockLadder: buildRestaurantProviderUnlockLadder({
+        setupState: result.summary,
+        health: providerReadinessHealth,
       }),
     }, { status: 201 });
   }

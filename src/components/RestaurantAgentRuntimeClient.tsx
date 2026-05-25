@@ -47,6 +47,7 @@ import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setu
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
+import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
@@ -244,6 +245,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerSetupWizard?: RestaurantProviderSetupWizard;
     providerSetupState?: RestaurantProviderSetupStateSummary;
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
+    providerUnlockLadder?: RestaurantProviderUnlockLadder;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -938,6 +940,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         message: `Provider health checked: ${payload?.providerReadinessHealth?.summary?.healthReady ?? 0}/${payload?.providerReadinessHealth?.summary?.items ?? 0} ready, ${payload?.providerReadinessHealth?.summary?.rememberedNotProbed ?? 0} remembered but not probed.`,
         providerReadinessHealth: payload?.providerReadinessHealth,
         providerSetupState: payload?.providerSetupState,
+        providerUnlockLadder: payload?.providerUnlockLadder,
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Provider readiness health is temporarily unavailable.' });
@@ -1077,6 +1080,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerSetupState: payload?.providerSetupState,
         providerSetupWizard: payload?.providerSetupWizard,
         providerReadinessHealth: payload?.providerReadinessHealth,
+        providerUnlockLadder: payload?.providerUnlockLadder,
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Provider setup state save is temporarily unavailable.' });
@@ -2647,6 +2651,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderReadinessHealth =
     dispatchState.commandCenter?.providerReadinessHealth ||
     dispatchState.providerReadinessHealth;
+  const commandProviderUnlockLadder =
+    dispatchState.commandCenter?.providerUnlockLadder ||
+    dispatchState.providerUnlockLadder;
   const commandChannelDeliveryReport = dispatchState.commandCenter?.channelDeliveryReport || dispatchState.channelDeliveryReport;
   const commandChannelDeliveryAttempt = dispatchState.channelDeliveryAttempt;
   const commandChannelScheduleRun = dispatchState.channelScheduleRun;
@@ -4165,6 +4172,56 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 Check Provider Health
               </button>
             </div>
+            {commandProviderUnlockLadder ? (
+              <div className="mt-3 border border-cyan-200/25 bg-cyan-200/[0.05] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">Provider Unlock Ladder</div>
+                    <p className="mt-1 max-w-3xl text-xs leading-5 text-white/55">
+                      Shows which competitor-grade abilities are only internal, which have signed setup evidence, and which have live provider health. Remembered evidence is not treated as automation.
+                    </p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-5 lg:min-w-[560px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">capabilities</div>
+                      <div className="mt-1 font-mono text-white">{commandProviderUnlockLadder.summary.capabilities}</div>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">health ready</div>
+                      <div className="mt-1 font-mono text-white">{commandProviderUnlockLadder.summary.providerHealthReady}</div>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">signed evidence</div>
+                      <div className="mt-1 font-mono text-white">{commandProviderUnlockLadder.summary.setupEvidenceSigned}</div>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">blocked</div>
+                      <div className="mt-1 font-mono text-white">{commandProviderUnlockLadder.summary.externalBlocked}</div>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">claim external</div>
+                      <div className="mt-1 font-mono text-white">{commandProviderUnlockLadder.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  {commandProviderUnlockLadder.items.map(item => (
+                    <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-cyan-100/70">{item.stage}</span>
+                        <span className="text-[10px] text-white/35">{item.setupEvidence.length ? 'signed' : 'no-signoff'}</span>
+                      </div>
+                      <p className="mt-1 text-xs font-black text-white">{item.label}</p>
+                      <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/45">{item.nextAction}</p>
+                      <p className="mt-1 truncate text-[11px] text-white/35" title={item.stillNeeds.join(' / ')}>
+                        needs: {item.stillNeeds.join(' / ') || 'none'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.05] p-2 text-[11px] leading-4 text-white/45">{commandProviderUnlockLadder.safetyBoundary}</p>
+              </div>
+            ) : null}
             <div className="mt-3 grid gap-2 lg:grid-cols-5">
               {(commandProviderSetupWizard?.sections || []).map(section => (
                 <div className="border border-white/10 bg-white/[0.04] p-2" key={section.id}>

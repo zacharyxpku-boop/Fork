@@ -18,6 +18,7 @@ import { buildRestaurantProviderSetupPack, type RestaurantProviderSetupPack } fr
 import { buildRestaurantProviderSetupWizard, type RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import { buildRestaurantProviderSetupStateSummary, type RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import { buildRestaurantProviderReadinessHealth, type RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
+import { buildRestaurantProviderUnlockLadder, type RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import { buildRestaurantPublicIntelligenceBrief, type RestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantBenchmarkStrategy, type RestaurantBenchmarkStrategy } from '@/lib/restaurant-benchmark-strategy';
 import { buildRestaurantActivationCockpit, type RestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
@@ -89,6 +90,7 @@ export type RestaurantAgentCommandCenter = {
   providerSetupWizard: Pick<RestaurantProviderSetupWizard, 'payloadShape' | 'summary' | 'sections' | 'handoffPayload' | 'externalRequired' | 'safetyBoundary'>;
   providerSetupState: Pick<RestaurantProviderSetupStateSummary, 'payloadShape' | 'summary' | 'provided' | 'latest' | 'safetyBoundary'>;
   providerReadinessHealth: Pick<RestaurantProviderReadinessHealth, 'payloadShape' | 'summary' | 'items' | 'nextActions' | 'externalRequired' | 'safetyBoundary'>;
+  providerUnlockLadder: Pick<RestaurantProviderUnlockLadder, 'payloadShape' | 'summary' | 'items' | 'nextExternalAsks' | 'safetyBoundary'>;
   externalWizard: Pick<RestaurantExternalExecutionWizard, 'payloadShape' | 'verdict' | 'canForward' | 'summary' | 'steps' | 'safetyBoundary'>;
   operatorBrief: string[];
   externalRequired: string[];
@@ -214,6 +216,10 @@ export async function buildRestaurantAgentCommandCenter(input: RestaurantTrialIn
     fetcher: input.fetcher,
     providerSetupState,
     now,
+  });
+  const providerUnlockLadder = buildRestaurantProviderUnlockLadder({
+    setupState: providerSetupState,
+    health: providerReadinessHealth,
   });
   const storeManagerFollowup = buildRestaurantStoreManagerFollowupPack({
     restaurant,
@@ -469,6 +475,13 @@ export async function buildRestaurantAgentCommandCenter(input: RestaurantTrialIn
       nextActions: providerReadinessHealth.nextActions,
       externalRequired: providerReadinessHealth.externalRequired,
       safetyBoundary: providerReadinessHealth.safetyBoundary,
+    },
+    providerUnlockLadder: {
+      payloadShape: providerUnlockLadder.payloadShape,
+      summary: providerUnlockLadder.summary,
+      items: providerUnlockLadder.items,
+      nextExternalAsks: providerUnlockLadder.nextExternalAsks,
+      safetyBoundary: providerUnlockLadder.safetyBoundary,
     },
     externalWizard: {
       payloadShape: externalWizard.payloadShape,
