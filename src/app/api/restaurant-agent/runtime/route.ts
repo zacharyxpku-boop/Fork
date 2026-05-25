@@ -61,6 +61,7 @@ import { buildRestaurantOperatingDataContract } from '@/lib/restaurant-operating
 import { buildRestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import { buildRestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
 import { buildRestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
+import { buildRestaurantPublishExecutionInbox } from '@/lib/restaurant-publish-execution-inbox';
 import { buildRestaurantPosImportReport, type RestaurantPosImportRow } from '@/lib/restaurant-pos-import-validator';
 import { buildRestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-review-pack';
 import { buildRestaurantNextLoopChannelPlan } from '@/lib/restaurant-next-loop-channel-plan';
@@ -1057,6 +1058,13 @@ export async function POST(request: NextRequest) {
     const receipts = listRestaurantAgentReceipts();
     const runnerEvents = listRestaurantBrowserRunnerEvents();
     const readiness = buildRestaurantExternalReadiness();
+    const recovery = buildRestaurantAgentRecoveryPlan(runs, receipts, readiness);
+    const runtimeRunnerLoopPack = buildRestaurantRuntimeRunnerLoopPack({
+      runs,
+      receipts,
+      runnerEvents,
+      readiness,
+    });
     const defaultPathPosRows: RestaurantPosImportRow[] = [
       {
         businessDate: new Date().toISOString().slice(0, 10),
@@ -1169,6 +1177,20 @@ export async function POST(request: NextRequest) {
       nextLoopChannelPlan,
       reputationCloseoutPack,
     });
+    const publishExecutionInbox = buildRestaurantPublishExecutionInbox({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      browserGatewayPack,
+      runtimeRunnerLoopPack,
+      channelDeliveryReport,
+      businessSignals,
+      recovery,
+    });
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -1206,12 +1228,7 @@ export async function POST(request: NextRequest) {
       capabilityTrainingPlan,
       controlledTrialRun,
       browserGatewayPack,
-      runtimeRunnerLoopPack: buildRestaurantRuntimeRunnerLoopPack({
-        runs,
-        receipts,
-        runnerEvents,
-        readiness,
-      }),
+      runtimeRunnerLoopPack,
       posImport,
       businessSignals,
       operatingDataContract,
@@ -1224,6 +1241,8 @@ export async function POST(request: NextRequest) {
       publicIntelligenceBrief,
       reputationCloseoutPack,
       leadCaptureInbox,
+      publishExecutionInbox,
+      recovery,
       runtimeProbe,
       runs,
       receipts,

@@ -41,6 +41,7 @@ import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operatin
 import type { RestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
 import type { RestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
 import type { RestaurantMerchantActivationPacket } from '@/lib/restaurant-merchant-activation-packet';
+import type { RestaurantPublishExecutionInbox } from '@/lib/restaurant-publish-execution-inbox';
 import type { RestaurantExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import type { RestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
 import type { RestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
@@ -272,6 +273,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     operatingInsightReport?: RestaurantOperatingInsightReport;
     platformOperatingSpine?: RestaurantPlatformOperatingSpine;
     merchantActivationPacket?: RestaurantMerchantActivationPacket;
+    publishExecutionInbox?: RestaurantPublishExecutionInbox;
     operatingDataContract?: RestaurantOperatingDataContract;
     providerSetupPack?: RestaurantProviderSetupPack;
     externalUnlockRequestPack?: RestaurantExternalUnlockRequestPack;
@@ -460,6 +462,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         receipts: payload?.receipts || previous.receipts,
         browserGatewayPack: payload?.browserGatewayPack || previous.browserGatewayPack,
         runtimeRunnerLoopPack: payload?.runtimeRunnerLoopPack || previous.runtimeRunnerLoopPack,
+        recovery: payload?.recovery || previous.recovery,
         providerSetupState: payload?.providerSetupState || previous.providerSetupState,
         providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
         providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
@@ -472,6 +475,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         aiCockpit: payload?.aiCockpit || previous.aiCockpit,
         customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
         leadCaptureInbox: payload?.leadCaptureInbox || previous.leadCaptureInbox,
+        publishExecutionInbox: payload?.publishExecutionInbox || previous.publishExecutionInbox,
         voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
         capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
         posImport: payload?.posImport || previous.posImport,
@@ -6966,6 +6970,83 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-sky-100/55">
                 next runner action: {dispatchState.runtimeRunnerLoopPack?.nextBestAction || 'Configure runtime key, callback secret, isolated browser profile and merchant authorization before external browser execution.'}
+              </p>
+            </div>
+            <div className="mt-3 border border-violet-200/15 bg-violet-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/65">publish execution inbox</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now converts publish, browser runner, receipt, recovery and memory work into one execution queue.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  It is the operator-facing layer for auto-publish parity: prepare internally, run through Provider only when allowed, accept proof, then recover or write memory.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.publishExecutionInbox?.verdict || 'provider-unlock-first'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">tasks</div>
+                  <div className="mt-1 text-xs font-black text-violet-100/75">{dispatchState.publishExecutionInbox?.summary.tasks ?? 6}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">ready inside</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.publishExecutionInbox?.summary.readyInternal ?? 1}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">waiting proof</div>
+                  <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.publishExecutionInbox?.summary.waitingProof ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">auto publish</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.publishExecutionInbox?.summary.canClaimAutoPublish ? 'ready' : 'blocked'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">browser execute</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.publishExecutionInbox?.summary.canClaimBrowserExecution ? 'ready' : 'gated'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.publishExecutionInbox?.tasks || [
+                  { id: 'prepare-publish-package', title: 'Prepare publish package and proof slot', status: 'ready-internal', owner: 'ops', lane: 'publish', action: 'Prepare approved content, target platform and proof slot.', evidenceRequired: ['approved content', 'target channel'], stopLine: 'Do not publish before proof is accepted.' },
+                  { id: 'submit-browser-runner', title: 'Submit governed browser runner task', status: 'waiting-provider', owner: 'runtime-admin', lane: 'browser-runner', action: 'Collect runtime URL/key, callback secret, isolated profile and merchant authorization.', evidenceRequired: ['gateway id', 'runtime health'], stopLine: 'Stop on login challenge, captcha or private inbox.' },
+                  { id: 'recover-failed-run', title: 'Recover blocked, stale or failed runner run', status: 'blocked', owner: 'runtime-admin', lane: 'recovery', action: 'Run failure recovery and manual fallback if proof does not arrive.', evidenceRequired: ['blocked reason', 'retry attempt'], stopLine: 'Retry at most twice; never loop platform actions automatically.' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.title}</span>
+                      <span className={item.status === 'ready-internal' || item.status === 'done' ? 'text-[10px] text-emerald-100/70' : item.status === 'waiting-proof' ? 'text-[10px] text-sky-100/70' : item.status === 'waiting-provider' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-violet-100/55">{item.owner} / {item.lane}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.action}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">proof: {item.evidenceRequired.slice(0, 2).join(' / ')}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/50">{item.stopLine}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.publishExecutionInbox?.runnerCommands || [
+                  { action: 'open_public_page', allowed: false, writesTo: 'runner-event', requiredEvidence: ['opened url'], stopIf: ['domain not allowlisted'] },
+                  { action: 'capture_public_proof', allowed: false, writesTo: 'runner-event', requiredEvidence: ['screenshot id'], stopIf: ['private data visible'] },
+                  { action: 'send_signed_receipt', allowed: false, writesTo: 'signed-receipt', requiredEvidence: ['signature'], stopIf: ['callback secret missing'] },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-white/[0.04] p-2" key={item.action}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-white">{item.action}</span>
+                      <span className={item.allowed ? 'text-[10px] text-emerald-100/70' : 'text-[10px] text-rose-100/70'}>{item.allowed ? 'allowed' : 'blocked'}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-violet-100/55">writes: {item.writesTo}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">stop: {item.stopIf.slice(0, 2).join(' / ')}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-violet-100/55">
+                failure recovery: {(dispatchState.publishExecutionInbox?.failureRecovery || [
+                  { nextStep: 'Configure runtime key, callback secret, isolated browser profile and merchant authorization before external browser execution.' },
+                  { nextStep: 'Use manual fallback and import public proof if Provider proof does not arrive.' },
+                ]).slice(0, 3).map(item => item.nextStep).join(' / ')}
               </p>
             </div>
             <div className="mt-3 border border-amber-200/15 bg-amber-200/[0.035] p-3">
