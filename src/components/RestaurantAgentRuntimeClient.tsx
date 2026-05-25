@@ -35,6 +35,7 @@ import type { RestaurantClawSkillExecutionLedger, RestaurantClawSkillExecutionRe
 import type { RestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
 import type { RestaurantCustomerDemandGateway } from '@/lib/restaurant-customer-demand-gateway';
 import type { RestaurantLeadCaptureInbox } from '@/lib/restaurant-lead-capture-inbox';
+import type { RestaurantLeadAcquisitionProviderWorkbench } from '@/lib/restaurant-lead-acquisition-provider-workbench';
 import type { RestaurantVoiceOrderConsole } from '@/lib/restaurant-voice-order-console';
 import type { RestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
 import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
@@ -269,6 +270,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     controlledTrialRun?: RestaurantControlledTrialRun;
     customerDemandGateway?: RestaurantCustomerDemandGateway;
     leadCaptureInbox?: RestaurantLeadCaptureInbox;
+    leadAcquisitionProviderWorkbench?: RestaurantLeadAcquisitionProviderWorkbench;
     voiceOrderConsole?: RestaurantVoiceOrderConsole;
     aiOsAuditReport?: RestaurantAiOsAuditReport;
     platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
@@ -479,6 +481,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         aiCockpit: payload?.aiCockpit || previous.aiCockpit,
         customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
         leadCaptureInbox: payload?.leadCaptureInbox || previous.leadCaptureInbox,
+        leadAcquisitionProviderWorkbench: payload?.leadAcquisitionProviderWorkbench || previous.leadAcquisitionProviderWorkbench,
         publishExecutionInbox: payload?.publishExecutionInbox || previous.publishExecutionInbox,
         voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
         capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
@@ -7450,6 +7453,81 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-sky-100/55">
                 provider unlocks: {(dispatchState.leadCaptureInbox?.providerUnlocks || ['merchant platform authorization for lead sources', 'staff channel provider and recipient-role approval', 'callback secret and accepted receipt schema']).slice(0, 4).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-indigo-200/15 bg-indigo-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-100/65">lead acquisition provider workbench</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now turns lead capture into a Provider acceptance path for reservations, coupon claims, private-domain inquiries, visit intent and review recovery.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This is the execution bridge for auto-acquisition parity: internal staff tasks now, automatic capture/contact only after merchant grants, signed callbacks, no-PII contracts and staff approval.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadAcquisitionProviderWorkbench?.verdict || 'provider-setup-required'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">lanes</div>
+                  <div className="mt-1 text-xs font-black text-indigo-100/75">{dispatchState.leadAcquisitionProviderWorkbench?.summary.lanes ?? 5}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">passed stages</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.leadAcquisitionProviderWorkbench?.summary.passedStages ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider stages</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.leadAcquisitionProviderWorkbench?.summary.providerStages ?? 'gated'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">callback</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadAcquisitionProviderWorkbench?.summary.callbackReady ? 'ready' : 'blocked'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">auto contact</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.leadAcquisitionProviderWorkbench?.summary.canClaimAutoCustomerContact ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                {(dispatchState.leadAcquisitionProviderWorkbench?.lanes || [
+                  { id: 'reservation', label: 'Reservation and waitlist capture', status: 'provider-gated', owner: 'store-manager', signalCount: 0, firstRunnableTask: 'Create a staff-reviewed capacity check before any reservation reply.' },
+                  { id: 'coupon-claim', label: 'Coupon and group-buy lead capture', status: 'provider-gated', owner: 'ops', signalCount: 0, firstRunnableTask: 'Confirm coupon rules and aggregate claims before redemption follow-up.' },
+                  { id: 'private-domain', label: 'Private-domain inquiry follow-up', status: 'blocked', owner: 'community-ops', signalCount: 0, firstRunnableTask: 'Classify aggregate inquiry themes and draft approved replies for staff send.' },
+                  { id: 'visit-intent', label: 'Public visit-intent capture', status: 'provider-gated', owner: 'store-manager', signalCount: 0, firstRunnableTask: 'Turn public proof into service-prep and next-loop content tasks.' },
+                  { id: 'review-recovery', label: 'Review-led recovery follow-up', status: 'provider-gated', owner: 'runtime-admin', signalCount: 0, firstRunnableTask: 'Assign recovery owner and approved reply draft before platform response.' },
+                ]).slice(0, 5).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.status === 'sample-ready' || item.status === 'internal-ready' ? 'text-[10px] text-emerald-100/70' : item.status === 'blocked' ? 'text-[10px] text-rose-100/70' : 'text-[10px] text-amber-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-indigo-100/55">{item.owner} / signals {item.signalCount}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/50">{item.firstRunnableTask}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.leadAcquisitionProviderWorkbench?.operatorQueue || [
+                  { id: 'lead-provider-reservation', owner: 'merchant', priority: 'blocked', action: 'Collect merchant authorization for reservation, coupon, private-domain or review source.', evidenceRequired: 'platform grant / allowed source list', providerRequired: ['reservation provider API or export'] },
+                  { id: 'lead-provider-callback', owner: 'runtime-admin', priority: 'blocked', action: 'Configure callback secret and receipt schema before provider execution.', evidenceRequired: 'signed lead receipt', providerRequired: ['RESTAURANT_AGENT_CALLBACK_SECRET'] },
+                  { id: 'lead-provider-private-domain', owner: 'runtime-admin', priority: 'blocked', action: 'Use manual aggregate summaries until messaging provider and no-PII contract are accepted.', evidenceRequired: 'no-PII private-domain data contract', providerRequired: ['WeCom/WeChat/SMS provider'] },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-white">{item.owner}</span>
+                      <span className={item.priority === 'blocked' ? 'text-[10px] text-rose-100/70' : item.priority === 'today' ? 'text-[10px] text-emerald-100/70' : 'text-[10px] text-amber-100/70'}>{item.priority}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/60">{item.action}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-indigo-100/50">proof: {item.evidenceRequired}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/45">provider: {item.providerRequired.slice(0, 2).join(' / ') || 'none'}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-indigo-100/55">
+                acceptance: {dispatchState.leadAcquisitionProviderWorkbench?.providerAcceptanceContract.callbackAction || 'lead-acquisition-receipt'} / forbidden: {(dispatchState.leadAcquisitionProviderWorkbench?.providerAcceptanceContract.forbiddenPayloadFields || ['phone', 'WeChat ID', 'raw private message', 'coupon code']).slice(0, 5).join(' / ')}
               </p>
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
