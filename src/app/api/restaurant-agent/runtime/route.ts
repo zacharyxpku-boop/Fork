@@ -70,6 +70,7 @@ import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-
 import { buildRestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
 import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import { buildRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
+import { buildRestaurantShiftCapabilityActivationPack } from '@/lib/restaurant-shift-capability-activation-pack';
 import { buildRestaurantShiftCloseoutTrainingPack, buildRestaurantShiftCloseoutTrainingRecordAttempt, selectRecordableShiftTrainingDrafts } from '@/lib/restaurant-shift-closeout-training-pack';
 import { listRestaurantShiftAutopilotRuns, runRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot-run-store';
 import { buildRestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
@@ -1426,6 +1427,30 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
     }, { status: shiftCloseoutTrainingRecordAttempt.ok ? 201 : 409 });
+  }
+
+  if (body.action === 'shift-capability-activation-pack') {
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+      runtimeProbe,
+    });
+    const trainingRecords = listRestaurantCapabilityTrainingRecords();
+    const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger();
+    return NextResponse.json({
+      ok: true,
+      shiftCapabilityActivationPack: buildRestaurantShiftCapabilityActivationPack({
+        capabilityTrainingPlan,
+        trainingRecords,
+        providerReadinessHealth,
+      }),
+      capabilityTrainingPlan,
+      trainingRecords,
+      providerReadinessHealth,
+      providerSetupState,
+      runtimeProbe,
+    });
   }
 
   if (body.action === 'command-route') {

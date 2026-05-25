@@ -150,6 +150,7 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Submit Shift Sandbox Run');
     expect(html).toContain('Closeout + Train');
     expect(html).toContain('Record Training');
+    expect(html).toContain('Activation Pack');
     expect(html).toContain('now queue');
     expect(html).toContain('next wakeups');
     expect(html).toContain('Competitor Parity Board');

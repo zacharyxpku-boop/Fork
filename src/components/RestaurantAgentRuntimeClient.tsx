@@ -51,6 +51,7 @@ import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-u
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-autopilot-run-store';
+import type { RestaurantShiftCapabilityActivationPack } from '@/lib/restaurant-shift-capability-activation-pack';
 import type { RestaurantShiftCloseoutTrainingPack, RestaurantShiftCloseoutTrainingRecordAttempt } from '@/lib/restaurant-shift-closeout-training-pack';
 import type { RestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
 import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
@@ -261,6 +262,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     gmCommandDeck?: RestaurantGmCommandDeck;
     shiftAutopilot?: RestaurantShiftAutopilot;
     shiftAutopilotRun?: RestaurantShiftAutopilotRunRecord;
+    shiftCapabilityActivationPack?: RestaurantShiftCapabilityActivationPack;
     shiftCloseoutTrainingPack?: RestaurantShiftCloseoutTrainingPack;
     shiftCloseoutTrainingRecordAttempt?: RestaurantShiftCloseoutTrainingRecordAttempt;
     shiftFirstForwardableRun?: RestaurantShiftFirstForwardableRun;
@@ -2499,6 +2501,31 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildShiftCapabilityActivationPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Shift Capability Activation Pack...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'shift-capability-activation-pack' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftCapabilityActivationPack?.summary?.activatedInternal ? 'queued' : 'blocked',
+        message: `Shift Capability Activation: ${payload?.shiftCapabilityActivationPack?.verdict || 'unknown'}; active ${payload?.shiftCapabilityActivationPack?.summary?.activatedInternal ?? 0}, provider gated ${payload?.shiftCapabilityActivationPack?.summary?.trainedNeedsProvider ?? 0}.`,
+        shiftCapabilityActivationPack: payload?.shiftCapabilityActivationPack || previous.shiftCapabilityActivationPack,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        capabilityTrainingRecords: payload?.trainingRecords || previous.capabilityTrainingRecords,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift Capability Activation Pack is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -3050,6 +3077,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       safetyBoundary: 'Shift Autopilot preview builds a bounded shift plan only; it does not run forever, publish, contact customers, redeem coupons, write POS orders or expose secrets.',
     } satisfies Pick<RestaurantShiftAutopilot, 'payloadShape' | 'summary' | 'steps' | 'nowQueue' | 'nextWakeups' | 'providerQueue' | 'evidenceQueue' | 'operatingPolicy' | 'safetyBoundary'>;
   const commandShiftAutopilotRun = dispatchState.shiftAutopilotRun;
+  const commandShiftCapabilityActivationPack = dispatchState.shiftCapabilityActivationPack;
   const commandShiftCloseoutTrainingPack = dispatchState.shiftCloseoutTrainingPack;
   const commandShiftCloseoutTrainingRecordAttempt = dispatchState.shiftCloseoutTrainingRecordAttempt;
   const commandShiftFirstForwardableRun = dispatchState.shiftFirstForwardableRun;
@@ -3650,6 +3678,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Record Training
                         </button>
+                        <button
+                          className="ml-2 mt-3 border border-cyan-200/70 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildShiftCapabilityActivationPack}
+                          type="button"
+                        >
+                          Activation Pack
+                        </button>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
                         <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -4060,6 +4096,56 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                           </p>
                         ))}
                         <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftCloseoutTrainingRecordAttempt.safetyBoundary}</p>
+                      </div>
+                    ) : null}
+                    {commandShiftCapabilityActivationPack ? (
+                      <div className="mt-3 border border-cyan-200/25 bg-cyan-200/[0.05] p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">shift capability activation pack</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftCapabilityActivationPack.verdict}</h5>
+                            <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                              {commandShiftCapabilityActivationPack.payloadShape} maps accepted training records into internal-active and provider-gated restaurant AI capabilities.
+                            </p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCapabilityActivationPack.summary.activatedInternal}</div>
+                              <p className="mt-1 text-white/55">active</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCapabilityActivationPack.summary.trainedNeedsProvider}</div>
+                              <p className="mt-1 text-white/55">trained gated</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCapabilityActivationPack.summary.needsTraining}</div>
+                              <p className="mt-1 text-white/55">needs train</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCapabilityActivationPack.summary.acceptedTrainingRecords}</div>
+                              <p className="mt-1 text-white/55">records</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCapabilityActivationPack.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">claim</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                          {commandShiftCapabilityActivationPack.activations.slice(0, 6).map(item => (
+                            <div className="border border-white/10 bg-stone-950/50 p-2" key={item.capabilityId}>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-black text-white">{item.capabilityId}</span>
+                                <span className={item.status === 'activated-internal' ? 'text-[11px] text-emerald-100/70' : item.status === 'trained-needs-provider' ? 'text-[11px] text-amber-100/70' : 'text-[11px] text-rose-100/70'}>
+                                  {item.status}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[11px] leading-4 text-white/55">{item.nextAction}</p>
+                              <p className="mt-1 text-[11px] leading-4 text-cyan-100/55">records: {item.acceptedRecords} / provider: {item.providerEvidence.slice(0, 2).join(' / ') || item.providerGaps.slice(0, 2).join(' / ') || 'none'}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftCapabilityActivationPack.safetyBoundary}</p>
                       </div>
                     ) : null}
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>
