@@ -40,6 +40,7 @@ import { buildRestaurantRuntimeProbe } from '@/lib/restaurant-agent-runtime-prob
 import { buildRestaurantRuntimeSetupContract } from '@/lib/restaurant-agent-runtime-setup-contract';
 import { forwardRestaurantAgentDispatch, forwardRestaurantAgentExecutionPackage, readRestaurantRuntimeBridgeConfig } from '@/lib/restaurant-agent-runtime-bridge';
 import { buildRestaurantAgentRuntime } from '@/lib/restaurant-agent-runtime';
+import { buildRestaurantRuntimeAdapterContract } from '@/lib/restaurant-runtime-adapter-contract';
 import { buildRestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-tool-policy';
 import { buildRestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
 import { buildRestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
@@ -2355,6 +2356,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       runtimeSetupContract: buildRestaurantRuntimeSetupContract(),
+    });
+  }
+
+  if (body.action === 'runtime-adapter-contract') {
+    const runtimeTarget = body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+      ? body.runtimeTarget
+      : 'openclaw';
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const executionPackage = buildRestaurantAgentExecutionPackage({
+      target: runtimeTarget,
+      taskId: typeof body.taskId === 'string' ? body.taskId : 'browser-publish-check',
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      owner: typeof body.owner === 'string' ? body.owner : undefined,
+      requestedAction: body.requestedAction === 'submit_platform_publish' || body.requestedAction === 'capture_public_receipt' || body.requestedAction === 'open_public_page'
+        ? body.requestedAction
+        : 'capture_public_receipt',
+    });
+    return NextResponse.json({
+      ok: true,
+      runtimeAdapterContract: buildRestaurantRuntimeAdapterContract({
+        target: runtimeTarget,
+        executionPackage,
+        runtimeProbe,
+      }),
+      executionPackage,
+      runtimeProbe,
     });
   }
 

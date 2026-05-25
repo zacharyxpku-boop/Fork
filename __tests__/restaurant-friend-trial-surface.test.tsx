@@ -199,6 +199,7 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('外部执行投递包');
     expect(html).toContain('Run Health 与回执验收面板');
     expect(html).toContain('外部 Runtime Health Probe');
+    expect(html).toContain('Runtime Adapter Contract');
     expect(html).toContain('带 grant、browser session、callback 和停止条件的执行投递包');
     expect(html).toContain('酸菜鱼双人餐 15 秒到店脚本');
     expect(html).toContain('双人酸菜鱼晚餐到店活动');

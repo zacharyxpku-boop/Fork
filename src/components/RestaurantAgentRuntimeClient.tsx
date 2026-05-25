@@ -71,6 +71,7 @@ import type { RestaurantAgentReceiptRecord } from '@/lib/restaurant-agent-receip
 import type { RestaurantRunHealth } from '@/lib/restaurant-agent-run-health';
 import type { RestaurantRuntimeProbe } from '@/lib/restaurant-agent-runtime-probe';
 import type { RestaurantRuntimeSetupContract } from '@/lib/restaurant-agent-runtime-setup-contract';
+import type { RestaurantRuntimeAdapterContract } from '@/lib/restaurant-runtime-adapter-contract';
 import type { RestaurantPosImportReport } from '@/lib/restaurant-pos-import-validator';
 import { buildRestaurantAgentRuntime, type RestaurantAgentConnector } from '@/lib/restaurant-agent-runtime';
 import type { RestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-tool-policy';
@@ -237,6 +238,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     runHealth?: RestaurantRunHealth;
     runtimeProbe?: RestaurantRuntimeProbe;
     runtimeSetupContract?: RestaurantRuntimeSetupContract;
+    runtimeAdapterContract?: RestaurantRuntimeAdapterContract;
     posImport?: RestaurantPosImportReport;
     capabilityTrainingPlan?: RestaurantCapabilityTrainingPlan;
     capabilityTrainingRecord?: RestaurantCapabilityTrainingRecord;
@@ -992,6 +994,34 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Runtime setup contract is temporarily unavailable.' });
+    }
+  };
+
+  const inspectRuntimeAdapterContract = async () => {
+    setDispatchState({ status: 'loading', message: 'Building runtime adapter contract for Lobu/OpenClaw/Hermes...' });
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'runtime-adapter-contract',
+          runtimeTarget: 'openclaw',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          owner: 'store-manager',
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.runtimeAdapterContract?.summary?.canSubmitSandbox ? 'queued' : 'blocked',
+        message: `Runtime adapter contract: ${payload?.runtimeAdapterContract?.verdict || 'unknown'}; ready ${payload?.runtimeAdapterContract?.summary?.ready ?? 0}/${payload?.runtimeAdapterContract?.summary?.checks ?? 0}.`,
+        runtimeAdapterContract: payload?.runtimeAdapterContract || previous.runtimeAdapterContract,
+        executionPackage: payload?.executionPackage || previous.executionPackage,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Runtime adapter contract is temporarily unavailable.' }));
     }
   };
 
@@ -6632,6 +6662,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               Runtime Setup Contract
             </button>
             <button
+              className="border border-cyan-200/40 bg-cyan-200/10 px-4 py-2 text-sm font-black text-cyan-100 transition hover:bg-cyan-200/20 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={dispatchState.status === 'loading'}
+              onClick={inspectRuntimeAdapterContract}
+              type="button"
+            >
+              Runtime Adapter Contract
+            </button>
+            <button
               className="border border-teal-200/40 bg-teal-200/10 px-4 py-2 text-sm font-black text-teal-100 transition hover:bg-teal-200/20 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={dispatchState.status === 'loading'}
               onClick={buildProviderSetupPack}
@@ -8302,6 +8340,68 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
                     {dispatchState.runtimeSetupContract.safetyBoundary}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {dispatchState.runtimeAdapterContract ? (
+              <div className="md:col-span-3">
+                <div className="text-white/45">Runtime Adapter Contract</div>
+                <div className="mt-2 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeAdapterContract.target}</div>
+                    <p className="mt-1 text-white/60">target</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeAdapterContract.verdict}</div>
+                    <p className="mt-1 text-white/60">verdict</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeAdapterContract.summary.ready}/{dispatchState.runtimeAdapterContract.summary.checks}</div>
+                    <p className="mt-1 text-white/60">ready checks</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeAdapterContract.summary.missing}</div>
+                    <p className="mt-1 text-white/60">missing</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeAdapterContract.summary.blocked}</div>
+                    <p className="mt-1 text-white/60">blocked</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeAdapterContract.summary.canSubmitSandbox ? 'ready' : 'blocked'}</div>
+                    <p className="mt-1 text-white/60">sandbox submit</p>
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    request: {dispatchState.runtimeAdapterContract.requestContract.method} {dispatchState.runtimeAdapterContract.adapterSpec.endpointPath} / {dispatchState.runtimeAdapterContract.requestContract.bodyShape}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    response: {dispatchState.runtimeAdapterContract.responseContract.acceptedStatuses.join('/')} / id {dispatchState.runtimeAdapterContract.responseContract.runIdFields.join('|')}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    callback: {dispatchState.runtimeAdapterContract.callbackContract.action} / {dispatchState.runtimeAdapterContract.callbackContract.header}
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  {dispatchState.runtimeAdapterContract.checks.map(check => (
+                    <div className="border border-white/10 bg-white/[0.05] p-2" key={check.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-white">{check.id}</span>
+                        <span>{check.status}</span>
+                      </div>
+                      <p className="mt-1 text-white/60">{check.nextAction}</p>
+                      <p className="mt-1 text-white/45">evidence: {check.evidence.join(' / ')}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    script: {dispatchState.runtimeAdapterContract.sandboxScript.slice(0, 3).join(' / ')}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    {dispatchState.runtimeAdapterContract.safetyBoundary}
                   </div>
                 </div>
               </div>
