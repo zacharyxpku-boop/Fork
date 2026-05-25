@@ -29,6 +29,8 @@ describe('restaurant agent build queue', () => {
       owner: 'merchant',
     }));
     expect(platformData?.externalRequired.join(' ')).toContain('Merchant account authorization');
+    expect(platformData?.externalRequired).toContain('platform API/export');
+    expect(platformData?.externalRequired.length).toBeGreaterThan(3);
     expect(platformData?.blockedBy.length).toBeGreaterThan(0);
     expect(queue.externalSetupRequests[0].dimensionId).toBe('restaurant-platform-data');
     expect(queue.safetyBoundary).toContain('do not imply real platform execution');

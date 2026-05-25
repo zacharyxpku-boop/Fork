@@ -111,8 +111,8 @@ function acceptanceFor(dimension: RestaurantCompetitorAuditDimension): string[] 
 
 function externalRequirements(dimension: RestaurantCompetitorAuditDimension): string[] {
   return dimension.externalRequired
-    .split('、')
-    .map(item => item.replace(/[。；;]/g, '').trim())
+    .split(/[;,，、]/g)
+    .map(item => item.replace(/[.。；;]/g, '').trim())
     .filter(Boolean);
 }
 
