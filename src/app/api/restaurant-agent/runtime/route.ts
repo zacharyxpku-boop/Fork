@@ -74,6 +74,7 @@ import { listRestaurantShiftAutopilotRuns, runRestaurantShiftAutopilot } from '@
 import { buildRestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
 import { buildRestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
 import { buildRestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
+import { blockedShiftSandboxBridge, buildRestaurantShiftSandboxForwardAttempt, selectShiftForwardPackage } from '@/lib/restaurant-shift-sandbox-forward';
 import { buildRestaurantStoreOperatingPlan } from '@/lib/restaurant-store-operating-plan';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, recordRestaurantStoreManagerTasksFromDayZeroMissionPack, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
@@ -1160,6 +1161,133 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
     }, { status: shiftFirstForwardableRun.summary.canForwardFirstShiftRun ? 200 : 409 });
+  }
+
+  if (body.action === 'shift-sandbox-forward') {
+    const runtimeTarget = body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+      ? body.runtimeTarget
+      : 'openclaw';
+    const now = new Date();
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+      runtimeProbe,
+    });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue(now);
+    const taskProviderHandoff = buildRestaurantTaskProviderHandoff({
+      queue: storeManagerTaskQueue,
+      target: runtimeTarget,
+      now,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({
+      runs,
+      receipts,
+      readiness,
+      now,
+    });
+    const providerSandboxContract = buildRestaurantProviderSandboxContract({
+      runtimeProbe,
+      providerReadinessHealth,
+      taskProviderHandoff,
+      providerReceiptInbox,
+      now,
+    });
+    const firstForwardableRunPack = buildRestaurantFirstForwardableRunPack({
+      queue: storeManagerTaskQueue,
+      target: runtimeTarget,
+      runtimeProbe,
+      providerReadinessHealth,
+      providerReceiptInbox,
+      now,
+    });
+    const shiftRuns = listRestaurantShiftAutopilotRuns();
+    const shiftProviderHandoff = buildRestaurantShiftProviderHandoff({
+      shiftRuns,
+      providerReadinessHealth,
+      now,
+    });
+    const shiftSandboxAcceptance = buildRestaurantShiftSandboxAcceptance({
+      shiftProviderHandoff,
+      providerReadinessHealth,
+      providerSandboxContract,
+      now,
+    });
+    const shiftFirstForwardableRun = buildRestaurantShiftFirstForwardableRun({
+      shiftRuns,
+      shiftProviderHandoff,
+      shiftSandboxAcceptance,
+      firstForwardableRunPack,
+      taskProviderHandoff,
+      providerSandboxContract,
+      now,
+    });
+    const selectedPackage = selectShiftForwardPackage({
+      shiftFirstForwardableRun,
+      taskProviderHandoff,
+    });
+    const bridge = shiftFirstForwardableRun.summary.canForwardFirstShiftRun && selectedPackage?.canForward
+      ? await forwardRestaurantAgentExecutionPackage(
+          selectedPackage.executionPackage,
+          readRestaurantRuntimeBridgeConfig(runtimeTarget),
+        )
+      : blockedShiftSandboxBridge({
+          shiftFirstForwardableRun,
+          selectedPackage,
+        });
+    const run = selectedPackage ? recordRestaurantAgentRun(buildRestaurantAgentDispatch({
+      taskId: 'external-runtime-attach',
+      restaurant: selectedPackage.safePayload.restaurant,
+      offer: selectedPackage.safePayload.offer,
+      owner: selectedPackage.safePayload.owner,
+      source: 'shift_first_forwardable_run',
+      runtimeTarget: 'local',
+    }), runtimeTarget, bridge, now) : undefined;
+    const updatedRuns = listRestaurantAgentRuns();
+    const updatedReceipts = listRestaurantAgentReceipts();
+    const updatedReadiness = buildRestaurantExternalReadiness();
+    const shiftSandboxForwardAttempt = buildRestaurantShiftSandboxForwardAttempt({
+      shiftFirstForwardableRun,
+      taskProviderHandoff,
+      selectedPackage,
+      bridge,
+      run,
+      now,
+    });
+
+    return NextResponse.json({
+      ok: bridge.ok,
+      shiftSandboxForwardAttempt,
+      shiftFirstForwardableRun,
+      shiftProviderHandoff,
+      shiftSandboxAcceptance,
+      firstForwardableRunPack,
+      taskProviderHandoff,
+      providerSandboxContract,
+      providerReceiptInbox: buildRestaurantProviderReceiptInbox({
+        runs: updatedRuns,
+        receipts: updatedReceipts,
+        readiness: updatedReadiness,
+        now,
+      }),
+      run,
+      runs: updatedRuns,
+      receipts: updatedReceipts,
+      runHealth: buildRestaurantRunHealth(updatedRuns, updatedReceipts, updatedReadiness, now),
+      recovery: buildRestaurantAgentRecoveryPlan(updatedRuns, updatedReceipts, updatedReadiness, now),
+      executionTimeline: buildRestaurantExecutionTimeline({
+        runs: updatedRuns,
+        receipts: updatedReceipts,
+        readiness: updatedReadiness,
+        browserSessions: listRestaurantBrowserSessions(),
+      }),
+      providerReadinessHealth,
+      providerSetupState,
+      storeManagerTaskQueue,
+    }, { status: bridge.ok ? 202 : 409 });
   }
 
   if (body.action === 'command-route') {

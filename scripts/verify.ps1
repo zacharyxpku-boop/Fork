@@ -28,6 +28,14 @@ Invoke-Step "Vitest restaurant first forwardable run" {
   npm.cmd run test -- __tests__/restaurant-first-forwardable-run-pack.test.ts
 }
 
+Invoke-Step "Vitest restaurant shift first forwardable run" {
+  npm.cmd run test -- __tests__/restaurant-shift-first-forwardable-run.test.ts
+}
+
+Invoke-Step "Vitest restaurant shift sandbox forward" {
+  npm.cmd run test -- __tests__/restaurant-shift-sandbox-forward.test.ts
+}
+
 Invoke-Step "Vitest restaurant first run control tower" {
   npm.cmd run test -- __tests__/restaurant-first-run-control-tower.test.ts
 }

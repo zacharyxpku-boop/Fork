@@ -53,6 +53,7 @@ import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot'
 import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-autopilot-run-store';
 import type { RestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
 import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
+import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shift-sandbox-forward';
 import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
@@ -262,6 +263,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftFirstForwardableRun?: RestaurantShiftFirstForwardableRun;
     shiftProviderHandoff?: RestaurantShiftProviderHandoff;
     shiftSandboxAcceptance?: RestaurantShiftSandboxAcceptance;
+    shiftSandboxForwardAttempt?: RestaurantShiftSandboxForwardAttempt;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -2351,6 +2353,43 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const forwardShiftSandboxRun = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Submitting guarded Shift Sandbox Run...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'shift-sandbox-forward', runtimeTarget: 'openclaw' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftSandboxForwardAttempt?.ok ? 'queued' : 'blocked',
+        message: `Shift Sandbox Forward: ${payload?.shiftSandboxForwardAttempt?.verdict || 'unknown'}; bridge ${payload?.shiftSandboxForwardAttempt?.summary?.bridgeStatus || 'unknown'}.`,
+        eventId: payload?.run?.eventId || previous.eventId,
+        tenantId: payload?.run?.tenantId || previous.tenantId,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        shiftSandboxForwardAttempt: payload?.shiftSandboxForwardAttempt || previous.shiftSandboxForwardAttempt,
+        shiftFirstForwardableRun: payload?.shiftFirstForwardableRun || previous.shiftFirstForwardableRun,
+        shiftProviderHandoff: payload?.shiftProviderHandoff || previous.shiftProviderHandoff,
+        shiftSandboxAcceptance: payload?.shiftSandboxAcceptance || previous.shiftSandboxAcceptance,
+        firstForwardableRunPack: payload?.firstForwardableRunPack || previous.firstForwardableRunPack,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
+        providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        runHealth: payload?.runHealth || previous.runHealth,
+        recovery: payload?.recovery || previous.recovery,
+        executionTimeline: payload?.executionTimeline || previous.executionTimeline,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift Sandbox Forward is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -2905,6 +2944,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandShiftFirstForwardableRun = dispatchState.shiftFirstForwardableRun;
   const commandShiftProviderHandoff = dispatchState.shiftProviderHandoff;
   const commandShiftSandboxAcceptance = dispatchState.shiftSandboxAcceptance;
+  const commandShiftSandboxForwardAttempt = dispatchState.shiftSandboxForwardAttempt;
   const commandChannelDeliveryReport = dispatchState.commandCenter?.channelDeliveryReport || dispatchState.channelDeliveryReport;
   const commandChannelDeliveryAttempt = dispatchState.channelDeliveryAttempt;
   const commandChannelScheduleRun = dispatchState.channelScheduleRun;
@@ -3475,6 +3515,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Build Shift First Forwardable Run
                         </button>
+                        <button
+                          className="ml-2 mt-3 border border-rose-200/70 px-3 py-2 text-xs font-black text-rose-100 transition hover:bg-rose-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={forwardShiftSandboxRun}
+                          type="button"
+                        >
+                          Submit Shift Sandbox Run
+                        </button>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
                         <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -3745,6 +3793,46 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                           </p>
                         ) : null}
                         <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftFirstForwardableRun.safetyBoundary}</p>
+                      </div>
+                    ) : null}
+                    {commandShiftSandboxForwardAttempt ? (
+                      <div className="mt-3 border border-rose-200/25 bg-rose-200/[0.05] p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-100/70">shift sandbox forward attempt</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftSandboxForwardAttempt.verdict}</h5>
+                            <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                              {commandShiftSandboxForwardAttempt.payloadShape} / {commandShiftSandboxForwardAttempt.bridge.message}
+                            </p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-4 xl:min-w-[520px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxForwardAttempt.summary.bridgeStatus}</div>
+                              <p className="mt-1 text-white/55">bridge</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxForwardAttempt.summary.selectedPackageFound ? 'yes' : 'no'}</div>
+                              <p className="mt-1 text-white/55">package</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxForwardAttempt.summary.runRecorded ? 'yes' : 'no'}</div>
+                              <p className="mt-1 text-white/55">run ledger</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxForwardAttempt.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">claim</p>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/55">
+                          receipt: {commandShiftSandboxForwardAttempt.receiptExpectation.callbackHeader} / {commandShiftSandboxForwardAttempt.receiptExpectation.closeoutRule}
+                        </p>
+                        {commandShiftSandboxForwardAttempt.selectedPackage ? (
+                          <p className="mt-2 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-rose-100/65">
+                            package: {commandShiftSandboxForwardAttempt.selectedPackage.runtimeTarget} / {commandShiftSandboxForwardAttempt.selectedPackage.status} / {commandShiftSandboxForwardAttempt.selectedPackage.canForward ? 'forwardable' : commandShiftSandboxForwardAttempt.selectedPackage.blockedReasons[0]}
+                          </p>
+                        ) : null}
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftSandboxForwardAttempt.safetyBoundary}</p>
                       </div>
                     ) : null}
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>
