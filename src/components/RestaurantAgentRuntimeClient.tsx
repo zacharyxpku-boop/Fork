@@ -49,6 +49,7 @@ import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provi
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
+import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
@@ -248,6 +249,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerUnlockLadder?: RestaurantProviderUnlockLadder;
     gmCommandDeck?: RestaurantGmCommandDeck;
+    shiftAutopilot?: RestaurantShiftAutopilot;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -2734,6 +2736,45 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       evidenceQueue: ['Closeout and next loop: sanitized POS/coupon/member aggregate'],
       safetyBoundary: 'GM Command Deck preview does not log in, publish, scrape private messages, redeem coupons, write POS orders, expose secrets or claim growth without accepted proof.',
     } satisfies Pick<RestaurantGmCommandDeck, 'payloadShape' | 'shiftMode' | 'answerForOwner' | 'summary' | 'lanes' | 'aiAutopilotQueue' | 'staffQueue' | 'providerQueue' | 'evidenceQueue' | 'safetyBoundary'>;
+  const commandShiftAutopilot =
+    dispatchState.commandCenter?.shiftAutopilot ||
+    dispatchState.shiftAutopilot || {
+      payloadShape: 'restaurant-shift-autopilot-v1',
+      summary: {
+        steps: 5,
+        dueNow: 2,
+        internalRunnable: 1,
+        manualPrep: 2,
+        providerBlocked: 1,
+        evidenceBlocked: 1,
+        nextWakeups: 5,
+        canRunNowWithoutProvider: true,
+        canClaimExternalAutomation: false,
+      },
+      steps: commandGmCommandDeck.lanes.map(lane => ({
+        id: `preview-${lane.id}`,
+        laneId: lane.id,
+        title: lane.title,
+        mode: lane.status === 'provider-required' ? 'wait-provider' : lane.status === 'evidence-required' ? 'collect-evidence' : lane.status === 'staff-review' ? 'prepare-manual' : 'run-internal',
+        dueNow: lane.status !== 'provider-required',
+        owner: lane.owner,
+        trigger: lane.customerPromise,
+        action: lane.actionNow,
+        proofRequired: [lane.visibleProof],
+        providerRequired: lane.status === 'provider-required' ? [lane.providerAsk] : [],
+        nextWakeup: lane.id === 'opening' ? '09:30 local' : lane.id === 'closeout' ? '22:30 local' : 'every 60 minutes',
+        stopLine: lane.stopLine,
+      })),
+      nowQueue: commandGmCommandDeck.aiAutopilotQueue,
+      nextWakeups: ['Open-shift command: 09:30 local', 'Runtime and inbox heartbeat: every 60 minutes', 'Closeout and next loop: 22:30 local'],
+      providerQueue: commandGmCommandDeck.providerQueue,
+      evidenceQueue: commandGmCommandDeck.evidenceQueue,
+      operatingPolicy: [
+        'Run internal planning, staff review and proof preparation without Provider keys.',
+        'Hold external automation claims until provider health and accepted proof exist.',
+      ],
+      safetyBoundary: 'Shift Autopilot preview builds a bounded shift plan only; it does not run forever, publish, contact customers, redeem coupons, write POS orders or expose secrets.',
+    } satisfies Pick<RestaurantShiftAutopilot, 'payloadShape' | 'summary' | 'steps' | 'nowQueue' | 'nextWakeups' | 'providerQueue' | 'evidenceQueue' | 'operatingPolicy' | 'safetyBoundary'>;
   const commandChannelDeliveryReport = dispatchState.commandCenter?.channelDeliveryReport || dispatchState.channelDeliveryReport;
   const commandChannelDeliveryAttempt = dispatchState.channelDeliveryAttempt;
   const commandChannelScheduleRun = dispatchState.channelScheduleRun;
@@ -3261,6 +3302,72 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       </div>
                     </div>
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandGmCommandDeck.safetyBoundary}</p>
+                  </div>
+                ) : null}
+                {commandShiftAutopilot ? (
+                  <div className="mt-3 border border-sky-200/25 bg-sky-200/[0.05] p-3">
+                    <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">Shift Autopilot</div>
+                        <h4 className="mt-1 text-sm font-black text-white">{commandShiftAutopilot.payloadShape}</h4>
+                        <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                          Turns GM lanes and scheduled channel jobs into a bounded shift queue: what can run internally now, what needs staff review, and what is blocked by Provider proof.
+                        </p>
+                      </div>
+                      <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandShiftAutopilot.summary.dueNow}</div>
+                          <p className="mt-1 text-white/55">due now</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandShiftAutopilot.summary.internalRunnable}</div>
+                          <p className="mt-1 text-white/55">internal run</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandShiftAutopilot.summary.manualPrep}</div>
+                          <p className="mt-1 text-white/55">manual prep</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandShiftAutopilot.summary.providerBlocked}</div>
+                          <p className="mt-1 text-white/55">provider held</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandShiftAutopilot.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                          <p className="mt-1 text-white/55">external claim</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                      {commandShiftAutopilot.steps.map(step => (
+                        <div className="border border-white/10 bg-stone-950/50 p-3" key={step.id}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-black text-white">{step.title}</span>
+                            <span className={step.mode === 'run-internal' ? 'text-[11px] text-emerald-100/70' : step.mode === 'wait-provider' ? 'text-[11px] text-amber-100/70' : 'text-[11px] text-sky-100/70'}>
+                              {step.mode}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-[11px] leading-4 text-white/50">{step.dueNow ? 'due now' : `wake ${step.nextWakeup}`} / {step.owner}</p>
+                          <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-sky-100/65">action: {step.action}</p>
+                          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/40">proof: {step.proofRequired.join(' / ')}</p>
+                          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-amber-100/55">provider: {step.providerRequired.join(' / ') || 'none'}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                      <div className="border border-white/10 bg-white/[0.04] p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">now queue</div>
+                        <p className="mt-1 text-[11px] leading-4 text-emerald-100/65">{commandShiftAutopilot.nowQueue.join(' / ') || 'none'}</p>
+                      </div>
+                      <div className="border border-white/10 bg-white/[0.04] p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">next wakeups</div>
+                        <p className="mt-1 text-[11px] leading-4 text-sky-100/65">{commandShiftAutopilot.nextWakeups.join(' / ') || 'none'}</p>
+                      </div>
+                      <div className="border border-white/10 bg-white/[0.04] p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">operating policy</div>
+                        <p className="mt-1 text-[11px] leading-4 text-white/45">{commandShiftAutopilot.operatingPolicy.join(' / ')}</p>
+                      </div>
+                    </div>
+                    <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>
                   </div>
                 ) : null}
                 <div className="mt-3 grid gap-2 lg:grid-cols-4">
