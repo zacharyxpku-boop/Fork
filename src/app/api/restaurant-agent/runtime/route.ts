@@ -77,6 +77,7 @@ import { buildRestaurantProviderReadinessHealth } from '@/lib/restaurant-provide
 import { buildRestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
+import { buildRestaurantProviderKeyGapBoard } from '@/lib/restaurant-provider-key-gap-board';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
 import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
@@ -242,6 +243,41 @@ export async function POST(request: NextRequest) {
       runHealth: buildRestaurantRunHealth(runs, receipts, readiness, now),
       runs,
       receipts,
+    });
+  }
+
+  if (body.action === 'provider-key-gap-board') {
+    return NextResponse.json({
+      ok: true,
+      providerKeyGapBoard: buildRestaurantProviderKeyGapBoard({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      }),
+      platformConnectorMatrix: buildRestaurantPlatformConnectorMatrix(),
+      externalUnlockRequestPack: buildRestaurantExternalUnlockRequestPack({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      }),
+      providerSetupWizard: buildRestaurantProviderSetupWizard({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      }),
+      readiness: buildRestaurantExternalReadiness(),
     });
   }
 
@@ -1496,6 +1532,16 @@ export async function POST(request: NextRequest) {
       postRunReviewPack,
       now,
     });
+    const providerKeyGapBoard = buildRestaurantProviderKeyGapBoard({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      now,
+    });
     const channelHub = buildRestaurantAgentChannelHub({
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
       offer: typeof body.offer === 'string' ? body.offer : undefined,
@@ -1841,6 +1887,7 @@ export async function POST(request: NextRequest) {
       operatingInsightReport,
       providerReceiptInbox,
       providerReceiptLifecycle,
+      providerKeyGapBoard,
       postRunReviewPack,
       channelHub,
       channelScheduleRun,

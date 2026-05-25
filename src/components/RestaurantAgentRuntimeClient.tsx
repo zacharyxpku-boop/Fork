@@ -58,6 +58,7 @@ import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-se
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import type { RestaurantProviderAdapterContractPack } from '@/lib/restaurant-provider-adapter-contract-pack';
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
+import type { RestaurantProviderKeyGapBoard } from '@/lib/restaurant-provider-key-gap-board';
 import type { RestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
 import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
@@ -292,6 +293,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerSetupState?: RestaurantProviderSetupStateSummary;
     providerAdapterContractPack?: RestaurantProviderAdapterContractPack;
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
+    providerKeyGapBoard?: RestaurantProviderKeyGapBoard;
     providerUnlockLadder?: RestaurantProviderUnlockLadder;
     gmCommandDeck?: RestaurantGmCommandDeck;
     shiftAutopilot?: RestaurantShiftAutopilot;
@@ -482,6 +484,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         recovery: payload?.recovery || previous.recovery,
         providerSetupState: payload?.providerSetupState || previous.providerSetupState,
         providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerKeyGapBoard: payload?.providerKeyGapBoard || previous.providerKeyGapBoard,
         providerAdapterContractPack: payload?.providerAdapterContractPack || previous.providerAdapterContractPack,
         competitorAudit: payload?.competitorAudit || previous.competitorAudit,
         buildQueue: payload?.buildQueue || previous.buildQueue,
@@ -996,6 +999,39 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider receipt lifecycle is temporarily unavailable.' }));
+    }
+  };
+
+  const inspectProviderKeyGapBoard = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building provider key gap board...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'provider-key-gap-board',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.providerKeyGapBoard?.summary?.canClaimCompetitorParity ? 'queued' : 'blocked',
+        message: `Provider key gap: ${payload?.providerKeyGapBoard?.summary?.configuredEnvKeys ?? 0}/${payload?.providerKeyGapBoard?.summary?.totalEnvKeys ?? 0} env keys, ${payload?.providerKeyGapBoard?.summary?.providerGated ?? 0} provider gated, ${payload?.providerKeyGapBoard?.summary?.dataGated ?? 0} data gated.`,
+        providerKeyGapBoard: payload?.providerKeyGapBoard || previous.providerKeyGapBoard,
+        platformConnectorMatrix: payload?.platformConnectorMatrix || previous.platformConnectorMatrix,
+        externalUnlockRequestPack: payload?.externalUnlockRequestPack || previous.externalUnlockRequestPack,
+        providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
+        readiness: payload?.readiness || previous.readiness,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider key gap board is temporarily unavailable.' }));
     }
   };
 
@@ -3442,6 +3478,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandExternalUnlockRequestPack = dispatchState.externalUnlockRequestPack;
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderReceiptLifecycle = dispatchState.providerReceiptLifecycle;
+  const commandProviderKeyGapBoard = dispatchState.providerKeyGapBoard;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandProviderSandboxSubmitWorkbench = dispatchState.providerSandboxSubmitWorkbench;
   const commandProviderSandboxSubmitAttempt = dispatchState.providerSandboxSubmitAttempt;
@@ -6695,6 +6732,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     >
                       Receipt Lifecycle
                     </button>
+                    <button
+                      className="ml-2 mt-2 border border-amber-200/50 px-2 py-1 text-[11px] font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={inspectProviderKeyGapBoard}
+                      type="button"
+                    >
+                      Key Gap Board
+                    </button>
                   </div>
                 ) : null}
                 {commandProviderReceiptLifecycle ? (
@@ -6706,6 +6751,19 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     {commandProviderReceiptLifecycle.stages.slice(0, 3).map(stage => (
                       <p className="mt-1 text-[11px] leading-4 text-white/45" key={stage.id}>
                         {stage.status}: {stage.label} / {stage.nextAction}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+                {commandProviderKeyGapBoard ? (
+                  <div className="border border-amber-200/25 bg-amber-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">provider key gap board</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandProviderKeyGapBoard.payloadShape} / keys {commandProviderKeyGapBoard.summary.configuredEnvKeys}/{commandProviderKeyGapBoard.summary.totalEnvKeys} / provider {commandProviderKeyGapBoard.summary.providerGated} / merchant {commandProviderKeyGapBoard.summary.merchantGated} / data {commandProviderKeyGapBoard.summary.dataGated}
+                    </p>
+                    {commandProviderKeyGapBoard.rows.slice(0, 3).map(row => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45" key={row.id}>
+                        {row.status}: {row.label} / {row.nextAction}
                       </p>
                     ))}
                   </div>
@@ -7527,6 +7585,61 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <p className="mt-1 text-[11px] leading-4 text-white/35">receipt: {dispatchState.providerSandboxSubmitAttempt.receiptExpectation.callbackHeader} / {dispatchState.providerSandboxSubmitAttempt.receiptExpectation.acceptedEvidence.slice(0, 3).join(' / ')}</p>
                   </div>
                 ) : null}
+                <div className="mt-3 border border-amber-200/15 bg-amber-200/[0.035] p-3">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/65">real automation unlock board</div>
+                      <p className="mt-1 text-xs font-black text-white">Maps competitor-grade automation to the exact provider keys, merchant grants, data contracts and accepted receipts still required.</p>
+                    </div>
+                    <button
+                      className="border border-amber-200/40 px-3 py-2 text-[11px] font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={inspectProviderKeyGapBoard}
+                      type="button"
+                    >
+                      Build Key Gap Board
+                    </button>
+                  </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-5">
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">capabilities</div>
+                      <div className="mt-1 text-xs font-black text-white">{dispatchState.providerKeyGapBoard?.summary.capabilities ?? 7}</div>
+                    </div>
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">env keys</div>
+                      <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.providerKeyGapBoard ? `${dispatchState.providerKeyGapBoard.summary.configuredEnvKeys}/${dispatchState.providerKeyGapBoard.summary.totalEnvKeys}` : '0/12'}</div>
+                    </div>
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider</div>
+                      <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerKeyGapBoard?.summary.providerGated ?? 4}</div>
+                    </div>
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">merchant</div>
+                      <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.providerKeyGapBoard?.summary.merchantGated ?? 1}</div>
+                    </div>
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">parity claim</div>
+                      <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerKeyGapBoard?.summary.canClaimCompetitorParity ? 'ready' : 'blocked'}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                    {(dispatchState.providerKeyGapBoard?.rows || [
+                      { id: 'persistent-browser-runner', label: 'Persistent browser runner', status: 'provider-gated', owner: 'runtime-admin', requiredEnvKeys: ['RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL', 'RESTAURANT_AGENT_OPENCLAW_API_KEY'], nextAction: 'Configure one runtime target and callback secret.' },
+                      { id: 'auto-publish', label: 'Auto publish', status: 'merchant-gated', owner: 'merchant', requiredEnvKeys: ['RESTAURANT_AGENT_BROWSER_PROFILE_ID'], nextAction: 'Start with one platform and one publish-proof lane.' },
+                      { id: 'true-operating-analysis', label: 'True operating analysis', status: 'data-gated', owner: 'data-ops', requiredEnvKeys: ['RESTAURANT_POS_DATA_MODE', 'RESTAURANT_POS_FIELD_DICTIONARY'], nextAction: 'Import one sanitized POS/redemption sample.' },
+                    ]).slice(0, 6).map(row => (
+                      <div className="border border-white/10 bg-stone-950/45 p-2" key={row.id}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-black text-white">{row.label}</span>
+                          <span className={row.status === 'internal-ready' ? 'text-[10px] text-emerald-100/70' : row.status === 'data-gated' ? 'text-[10px] text-violet-100/70' : 'text-[10px] text-amber-100/70'}>{row.status}</span>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-4 text-amber-100/55">{row.owner}</p>
+                        <p className="mt-1 text-[11px] leading-4 text-white/35">keys: {row.requiredEnvKeys.slice(0, 2).join(' / ') || 'none'}</p>
+                        <p className="mt-1 text-[11px] leading-4 text-white/55">{row.nextAction}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
                 <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
                   <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                     <div>
