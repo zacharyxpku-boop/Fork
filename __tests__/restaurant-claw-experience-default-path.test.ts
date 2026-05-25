@@ -122,6 +122,10 @@ describe('restaurant claw experience default path', () => {
     expect(payload.providerAdapterContractPack.payloadShape).toBe('restaurant-provider-adapter-contract-pack-v1');
     expect(payload.providerAdapterContractPack.summary.canClaimCompetitorParity).toBe(false);
     expect(payload.providerAdapterContractPack.adapters.map((item: { id: string }) => item.id)).toContain('runtime-browser-agent');
+    expect(payload.competitorAudit.payloadShape).toBe('restaurant-agent-competitor-audit-v1');
+    expect(payload.competitorAudit.sources.map((item: { name: string }) => item.name)).toContain('Abacus Claw');
+    expect(payload.buildQueue.payloadShape).toBe('restaurant-agent-build-queue-v1');
+    expect(payload.buildQueue.externalSetupRequests[0].request).toContain('Merchant account authorization');
     expect(payload.publishExecutionInbox.payloadShape).toBe('restaurant-publish-execution-inbox-v1');
     expect(payload.publishExecutionInbox.summary.canClaimAutoPublish).toBe(false);
     expect(payload.publishExecutionInbox.tasks.map((item: { id: string }) => item.id)).toContain('submit-browser-runner');

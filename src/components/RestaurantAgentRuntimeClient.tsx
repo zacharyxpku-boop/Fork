@@ -478,6 +478,8 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerSetupState: payload?.providerSetupState || previous.providerSetupState,
         providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
         providerAdapterContractPack: payload?.providerAdapterContractPack || previous.providerAdapterContractPack,
+        competitorAudit: payload?.competitorAudit || previous.competitorAudit,
+        buildQueue: payload?.buildQueue || previous.buildQueue,
         providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
         providerUnlockLadder: payload?.providerUnlockLadder || previous.providerUnlockLadder,
         providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,

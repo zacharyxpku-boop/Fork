@@ -1421,6 +1421,8 @@ export async function POST(request: NextRequest) {
       todayCommandCockpit,
       now,
     });
+    const competitorAudit = buildRestaurantCompetitorAuditReport();
+    const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -1456,6 +1458,8 @@ export async function POST(request: NextRequest) {
       shiftCapabilityActivationPack,
       todayCommandCockpit,
       providerAdapterContractPack,
+      competitorAudit,
+      buildQueue,
       firstForwardableRunPack,
       residentAgentMissionControl,
       aiEmployeeMemoryPack,
