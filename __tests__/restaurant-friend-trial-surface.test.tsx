@@ -226,6 +226,10 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('reservation redemption closeout loop');
     expect(html).toContain('Default Path now closes the loop from reservations and coupon claims into POS aggregate import, redemption review and next-shift actions.');
     expect(html).toContain('next-shift actions');
+    expect(html).toContain('reputation and service recovery loop');
+    expect(html).toContain('Public reviews, comment themes and service issues become owner-reviewed replies, recovery tasks and the next content loop.');
+    expect(html).toContain('auto review reply');
+    expect(html).toContain('service recovery');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');

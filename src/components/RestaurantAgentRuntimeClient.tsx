@@ -48,6 +48,7 @@ import type { RestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-f
 import type { RestaurantFirstRunControlTower } from '@/lib/restaurant-first-run-control-tower';
 import type { RestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-review-pack';
 import type { RestaurantNextLoopChannelPlan } from '@/lib/restaurant-next-loop-channel-plan';
+import type { RestaurantReputationCloseoutPack } from '@/lib/restaurant-reputation-closeout-pack';
 import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
@@ -294,6 +295,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     firstRunControlTower?: RestaurantFirstRunControlTower;
     postRunReviewPack?: RestaurantPostRunReviewPack;
     nextLoopChannelPlan?: RestaurantNextLoopChannelPlan;
+    reputationCloseoutPack?: RestaurantReputationCloseoutPack;
     providerLaunchTrainingPack?: RestaurantProviderLaunchTrainingPack;
     businessSignals?: RestaurantBusinessSignalReport;
     browserSessionHealth?: RestaurantBrowserSessionHealth;
@@ -477,6 +479,8 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         channelHub: payload?.channelHub || previous.channelHub,
         channelDeliveryReport: payload?.channelDeliveryReport || previous.channelDeliveryReport,
         nextLoopChannelPlan: payload?.nextLoopChannelPlan || previous.nextLoopChannelPlan,
+        publicIntelligenceBrief: payload?.publicIntelligenceBrief || previous.publicIntelligenceBrief,
+        reputationCloseoutPack: payload?.reputationCloseoutPack || previous.reputationCloseoutPack,
         runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
       }));
     } catch {
@@ -7174,6 +7178,82 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   { action: 'Assign service-prep task from accepted receipt and POS aggregate.' },
                   { action: 'Draft owner-reviewed community follow-up from aggregate visit intent.' },
                   { action: 'Keep Provider unlock blocked until runtime, merchant grant and POS contract are configured.' },
+                ]).slice(0, 3).map(item => item.action).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-cyan-200/15 bg-cyan-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/65">reputation and service recovery loop</div>
+                  <p className="mt-1 text-xs font-black text-white">Public reviews, comment themes and service issues become owner-reviewed replies, recovery tasks and the next content loop.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  Auto review reply stays blocked until merchant authorization, platform/provider sync, callback proof and consent boundaries exist.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.reputationCloseoutPack?.verdict || 'needs-public-proof'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sources</div>
+                  <div className="mt-1 text-xs font-black text-cyan-100/75">{dispatchState.reputationCloseoutPack?.summary.sources ?? 5}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">internal ready</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.reputationCloseoutPack?.summary.internalReady ?? 2}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">needs proof</div>
+                  <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.reputationCloseoutPack?.summary.needsPublicProof ?? 2}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">auto review reply</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.reputationCloseoutPack?.summary.canClaimAutoReviewReply ? 'ready' : 'blocked'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">analytics</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.reputationCloseoutPack?.summary.canClaimReviewAnalytics ? 'evidence-ready' : 'evidence-gated'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.reputationCloseoutPack?.themes || [
+                  { id: 'taste-offer-fit', label: 'Dish taste and offer fit', signal: 'unknown', operatorAction: 'Collect public proof before turning taste claims into content.', staffScript: 'Confirm availability and service window before recommending add-ons.' },
+                  { id: 'wait-time-service', label: 'Wait time and service recovery', signal: 'mixed', operatorAction: 'Attach queue handling and staff owner to the next follow-up loop.', staffScript: 'Explain expected wait and offer a clear reservation or pickup alternative.' },
+                  { id: 'coupon-expectation', label: 'Coupon expectation and redemption clarity', signal: 'risk', operatorAction: 'Import sanitized coupon/POS aggregate before judging coupon friction.', staffScript: 'Confirm coupon validity, excluded items and redemption steps before guests arrive.' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.signal === 'positive' ? 'text-[10px] text-emerald-100/70' : item.signal === 'mixed' ? 'text-[10px] text-sky-100/70' : item.signal === 'risk' ? 'text-[10px] text-rose-100/70' : 'text-[10px] text-white/45'}>{item.signal}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-cyan-100/60">{item.operatorAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/40">staff: {item.staffScript}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.reputationCloseoutPack?.responseDrafts || [
+                  { platform: 'Dianping/Meituan', status: 'staff-review', draft: 'Store manager reviews the final reply from public proof.', proofNeeded: 'public review/proof URL or screenshot id' },
+                  { platform: 'Xiaohongshu/Douyin', status: 'staff-review', draft: 'Use approved dish details, photos and visit scenes only.', proofNeeded: 'approved public note/video proof and photo rights' },
+                  { platform: 'WeChat community', status: 'provider-gated', draft: 'Generate staff talk track only; do not send automatically.', proofNeeded: 'staff approval and consent boundary' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-white/[0.04] p-2" key={item.platform}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.platform}</span>
+                      <span className={item.status === 'staff-review' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.draft}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">proof: {item.proofNeeded}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-cyan-100/55">
+                service recovery: {(dispatchState.reputationCloseoutPack?.recoveryQueue || [
+                  { action: 'Confirm wait-time, stock and service-window boundaries before the next content push.' },
+                  { action: 'Prepare a staff reply script for coupon validity and redemption steps.' },
+                  { action: 'Keep auto-reply and review inbox sync blocked until merchant authorization is configured.' },
                 ]).slice(0, 3).map(item => item.action).join(' / ')}
               </p>
             </div>
