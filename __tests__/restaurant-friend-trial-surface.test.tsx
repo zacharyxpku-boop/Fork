@@ -192,6 +192,11 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('setup gates');
     expect(html).toContain('env placeholders');
     expect(html).toContain('signoff items');
+    expect(html).toContain('merchant handoff copy');
+    expect(html).toContain('owner signoff queue');
+    expect(html).toContain('receipt + export digest');
+    expect(html).toContain('Provider acceptance receipt template is created after Start Default Path.');
+    expect(html).toContain('markdown + csv created on start');
     expect(html).toContain('competitor parity snapshot');
     expect(html).toContain('Internal execution now, external automation after Provider proof.');
     expect(html).toContain('Ready inside');

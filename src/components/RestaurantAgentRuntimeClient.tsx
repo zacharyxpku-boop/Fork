@@ -6770,6 +6770,47 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="mt-1 text-xs font-black text-white">{commandExternalUnlockRequestPack?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
                 </div>
               </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                <div className="border border-white/10 bg-stone-950/45 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">merchant handoff copy</div>
+                  <div className="mt-2 grid gap-2">
+                    {(commandProviderSetupPack?.copyForMerchant || commandExternalUnlockRequestPack?.customerHandoffCopy || [
+                      'created after Start Default Path: customer-facing explanation for what can run internally and what needs authorization',
+                    ]).slice(0, 3).map(item => (
+                      <p className="border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/60" key={item}>{item}</p>
+                    ))}
+                  </div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">owner signoff queue</div>
+                  <div className="mt-2 grid gap-2">
+                    {(commandExternalUnlockRequestPack?.signoffChecklist || []).slice(0, 3).map(item => (
+                      <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-amber-100/70">{item.priority}</span>
+                          <span className="text-[10px] text-white/35">{item.handoffTarget}</span>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-4 text-white/60">{item.title}</p>
+                      </div>
+                    ))}
+                    {commandExternalUnlockRequestPack ? null : (
+                      <p className="text-[11px] leading-4 text-white/40">created after Start Default Path</p>
+                    )}
+                  </div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-3">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">receipt + export digest</div>
+                  <p className="mt-2 text-[11px] leading-4 text-white/60">
+                    {commandExternalUnlockRequestPack?.acceptanceReceiptTemplate.title || 'Provider acceptance receipt template is created after Start Default Path.'}
+                  </p>
+                  <p className="mt-2 text-[11px] leading-4 text-cyan-100/60">
+                    required: {commandExternalUnlockRequestPack?.acceptanceReceiptTemplate.requiredFields.slice(0, 4).join(' / ') || 'eventId / channel / evidenceUrl / externalRunId'}
+                  </p>
+                  <p className="mt-2 text-[11px] leading-4 text-white/40">
+                    export: {commandExternalUnlockRequestPack ? `markdown ${commandExternalUnlockRequestPack.exportDigest.markdown.length} chars / csv ${commandExternalUnlockRequestPack.exportDigest.csv.split('\n').length - 1} rows` : 'markdown + csv created on start'}
+                  </p>
+                </div>
+              </div>
             </div>
             <div className="mt-3 border border-white/10 bg-white/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
