@@ -144,6 +144,7 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('AI autopilot queue');
     expect(html).toContain('Shift Autopilot');
     expect(html).toContain('Run Shift Autopilot');
+    expect(html).toContain('Build Provider Handoff');
     expect(html).toContain('now queue');
     expect(html).toContain('next wakeups');
     expect(html).toContain('Competitor Parity Board');

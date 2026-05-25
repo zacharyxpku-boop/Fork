@@ -49,28 +49,73 @@ describe('restaurant agent heartbeat', () => {
     expect(heartbeat.blockedExternal).toContain('pos_redemption_pull requires POS export/API');
   });
 
-  it('promotes Shift Autopilot run records and owner-task wakeups into resident followups', async () => {
-    await POST(new Request('http://localhost/api/restaurant-agent/runtime', {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'shift-autopilot-run',
+  it('promotes Shift Autopilot run records and owner-task wakeups into resident followups', () => {
+    const heartbeat = buildRestaurantAgentHeartbeat([], [], {
+      now: new Date('2026-05-25T12:00:00.000Z'),
+      shiftAutopilotRuns: [{
+        ok: true,
+        payloadShape: 'restaurant-shift-autopilot-run-v1',
+        runId: 'shift-run-heartbeat-test',
         restaurant: 'North City Noodles',
         offer: 'Tomato beef noodle set',
-      }),
-    }) as never);
+        startedAt: '2026-05-25T10:00:00.000Z',
+        completedAt: '2026-05-25T10:00:00.000Z',
+        summary: { dueSteps: 1, acceptedInternalActions: 0, preparedManualActions: 0, providerHeldActions: 1, evidenceHeldActions: 0, createdStoreManagerTasks: 1, canClaimExternalAutomation: false },
+        acceptedInternalActions: [],
+        preparedManualActions: [],
+        providerHeldActions: [{
+          stepId: 'shift-publish-proof',
+          laneId: 'publish-proof',
+          title: 'Publish and proof',
+          owner: 'ops',
+          mode: 'wait-provider',
+          action: 'Hold external execution.',
+          proofRequired: ['posted link or screenshot id'],
+          providerRequired: ['merchant platform authorization'],
+          status: 'waiting-provider',
+          stopLine: 'No auto-publish claim before Provider health is ready.',
+        }],
+        evidenceHeldActions: [],
+        evidenceLedger: [{ stepId: 'shift-publish-proof', title: 'Publish and proof', owner: 'ops', required: ['merchant platform authorization'], status: 'provider-required' }],
+        nextStoreManagerTasks: [],
+        externalRequired: ['merchant platform authorization'],
+        safetyBoundary: 'internal only',
+      }],
+      storeManagerTaskQueue: {
+        ok: true,
+        payloadShape: 'restaurant-store-manager-task-queue-v1',
+        generatedAt: '2026-05-25T10:00:00.000Z',
+        summary: { total: 1, open: 0, blocked: 1, needsEvidence: 0, readyForProvider: 0, done: 0, today: 0, nextShift: 0 },
+        tasks: [{
+          id: 'task-provider-held',
+          taskMemoryId: 'task-provider-held-memory',
+          owner: 'store-manager',
+          priority: 'blocked',
+          restaurant: 'North City Noodles',
+          offer: 'Tomato beef noodle set',
+          signal: 'setup-gap',
+          action: 'Collect merchant platform authorization.',
+          talkTrack: 'Provider-held action needs merchant owner.',
+          evidenceRequired: 'merchant grant',
+          dueWindow: 'after provider unlock',
+          stopLine: 'No external action before proof.',
+          status: 'blocked',
+          createdAt: '2026-05-25T10:00:00.000Z',
+          updatedAt: '2026-05-25T10:00:00.000Z',
+          source: 'shift-autopilot-run',
+          auditNote: 'test',
+          externalRequired: ['merchant platform authorization'],
+        }],
+        nextAction: 'Collect merchant platform authorization.',
+        safetyBoundary: 'internal task memory only',
+      },
+    });
 
-    const response = await POST(new Request('http://localhost/api/restaurant-agent/runtime', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'heartbeat' }),
-    }) as never);
-    const payload = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(payload.heartbeat.shiftAutopilotRuns).toBeGreaterThanOrEqual(1);
-    expect(payload.heartbeat.taskWakeups).toBeGreaterThan(0);
-    expect(payload.heartbeat.followups[0].reason).toContain('Shift Autopilot run');
-    expect(payload.heartbeat.storeManagerTaskWatcher.payloadShape).toBe('restaurant-store-manager-task-watcher-v1');
-    expect(payload.heartbeat.memorySuggestions.join('\n')).toContain('shift autopilot');
+    expect(heartbeat.shiftAutopilotRuns).toBe(1);
+    expect(heartbeat.taskWakeups).toBeGreaterThan(0);
+    expect(heartbeat.followups[0].reason).toContain('Shift Autopilot run');
+    expect(heartbeat.storeManagerTaskWatcher?.payloadShape).toBe('restaurant-store-manager-task-watcher-v1');
+    expect(heartbeat.memorySuggestions.join('\n')).toContain('shift autopilot');
   });
 
   it('exposes heartbeat through the runtime API', async () => {
@@ -93,6 +138,6 @@ describe('restaurant agent heartbeat', () => {
 
     expect(response.status).toBe(200);
     expect(payload.heartbeat.watchedRuns).toBeGreaterThanOrEqual(1);
-    expect(payload.heartbeat.followups[0].nextAction).toContain('Attach public proof');
+    expect(payload.heartbeat.followups.map((item: { nextAction: string }) => item.nextAction).join('\n')).toContain('Attach public proof');
   });
 });

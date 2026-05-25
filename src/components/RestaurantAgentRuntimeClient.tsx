@@ -51,6 +51,7 @@ import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-u
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-autopilot-run-store';
+import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
@@ -256,6 +257,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     gmCommandDeck?: RestaurantGmCommandDeck;
     shiftAutopilot?: RestaurantShiftAutopilot;
     shiftAutopilotRun?: RestaurantShiftAutopilotRunRecord;
+    shiftProviderHandoff?: RestaurantShiftProviderHandoff;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -2268,6 +2270,28 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildShiftProviderHandoff = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Shift Provider Handoff from recorded shift runs...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'shift-provider-handoff' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftProviderHandoff?.summary?.requests ? 'blocked' : 'queued',
+        message: `Shift Provider Handoff: ${payload?.shiftProviderHandoff?.summary?.requests ?? 0} asks, ${payload?.shiftProviderHandoff?.summary?.p0 ?? 0} P0, ${payload?.shiftProviderHandoff?.summary?.readyToSandbox ?? 0} sandbox-ready.`,
+        shiftProviderHandoff: payload?.shiftProviderHandoff || previous.shiftProviderHandoff,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift Provider Handoff is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -2819,6 +2843,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       safetyBoundary: 'Shift Autopilot preview builds a bounded shift plan only; it does not run forever, publish, contact customers, redeem coupons, write POS orders or expose secrets.',
     } satisfies Pick<RestaurantShiftAutopilot, 'payloadShape' | 'summary' | 'steps' | 'nowQueue' | 'nextWakeups' | 'providerQueue' | 'evidenceQueue' | 'operatingPolicy' | 'safetyBoundary'>;
   const commandShiftAutopilotRun = dispatchState.shiftAutopilotRun;
+  const commandShiftProviderHandoff = dispatchState.shiftProviderHandoff;
   const commandChannelDeliveryReport = dispatchState.commandCenter?.channelDeliveryReport || dispatchState.channelDeliveryReport;
   const commandChannelDeliveryAttempt = dispatchState.channelDeliveryAttempt;
   const commandChannelScheduleRun = dispatchState.channelScheduleRun;
@@ -3365,6 +3390,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Run Shift Autopilot
                         </button>
+                        <button
+                          className="ml-2 mt-3 border border-amber-200/70 px-3 py-2 text-xs font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildShiftProviderHandoff}
+                          type="button"
+                        >
+                          Build Provider Handoff
+                        </button>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
                         <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -3471,6 +3504,64 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                           </div>
                         </div>
                         <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilotRun.safetyBoundary}</p>
+                      </div>
+                    ) : null}
+                    {commandShiftProviderHandoff ? (
+                      <div className="mt-3 border border-amber-200/25 bg-amber-200/[0.05] p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">shift provider handoff</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftProviderHandoff.payloadShape}</h5>
+                            <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">{commandShiftProviderHandoff.nextAction}</p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftProviderHandoff.summary.requests}</div>
+                              <p className="mt-1 text-white/55">asks</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftProviderHandoff.summary.p0}</div>
+                              <p className="mt-1 text-white/55">P0</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftProviderHandoff.summary.providerEnvKeys}</div>
+                              <p className="mt-1 text-white/55">key names</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftProviderHandoff.summary.merchantApprovals}</div>
+                              <p className="mt-1 text-white/55">grants</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftProviderHandoff.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">external claim</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                          <div className="border border-white/10 bg-white/[0.04] p-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider env keys</div>
+                            <p className="mt-1 text-[11px] leading-4 text-amber-100/65">{commandShiftProviderHandoff.providerEnvKeys.slice(0, 6).join(' / ') || 'none'}</p>
+                          </div>
+                          <div className="border border-white/10 bg-white/[0.04] p-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">merchant approvals</div>
+                            <p className="mt-1 text-[11px] leading-4 text-white/45">{commandShiftProviderHandoff.merchantApprovals.slice(0, 5).join(' / ') || 'none'}</p>
+                          </div>
+                          <div className="border border-white/10 bg-white/[0.04] p-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">data contracts</div>
+                            <p className="mt-1 text-[11px] leading-4 text-white/45">{commandShiftProviderHandoff.dataContracts.slice(0, 5).join(' / ') || 'none'}</p>
+                          </div>
+                        </div>
+                        {commandShiftProviderHandoff.requests.slice(0, 4).map(request => (
+                          <div className="mt-2 border border-white/10 bg-stone-950/50 p-2" key={request.id}>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-xs font-black text-white">{request.capability}</span>
+                              <span className="text-[11px] text-amber-100/70">{request.priority} / {request.status}</span>
+                            </div>
+                            <p className="mt-1 text-[11px] leading-4 text-white/55">{request.ask}</p>
+                            <p className="mt-1 text-[11px] leading-4 text-white/35">acceptance: {request.acceptance}</p>
+                          </div>
+                        ))}
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftProviderHandoff.safetyBoundary}</p>
                       </div>
                     ) : null}
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>

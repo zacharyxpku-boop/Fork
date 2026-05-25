@@ -71,6 +71,7 @@ import { buildRestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-se
 import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import { buildRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import { listRestaurantShiftAutopilotRuns, runRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot-run-store';
+import { buildRestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
 import { buildRestaurantStoreOperatingPlan } from '@/lib/restaurant-store-operating-plan';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, recordRestaurantStoreManagerTasksFromDayZeroMissionPack, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
@@ -1031,6 +1032,23 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
     }, { status: shiftAutopilotRun.summary.providerHeldActions > 0 ? 409 : 201 });
+  }
+
+  if (body.action === 'shift-provider-handoff') {
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+    });
+    const shiftProviderHandoff = buildRestaurantShiftProviderHandoff({
+      shiftRuns: listRestaurantShiftAutopilotRuns(),
+      providerReadinessHealth,
+    });
+    return NextResponse.json({
+      ok: true,
+      shiftProviderHandoff,
+      providerReadinessHealth,
+      providerSetupState,
+    }, { status: shiftProviderHandoff.summary.requests > 0 ? 409 : 200 });
   }
 
   if (body.action === 'command-route') {
