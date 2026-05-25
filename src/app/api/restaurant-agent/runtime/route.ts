@@ -943,6 +943,17 @@ export async function POST(request: NextRequest) {
       couponClaimCount: 9,
       visitIntentCount: 6,
     });
+    const browserGatewayPack = buildRestaurantBrowserGatewayPack({
+      runtimeTarget: 'openclaw',
+      eventId: controlledTrialRun.simulation.run.eventId,
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      channel: 'Dianping / Xiaohongshu / Douyin / WeChat group',
+      targetUrl: 'merchant-approved-url-or-public-proof-url',
+    });
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const runnerEvents = listRestaurantBrowserRunnerEvents();
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -966,8 +977,16 @@ export async function POST(request: NextRequest) {
       providerSetupPack,
       externalUnlockRequestPack,
       controlledTrialRun,
-      runs: listRestaurantAgentRuns(),
-      receipts: listRestaurantAgentReceipts(),
+      browserGatewayPack,
+      runtimeRunnerLoopPack: buildRestaurantRuntimeRunnerLoopPack({
+        runs,
+        receipts,
+        runnerEvents,
+        readiness: buildRestaurantExternalReadiness(),
+      }),
+      runs,
+      receipts,
+      runnerEvents,
     });
   }
 

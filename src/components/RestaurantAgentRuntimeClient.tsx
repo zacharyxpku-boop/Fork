@@ -454,6 +454,8 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         businessSignals: payload?.controlledTrialRun?.businessSignals || previous.businessSignals,
         latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
         receipts: payload?.receipts || previous.receipts,
+        browserGatewayPack: payload?.browserGatewayPack || previous.browserGatewayPack,
+        runtimeRunnerLoopPack: payload?.runtimeRunnerLoopPack || previous.runtimeRunnerLoopPack,
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Default Claw-style path is temporarily unavailable.' }));
@@ -6884,6 +6886,58 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                 ))}
               </div>
+            </div>
+            <div className="mt-3 border border-sky-200/15 bg-sky-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/65">browser runner simulation lane</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path prepares the OpenClaw/Hermes browser gateway before real Provider execution.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  The lane returns request schema, allowlisted actions, snapshot policy, callback contract and runner loop blockers without storing cookies, tokens, private messages or raw POS rows.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-5">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">gateway</div>
+                  <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.browserGatewayPack?.canExecuteNow ? 'ready' : 'blocked'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">accepted actions</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.browserGatewayPack?.browserRequest.acceptedActions.length ?? 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">runner loop</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.runtimeRunnerLoopPack?.verdict || 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">waiting receipts</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.runtimeRunnerLoopPack?.summary.waitingReceipts ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">runner events</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.runtimeRunnerLoopPack?.summary.runnerEvents ?? 0}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.browserGatewayPack?.actionSchema || [
+                  { action: 'open_public_page', allowed: false, requiredEvidence: ['created after Start Default Path'], stopIf: ['provider gates missing'] },
+                  { action: 'capture_public_proof', allowed: false, requiredEvidence: ['screenshot id'], stopIf: ['private data visible'] },
+                  { action: 'send_signed_receipt', allowed: false, requiredEvidence: ['x-restaurant-agent-signature'], stopIf: ['callback secret missing'] },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.action}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-mono uppercase tracking-[0.12em] text-sky-100/70">{item.action}</span>
+                      <span className={item.allowed ? 'text-[10px] text-emerald-100/70' : 'text-[10px] text-rose-100/70'}>{item.allowed ? 'allowed' : 'blocked'}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">proof: {item.requiredEvidence.slice(0, 2).join(' / ')}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">stop: {item.stopIf.slice(0, 2).join(' / ')}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-sky-100/55">
+                next runner action: {dispatchState.runtimeRunnerLoopPack?.nextBestAction || 'Configure runtime key, callback secret, isolated browser profile and merchant authorization before external browser execution.'}
+              </p>
             </div>
             {dispatchState.clawExperienceDefaultPath ? (
               <>
