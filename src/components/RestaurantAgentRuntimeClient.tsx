@@ -456,6 +456,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         receipts: payload?.receipts || previous.receipts,
         browserGatewayPack: payload?.browserGatewayPack || previous.browserGatewayPack,
         runtimeRunnerLoopPack: payload?.runtimeRunnerLoopPack || previous.runtimeRunnerLoopPack,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
+        providerUnlockLadder: payload?.providerUnlockLadder || previous.providerUnlockLadder,
+        providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
+        customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
+        voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Default Claw-style path is temporarily unavailable.' }));
@@ -6937,6 +6945,58 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-sky-100/55">
                 next runner action: {dispatchState.runtimeRunnerLoopPack?.nextBestAction || 'Configure runtime key, callback secret, isolated browser profile and merchant authorization before external browser execution.'}
+              </p>
+            </div>
+            <div className="mt-3 border border-amber-200/15 bg-amber-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/65">provider readiness ladder</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now shows exactly which Claw/Cloud-style abilities are internal-ready and which need external Provider setup.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This is the unlock path for auto publish proof, auto lead capture, coupon redemption, operating analysis, persistent browser tasks and memory follow-up without pretending they are live before Provider health is ready.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-5">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">capabilities</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.providerUnlockLadder?.summary.capabilities ?? 6}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">health ready</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.providerUnlockLadder?.summary.providerHealthReady ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">setup signed</div>
+                  <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.providerUnlockLadder?.summary.setupEvidenceSigned ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external blocked</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerUnlockLadder?.summary.externalBlocked ?? dispatchState.providerLaunchBoard?.summary.missingProvider ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">automation claim</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.providerUnlockLadder?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.providerUnlockLadder?.items || [
+                  { id: 'persistent-browser', label: 'Persistent browser agent', stage: 'external-blocked', internalCanDo: 'Build governed task packages, recovery runbooks and proof requirements.', nextAction: 'Provide OpenClaw/Hermes/Lobu URL and API key through server-side env.', stillNeeds: ['runtime URL/key and callback secret'] },
+                  { id: 'auto-publish-proof', label: 'Auto publish and proof capture', stage: 'external-blocked', internalCanDo: 'Prepare channel copy, staff checklist and proof ledger without claiming publication.', nextAction: 'Provide scoped merchant platform authorization and signed proof callback.', stillNeeds: ['merchant platform authorization'] },
+                  { id: 'operating-analysis', label: 'True operating analysis', stage: 'external-blocked', internalCanDo: 'Separate observations from measured store operation signals.', nextAction: 'Provide aggregate POS, coupon and redemption data contract.', stillNeeds: ['aggregate POS/coupon field dictionary'] },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.stage === 'provider-health-ready' ? 'text-[10px] text-emerald-100/70' : item.stage === 'setup-evidence-signed' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{item.stage}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">internal: {item.internalCanDo}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-amber-100/55">next: {item.nextAction}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-amber-100/55">
+                external asks: {(dispatchState.providerUnlockLadder?.nextExternalAsks || dispatchState.providerLaunchBoard?.externalRequired || ['runtime URL/key', 'merchant platform authorization', 'signed callback secret', 'aggregate POS/coupon data contract']).slice(0, 5).join(' / ')}
               </p>
             </div>
             {dispatchState.clawExperienceDefaultPath ? (

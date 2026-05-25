@@ -212,6 +212,10 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('accepted actions');
     expect(html).toContain('runner loop');
     expect(html).toContain('next runner action');
+    expect(html).toContain('provider readiness ladder');
+    expect(html).toContain('Default Path now shows exactly which Claw/Cloud-style abilities are internal-ready and which need external Provider setup.');
+    expect(html).toContain('automation claim');
+    expect(html).toContain('external asks');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');

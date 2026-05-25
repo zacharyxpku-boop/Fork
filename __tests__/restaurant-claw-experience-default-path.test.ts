@@ -71,6 +71,14 @@ describe('restaurant claw experience default path', () => {
     expect(payload.browserGatewayPack.browserRequest.forbiddenFields).toContain('cookie');
     expect(payload.runtimeRunnerLoopPack.payloadShape).toBe('restaurant-runtime-runner-loop-pack-v1');
     expect(payload.runtimeRunnerLoopPack.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerReadinessHealth.payloadShape).toBe('restaurant-provider-readiness-health-v1');
+    expect(payload.providerSetupWizard.payloadShape).toBe('restaurant-provider-setup-wizard-v1');
+    expect(payload.providerUnlockLadder.payloadShape).toBe('restaurant-provider-unlock-ladder-v1');
+    expect(payload.providerLaunchBoard.payloadShape).toBe('restaurant-provider-launch-board-v1');
+    expect(payload.customerDemandGateway.payloadShape).toBe('restaurant-customer-demand-gateway-v1');
+    expect(payload.voiceOrderConsole.payloadShape).toBe('restaurant-voice-order-console-v1');
+    expect(payload.providerUnlockLadder.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerLaunchBoard.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.receipts.length).toBeGreaterThan(0);
     expect(payload.providerSetupPack.summary.readyForExternalExecution).toBe(false);
     expect(payload.externalUnlockRequestPack.summary.canClaimExternalAutomation).toBe(false);

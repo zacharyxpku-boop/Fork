@@ -933,6 +933,65 @@ export async function POST(request: NextRequest) {
       constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
       evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
     });
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+    });
+    const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger({
+      availableMaterials: [
+        typeof body.evidence === 'string' ? body.evidence : '',
+        clawSkillWorkbench.summary.runnableNow > 0 ? 'claw-skill-workbench-ready' : '',
+      ].filter(Boolean),
+      configuredProviders: [
+        ...providerSetupState.provided.envKeys,
+        ...providerSetupState.provided.merchantApprovals,
+        ...providerSetupState.provided.dataContracts,
+      ],
+    });
+    const customerDemandGateway = buildRestaurantCustomerDemandGateway({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      capabilityTrainingPlan,
+      providerSetupState,
+    });
+    const voiceOrderConsole = buildRestaurantVoiceOrderConsole({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      customerDemandGateway,
+      providerSetupState,
+    });
+    const providerLaunchBoard = buildRestaurantProviderLaunchBoard({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      providerSetupState,
+      providerReadinessHealth,
+      customerDemandGateway,
+      voiceOrderConsole,
+    });
+    const providerSetupWizard = buildRestaurantProviderSetupWizard({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      provided: providerSetupState.provided,
+    });
+    const providerUnlockLadder = buildRestaurantProviderUnlockLadder({
+      setupState: providerSetupState,
+      health: providerReadinessHealth,
+    });
     const controlledTrialRun = await runRestaurantControlledTrialRun({
       target: 'openclaw',
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
@@ -976,6 +1035,14 @@ export async function POST(request: NextRequest) {
       taskProviderHandoff: buildRestaurantTaskProviderHandoff({ queue: storeManagerTaskQueue }),
       providerSetupPack,
       externalUnlockRequestPack,
+      providerSetupState,
+      providerReadinessHealth,
+      providerSetupWizard,
+      providerUnlockLadder,
+      providerLaunchBoard,
+      customerDemandGateway,
+      voiceOrderConsole,
+      capabilityTrainingPlan,
       controlledTrialRun,
       browserGatewayPack,
       runtimeRunnerLoopPack: buildRestaurantRuntimeRunnerLoopPack({
