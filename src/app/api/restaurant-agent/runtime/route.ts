@@ -70,7 +70,7 @@ import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-
 import { buildRestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
 import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import { buildRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
-import { runRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot-run-store';
+import { listRestaurantShiftAutopilotRuns, runRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot-run-store';
 import { buildRestaurantStoreOperatingPlan } from '@/lib/restaurant-store-operating-plan';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, recordRestaurantStoreManagerTasksFromDayZeroMissionPack, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
@@ -115,11 +115,18 @@ export async function POST(request: NextRequest) {
 
   if (body.action === 'heartbeat') {
     const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
     return NextResponse.json({
       ok: true,
-      heartbeat: buildRestaurantAgentHeartbeat(runs, listRestaurantAgentReceipts()),
+      heartbeat: buildRestaurantAgentHeartbeat(runs, receipts, {
+        shiftAutopilotRuns: listRestaurantShiftAutopilotRuns(),
+        storeManagerTaskQueue,
+      }),
       runs,
-      receipts: listRestaurantAgentReceipts(),
+      receipts,
+      shiftAutopilotRuns: listRestaurantShiftAutopilotRuns(),
+      storeManagerTaskQueue,
     });
   }
 

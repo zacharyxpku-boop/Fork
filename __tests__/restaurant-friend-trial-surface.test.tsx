@@ -159,6 +159,8 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Service Window Watch');
     expect(html).toContain('Closeout Memory');
     expect(html).toContain('Run Resident Heartbeat');
+    expect(html).toContain('shift runs watched');
+    expect(html).toContain('task wakeups');
     expect(html).toContain('Build Channel Hub');
     expect(html).toContain('Build Memory Pack');
     expect(html).toContain('Customer Operating Path');

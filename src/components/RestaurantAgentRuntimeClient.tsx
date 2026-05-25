@@ -195,6 +195,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       heartbeatId: string;
       watchedRuns: number;
       acceptedReceipts?: number;
+      shiftAutopilotRuns?: number;
+      taskWakeups?: number;
+      memorySuggestions?: string[];
       followups: Array<{
         id: string;
         priority: string;
@@ -204,6 +207,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         evidenceRequired: string;
       }>;
       watcherPolicy?: RestaurantAgentWatcherPolicy;
+      storeManagerTaskWatcher?: RestaurantStoreManagerTaskWatcher;
     };
     readiness?: RestaurantExternalReadiness;
     receipts?: RestaurantAgentReceiptRecord[];
@@ -419,10 +423,12 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       });
       const payload = await response.json();
       setDispatchState({
-        status: 'queued',
+        status: payload?.heartbeat?.taskWakeups || payload?.heartbeat?.shiftAutopilotRuns ? 'blocked' : 'queued',
         message: `Heartbeat 已检查 ${payload?.heartbeat?.watchedRuns ?? 0} 条运行记录。`,
         latestRuns: payload?.runs?.slice?.(0, 3),
         heartbeat: payload?.heartbeat,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue,
+        storeManagerTaskWatcher: payload?.heartbeat?.storeManagerTaskWatcher,
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Heartbeat Watcher 暂不可用。' });
@@ -3579,6 +3585,24 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <p className="mt-2 text-[11px] leading-4 text-emerald-100/60">proof: {item.proof}</p>
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-3 grid gap-2 text-xs sm:grid-cols-4">
+                    <div className="border border-white/10 bg-white/[0.04] p-2">
+                      <div className="font-mono text-white">{dispatchState.heartbeat?.watchedRuns ?? 0}</div>
+                      <p className="mt-1 text-white/55">run receipts watched</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.04] p-2">
+                      <div className="font-mono text-white">{dispatchState.heartbeat?.shiftAutopilotRuns ?? 0}</div>
+                      <p className="mt-1 text-white/55">shift runs watched</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.04] p-2">
+                      <div className="font-mono text-white">{dispatchState.heartbeat?.taskWakeups ?? 0}</div>
+                      <p className="mt-1 text-white/55">task wakeups</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.04] p-2">
+                      <div className="font-mono text-white">{dispatchState.heartbeat?.memorySuggestions?.length ?? 0}</div>
+                      <p className="mt-1 text-white/55">memory suggestions</p>
+                    </div>
                   </div>
                   {dispatchState.heartbeat?.followups?.length ? (
                     <div className="mt-3 grid gap-2 lg:grid-cols-3">
