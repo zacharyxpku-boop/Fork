@@ -36,6 +36,10 @@ Invoke-Step "Vitest restaurant shift sandbox forward" {
   npm.cmd run test -- __tests__/restaurant-shift-sandbox-forward.test.ts
 }
 
+Invoke-Step "Vitest restaurant shift closeout training" {
+  npm.cmd run test -- __tests__/restaurant-shift-closeout-training-pack.test.ts
+}
+
 Invoke-Step "Vitest restaurant first run control tower" {
   npm.cmd run test -- __tests__/restaurant-first-run-control-tower.test.ts
 }

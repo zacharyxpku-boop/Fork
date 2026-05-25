@@ -51,6 +51,7 @@ import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-u
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-autopilot-run-store';
+import type { RestaurantShiftCloseoutTrainingPack } from '@/lib/restaurant-shift-closeout-training-pack';
 import type { RestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
 import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
 import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shift-sandbox-forward';
@@ -260,6 +261,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     gmCommandDeck?: RestaurantGmCommandDeck;
     shiftAutopilot?: RestaurantShiftAutopilot;
     shiftAutopilotRun?: RestaurantShiftAutopilotRunRecord;
+    shiftCloseoutTrainingPack?: RestaurantShiftCloseoutTrainingPack;
     shiftFirstForwardableRun?: RestaurantShiftFirstForwardableRun;
     shiftProviderHandoff?: RestaurantShiftProviderHandoff;
     shiftSandboxAcceptance?: RestaurantShiftSandboxAcceptance;
@@ -2390,6 +2392,60 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildShiftCloseoutTrainingPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Shift Closeout Training Pack...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'shift-closeout-training-pack',
+          runtimeTarget: 'openclaw',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+          rows: [
+            {
+              businessDate: '2026-05-23',
+              storeName: runtimeIntake.restaurant,
+              offerName: runtimeIntake.offer,
+              channel: 'group-buy coupon',
+              couponClaimCount: 38,
+              redemptionCount: 21,
+              grossSales: 2180,
+              orderCount: 24,
+              inventoryUsed: 21,
+            },
+          ],
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftCloseoutTrainingPack?.summary?.canRecordTraining ? 'queued' : 'blocked',
+        message: `Shift Closeout Training: ${payload?.shiftCloseoutTrainingPack?.verdict || 'unknown'}; ${payload?.shiftCloseoutTrainingPack?.summary?.trainingDrafts ?? 0} drafts, ${payload?.shiftCloseoutTrainingPack?.summary?.recoveryActions ?? 0} recovery actions.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        posImport: payload?.posImport || previous.posImport,
+        shiftCloseoutTrainingPack: payload?.shiftCloseoutTrainingPack || previous.shiftCloseoutTrainingPack,
+        postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        recovery: payload?.recovery || previous.recovery,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift Closeout Training Pack is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -2941,6 +2997,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       safetyBoundary: 'Shift Autopilot preview builds a bounded shift plan only; it does not run forever, publish, contact customers, redeem coupons, write POS orders or expose secrets.',
     } satisfies Pick<RestaurantShiftAutopilot, 'payloadShape' | 'summary' | 'steps' | 'nowQueue' | 'nextWakeups' | 'providerQueue' | 'evidenceQueue' | 'operatingPolicy' | 'safetyBoundary'>;
   const commandShiftAutopilotRun = dispatchState.shiftAutopilotRun;
+  const commandShiftCloseoutTrainingPack = dispatchState.shiftCloseoutTrainingPack;
   const commandShiftFirstForwardableRun = dispatchState.shiftFirstForwardableRun;
   const commandShiftProviderHandoff = dispatchState.shiftProviderHandoff;
   const commandShiftSandboxAcceptance = dispatchState.shiftSandboxAcceptance;
@@ -3523,6 +3580,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Submit Shift Sandbox Run
                         </button>
+                        <button
+                          className="ml-2 mt-3 border border-violet-200/70 px-3 py-2 text-xs font-black text-violet-100 transition hover:bg-violet-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildShiftCloseoutTrainingPack}
+                          type="button"
+                        >
+                          Closeout + Train
+                        </button>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
                         <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -3833,6 +3898,64 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                           </p>
                         ) : null}
                         <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftSandboxForwardAttempt.safetyBoundary}</p>
+                      </div>
+                    ) : null}
+                    {commandShiftCloseoutTrainingPack ? (
+                      <div className="mt-3 border border-violet-200/25 bg-violet-200/[0.05] p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">shift closeout training pack</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftCloseoutTrainingPack.verdict}</h5>
+                            <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                              {commandShiftCloseoutTrainingPack.payloadShape} turns receipts, recovery, post-run review and capability drafts into the next operating loop.
+                            </p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingPack.summary.acceptedReceipts}</div>
+                              <p className="mt-1 text-white/55">accepted</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingPack.summary.waitingReceipts}</div>
+                              <p className="mt-1 text-white/55">waiting</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingPack.summary.recoveryActions}</div>
+                              <p className="mt-1 text-white/55">recovery</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingPack.summary.trainingDrafts}</div>
+                              <p className="mt-1 text-white/55">drafts</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftCloseoutTrainingPack.summary.canRecordTraining ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">training</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                          {commandShiftCloseoutTrainingPack.lanes.map(lane => (
+                            <div className="border border-white/10 bg-stone-950/50 p-2" key={lane.id}>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-black text-white">{lane.id}</span>
+                                <span className={lane.status === 'ready' ? 'text-[11px] text-emerald-100/70' : lane.status === 'waiting' ? 'text-[11px] text-amber-100/70' : 'text-[11px] text-rose-100/70'}>
+                                  {lane.status}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[11px] leading-4 text-white/55">{lane.nextAction}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                          {commandShiftCloseoutTrainingPack.trainingDrafts.slice(0, 3).map(draft => (
+                            <div className="border border-white/10 bg-white/[0.04] p-2" key={`${draft.capabilityId}-${draft.name}`}>
+                              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">{draft.capabilityId}</div>
+                              <p className="mt-1 text-[11px] leading-4 text-white/60">{draft.name} / {draft.owner}</p>
+                              <p className="mt-1 text-[11px] leading-4 text-white/40">{draft.acceptedWhen}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftCloseoutTrainingPack.safetyBoundary}</p>
                       </div>
                     ) : null}
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>

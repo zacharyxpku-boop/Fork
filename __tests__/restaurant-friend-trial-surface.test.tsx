@@ -148,6 +148,7 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Check Sandbox Acceptance');
     expect(html).toContain('Build Shift First Forwardable Run');
     expect(html).toContain('Submit Shift Sandbox Run');
+    expect(html).toContain('Closeout + Train');
     expect(html).toContain('now queue');
     expect(html).toContain('next wakeups');
     expect(html).toContain('Competitor Parity Board');
