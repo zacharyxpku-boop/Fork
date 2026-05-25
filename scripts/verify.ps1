@@ -88,6 +88,10 @@ Invoke-Step "Vitest restaurant runtime adapter contract" {
   npm.cmd run test -- __tests__/restaurant-runtime-adapter-contract.test.ts
 }
 
+Invoke-Step "Vitest restaurant runtime runner loop pack" {
+  npm.cmd run test -- __tests__/restaurant-runtime-runner-loop-pack.test.ts
+}
+
 Invoke-Step "Vitest restaurant AI consultant copilot" {
   npm.cmd run test -- __tests__/restaurant-ai-consultant-copilot.test.ts
 }

@@ -41,6 +41,7 @@ import { buildRestaurantRuntimeSetupContract } from '@/lib/restaurant-agent-runt
 import { forwardRestaurantAgentDispatch, forwardRestaurantAgentExecutionPackage, readRestaurantRuntimeBridgeConfig } from '@/lib/restaurant-agent-runtime-bridge';
 import { buildRestaurantAgentRuntime } from '@/lib/restaurant-agent-runtime';
 import { buildRestaurantRuntimeAdapterContract } from '@/lib/restaurant-runtime-adapter-contract';
+import { buildRestaurantRuntimeRunnerLoopPack } from '@/lib/restaurant-runtime-runner-loop-pack';
 import { buildRestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-tool-policy';
 import { buildRestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
 import { buildRestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
@@ -2383,6 +2384,25 @@ export async function POST(request: NextRequest) {
       }),
       executionPackage,
       runtimeProbe,
+    });
+  }
+
+  if (body.action === 'runtime-runner-loop-pack') {
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const runnerEvents = listRestaurantBrowserRunnerEvents();
+    const readiness = buildRestaurantExternalReadiness();
+    return NextResponse.json({
+      ok: true,
+      runtimeRunnerLoopPack: buildRestaurantRuntimeRunnerLoopPack({
+        runs,
+        receipts,
+        runnerEvents,
+        readiness,
+      }),
+      runs,
+      receipts,
+      runnerEvents,
     });
   }
 

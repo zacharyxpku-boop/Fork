@@ -72,6 +72,7 @@ import type { RestaurantRunHealth } from '@/lib/restaurant-agent-run-health';
 import type { RestaurantRuntimeProbe } from '@/lib/restaurant-agent-runtime-probe';
 import type { RestaurantRuntimeSetupContract } from '@/lib/restaurant-agent-runtime-setup-contract';
 import type { RestaurantRuntimeAdapterContract } from '@/lib/restaurant-runtime-adapter-contract';
+import type { RestaurantRuntimeRunnerLoopPack } from '@/lib/restaurant-runtime-runner-loop-pack';
 import type { RestaurantPosImportReport } from '@/lib/restaurant-pos-import-validator';
 import { buildRestaurantAgentRuntime, type RestaurantAgentConnector } from '@/lib/restaurant-agent-runtime';
 import type { RestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-tool-policy';
@@ -239,6 +240,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     runtimeProbe?: RestaurantRuntimeProbe;
     runtimeSetupContract?: RestaurantRuntimeSetupContract;
     runtimeAdapterContract?: RestaurantRuntimeAdapterContract;
+    runtimeRunnerLoopPack?: RestaurantRuntimeRunnerLoopPack;
     posImport?: RestaurantPosImportReport;
     capabilityTrainingPlan?: RestaurantCapabilityTrainingPlan;
     capabilityTrainingRecord?: RestaurantCapabilityTrainingRecord;
@@ -1022,6 +1024,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Runtime adapter contract is temporarily unavailable.' }));
+    }
+  };
+
+  const inspectRuntimeRunnerLoopPack = async () => {
+    setDispatchState({ status: 'loading', message: 'Building runtime runner loop pack...' });
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'runtime-runner-loop-pack' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.runtimeRunnerLoopPack?.summary?.recoveryActions ? 'blocked' : 'queued',
+        message: `Runner loop pack: ${payload?.runtimeRunnerLoopPack?.verdict || 'unknown'}; runner events ${payload?.runtimeRunnerLoopPack?.summary?.runnerEvents ?? 0}, waiting receipts ${payload?.runtimeRunnerLoopPack?.summary?.waitingReceipts ?? 0}.`,
+        runtimeRunnerLoopPack: payload?.runtimeRunnerLoopPack || previous.runtimeRunnerLoopPack,
+        receipts: payload?.receipts || previous.receipts,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Runtime runner loop pack is temporarily unavailable.' }));
     }
   };
 
@@ -6670,6 +6693,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               Runtime Adapter Contract
             </button>
             <button
+              className="border border-sky-200/40 bg-sky-200/10 px-4 py-2 text-sm font-black text-sky-100 transition hover:bg-sky-200/20 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={dispatchState.status === 'loading'}
+              onClick={inspectRuntimeRunnerLoopPack}
+              type="button"
+            >
+              Runner Loop Pack
+            </button>
+            <button
               className="border border-teal-200/40 bg-teal-200/10 px-4 py-2 text-sm font-black text-teal-100 transition hover:bg-teal-200/20 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={dispatchState.status === 'loading'}
               onClick={buildProviderSetupPack}
@@ -8402,6 +8433,60 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
                     {dispatchState.runtimeAdapterContract.safetyBoundary}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {dispatchState.runtimeRunnerLoopPack ? (
+              <div className="md:col-span-3">
+                <div className="text-white/45">Runtime Runner Loop Pack</div>
+                <div className="mt-2 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeRunnerLoopPack.verdict}</div>
+                    <p className="mt-1 text-white/60">verdict</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeRunnerLoopPack.summary.runnerEvents}</div>
+                    <p className="mt-1 text-white/60">runner events</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeRunnerLoopPack.summary.activeRunnerRuns}</div>
+                    <p className="mt-1 text-white/60">active runner</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeRunnerLoopPack.summary.waitingReceipts}</div>
+                    <p className="mt-1 text-white/60">waiting receipts</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeRunnerLoopPack.summary.acceptedReceipts}</div>
+                    <p className="mt-1 text-white/60">accepted receipts</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.runtimeRunnerLoopPack.summary.recoveryActions}</div>
+                    <p className="mt-1 text-white/60">recovery</p>
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  {dispatchState.runtimeRunnerLoopPack.stages.map(stage => (
+                    <div className="border border-white/10 bg-white/[0.05] p-2" key={stage.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-white">{stage.id}</span>
+                        <span>{stage.status} / {stage.owner}</span>
+                      </div>
+                      <p className="mt-1 text-white/60">{stage.nextAction}</p>
+                      <p className="mt-1 text-white/45">evidence: {stage.evidence.join(' / ')}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    next: {dispatchState.runtimeRunnerLoopPack.nextBestAction}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    external required: {dispatchState.runtimeRunnerLoopPack.externalRequired.slice(0, 3).join(' / ') || 'none'}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    {dispatchState.runtimeRunnerLoopPack.safetyBoundary}
                   </div>
                 </div>
               </div>
