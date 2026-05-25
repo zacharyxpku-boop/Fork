@@ -36,6 +36,7 @@ import type { RestaurantControlledTrialRun } from '@/lib/restaurant-controlled-t
 import type { RestaurantCustomerDemandGateway } from '@/lib/restaurant-customer-demand-gateway';
 import type { RestaurantLeadCaptureInbox } from '@/lib/restaurant-lead-capture-inbox';
 import type { RestaurantLeadAcquisitionProviderWorkbench } from '@/lib/restaurant-lead-acquisition-provider-workbench';
+import type { RestaurantLeadSandboxAcceptanceFlow } from '@/lib/restaurant-lead-sandbox-acceptance-flow';
 import type { RestaurantVoiceOrderConsole } from '@/lib/restaurant-voice-order-console';
 import type { RestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
 import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
@@ -271,6 +272,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     customerDemandGateway?: RestaurantCustomerDemandGateway;
     leadCaptureInbox?: RestaurantLeadCaptureInbox;
     leadAcquisitionProviderWorkbench?: RestaurantLeadAcquisitionProviderWorkbench;
+    leadSandboxAcceptanceFlow?: RestaurantLeadSandboxAcceptanceFlow;
     voiceOrderConsole?: RestaurantVoiceOrderConsole;
     aiOsAuditReport?: RestaurantAiOsAuditReport;
     platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
@@ -482,6 +484,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
         leadCaptureInbox: payload?.leadCaptureInbox || previous.leadCaptureInbox,
         leadAcquisitionProviderWorkbench: payload?.leadAcquisitionProviderWorkbench || previous.leadAcquisitionProviderWorkbench,
+        leadSandboxAcceptanceFlow: payload?.leadSandboxAcceptanceFlow || previous.leadSandboxAcceptanceFlow,
         publishExecutionInbox: payload?.publishExecutionInbox || previous.publishExecutionInbox,
         voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
         capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
@@ -7529,6 +7532,77 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-indigo-100/55">
                 acceptance: {dispatchState.leadAcquisitionProviderWorkbench?.providerAcceptanceContract.callbackAction || 'lead-acquisition-receipt'} / forbidden: {(dispatchState.leadAcquisitionProviderWorkbench?.providerAcceptanceContract.forbiddenPayloadFields || ['phone', 'WeChat ID', 'raw private message', 'coupon code']).slice(0, 5).join(' / ')}
               </p>
+            </div>
+            <div className="mt-3 border border-cyan-200/15 bg-cyan-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/65">lead sandbox acceptance flow</div>
+                  <p className="mt-1 text-xs font-black text-white">Provider submit now has a governed path: sanitized package, signed lead receipt, failed callback recovery, staff approval and aggregate-only memory gate.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This is how the product gets closer to auto-acquisition without faking it: no customer contact, member enrichment or memory write until accepted proof exists.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadSandboxAcceptanceFlow?.verdict || 'waiting-provider-setup'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">submit</div>
+                  <div className="mt-1 text-xs font-black text-cyan-100/75">{dispatchState.leadSandboxAcceptanceFlow?.summary.canSubmitProviderPackage ? 'ready' : 'blocked'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">receipts</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.leadSandboxAcceptanceFlow?.summary.acceptedLeadReceipts ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">recovery</div>
+                  <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.leadSandboxAcceptanceFlow?.recoveryPlan.length ?? 3}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">memory</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.status || 'waiting-receipt'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">auto acquire</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.leadSandboxAcceptanceFlow?.summary.canClaimAutoAcquisition ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.leadSandboxAcceptanceFlow?.stages || [
+                  { id: 'sanitized-package', label: 'Sanitized lead provider package', status: 'passed', owner: 'ops', evidence: ['aggregate fields only'], nextAction: 'Send only aggregate source counts, owner tasks and proof ids.', stopLine: 'No PII, private messages, coupon codes or raw profiles.' },
+                  { id: 'signed-lead-receipt', label: 'Signed lead receipt acceptance', status: 'waiting-proof', owner: 'runtime-admin', evidence: ['no accepted lead receipt'], nextAction: 'Import a signed lead-acquisition receipt.', stopLine: 'Unsigned receipts cannot unlock memory writes.' },
+                  { id: 'memory-write-boundary', label: 'Aggregate lead memory write', status: 'waiting-proof', owner: 'data-ops', evidence: ['accepted receipt required'], nextAction: 'Wait for accepted receipt before writing memory.', stopLine: 'Never write raw customer identity into memory.' },
+                ]).slice(0, 6).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.status === 'passed' ? 'text-[10px] text-emerald-100/70' : item.status === 'blocked' ? 'text-[10px] text-rose-100/70' : 'text-[10px] text-amber-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-cyan-100/55">{item.owner} / {item.evidence.slice(0, 2).join(' / ')}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/50">{item.nextAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/45">{item.stopLine}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                <div className="border border-white/10 bg-white/[0.04] p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sanitized package</div>
+                  <p className="mt-1 font-mono text-[11px] leading-4 text-cyan-100/60">
+                    {dispatchState.leadSandboxAcceptanceFlow?.sanitizedProviderPackage.packageId || 'lead-sandbox-package'} / {dispatchState.leadSandboxAcceptanceFlow?.sanitizedProviderPackage.callbackAction || 'lead-acquisition-receipt'}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-4 text-white/45">
+                    lanes: {(dispatchState.leadSandboxAcceptanceFlow?.sanitizedProviderPackage.lanes || []).map(item => item.id).slice(0, 5).join(' / ') || 'reservation / coupon-claim / private-domain / visit-intent / review-recovery'}
+                  </p>
+                </div>
+                <div className="border border-white/10 bg-white/[0.04] p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">memory gate</div>
+                  <p className="mt-1 font-mono text-[11px] leading-4 text-cyan-100/60">{dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.writeMode || 'aggregate-only-after-accepted-receipt'}</p>
+                  <p className="mt-1 text-[11px] leading-4 text-white/60">{dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.nextAction || 'Collect accepted lead receipt before writing memory.'}</p>
+                  <p className="mt-1 text-[11px] leading-4 text-rose-100/45">forbidden: {(dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.forbiddenFields || ['phone', 'WeChat ID', 'raw private message', 'coupon code']).slice(0, 5).join(' / ')}</p>
+                </div>
+              </div>
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">

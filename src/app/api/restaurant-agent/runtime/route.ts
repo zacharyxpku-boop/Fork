@@ -58,6 +58,7 @@ import { runRestaurantControlledTrialRun } from '@/lib/restaurant-controlled-tri
 import { buildRestaurantCustomerDemandGateway } from '@/lib/restaurant-customer-demand-gateway';
 import { buildRestaurantLeadCaptureInbox } from '@/lib/restaurant-lead-capture-inbox';
 import { buildRestaurantLeadAcquisitionProviderWorkbench } from '@/lib/restaurant-lead-acquisition-provider-workbench';
+import { buildRestaurantLeadSandboxAcceptanceFlow } from '@/lib/restaurant-lead-sandbox-acceptance-flow';
 import { buildRestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
 import { buildRestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import { buildRestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
@@ -1252,6 +1253,19 @@ export async function POST(request: NextRequest) {
       operatingDataContract,
       publishExecutionInbox,
     });
+    const leadSandboxAcceptanceFlow = buildRestaurantLeadSandboxAcceptanceFlow({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      leadAcquisitionProviderWorkbench,
+      providerSandboxContract,
+      receipts,
+      now,
+    });
     const commandCenter = await buildRestaurantAgentCommandCenter({
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
       offer: typeof body.offer === 'string' ? body.offer : undefined,
@@ -1440,6 +1454,7 @@ export async function POST(request: NextRequest) {
       reputationCloseoutPack,
       leadCaptureInbox,
       leadAcquisitionProviderWorkbench,
+      leadSandboxAcceptanceFlow,
       publishExecutionInbox,
       recovery,
       runtimeProbe,

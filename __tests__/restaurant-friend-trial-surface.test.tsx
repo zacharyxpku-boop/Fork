@@ -240,6 +240,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('lead acquisition provider workbench');
     expect(html).toContain('Default Path now turns lead capture into a Provider acceptance path for reservations, coupon claims, private-domain inquiries, visit intent and review recovery.');
     expect(html).toContain('lead-acquisition-receipt');
+    expect(html).toContain('lead sandbox acceptance flow');
+    expect(html).toContain('Provider submit now has a governed path: sanitized package, signed lead receipt, failed callback recovery, staff approval and aggregate-only memory gate.');
+    expect(html).toContain('aggregate-only-after-accepted-receipt');
     expect(html).toContain('restaurant AI cockpit zones');
     expect(html).toContain('Default Path now lands in an operator cockpit: today operations, AI consultant, automation launch and evidence review.');
     expect(html).toContain('daily runbook');

@@ -113,6 +113,9 @@ describe('restaurant claw experience default path', () => {
     expect(payload.leadAcquisitionProviderWorkbench.payloadShape).toBe('restaurant-lead-acquisition-provider-workbench-v1');
     expect(payload.leadAcquisitionProviderWorkbench.summary.canClaimAutoCustomerContact).toBe(false);
     expect(payload.leadAcquisitionProviderWorkbench.providerAcceptanceContract.forbiddenPayloadFields).toContain('raw private message');
+    expect(payload.leadSandboxAcceptanceFlow.payloadShape).toBe('restaurant-lead-sandbox-acceptance-flow-v1');
+    expect(payload.leadSandboxAcceptanceFlow.summary.canClaimAutoAcquisition).toBe(false);
+    expect(payload.leadSandboxAcceptanceFlow.sanitizedProviderPackage.callbackAction).toBe('lead-acquisition-receipt');
     expect(payload.publishExecutionInbox.payloadShape).toBe('restaurant-publish-execution-inbox-v1');
     expect(payload.publishExecutionInbox.summary.canClaimAutoPublish).toBe(false);
     expect(payload.publishExecutionInbox.tasks.map((item: { id: string }) => item.id)).toContain('submit-browser-runner');
