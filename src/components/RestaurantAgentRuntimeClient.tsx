@@ -462,6 +462,10 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerUnlockLadder: payload?.providerUnlockLadder || previous.providerUnlockLadder,
         providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
         platformConnectorMatrix: payload?.platformConnectorMatrix || previous.platformConnectorMatrix,
+        aiConsultantCopilot: payload?.aiConsultantCopilot || previous.aiConsultantCopilot,
+        dayZeroMissionPack: payload?.dayZeroMissionPack || previous.dayZeroMissionPack,
+        storeOperatingPlan: payload?.storeOperatingPlan || previous.storeOperatingPlan,
+        aiCockpit: payload?.aiCockpit || previous.aiCockpit,
         customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
         voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
         capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
@@ -7048,6 +7052,60 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/55">
                 pilot order: {(dispatchState.platformConnectorMatrix?.pilotOrder || ['Start with public-profile-intake and internal content draft.', 'Configure one browser runtime and callback secret for sandbox submit.', 'Add POS/redemption aggregate sample before claiming operating analysis.']).slice(0, 3).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fuchsia-100/65">restaurant AI cockpit zones</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now lands in an operator cockpit: today operations, AI consultant, automation launch and evidence review.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This turns the Claw/Cloud-style promise into a daily store-manager surface: what to do now, what evidence is missing, what Provider unlock is next and what cannot be claimed yet.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-5">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.aiCockpit?.verdict || 'provider-unlock-first'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">zones</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.aiCockpit?.summary.zones ?? 4}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">today blocks</div>
+                  <div className="mt-1 text-xs font-black text-fuchsia-100/75">{dispatchState.aiCockpit?.summary.todayBlocks ?? dispatchState.storeOperatingPlan?.summary.timeBlocks ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider unlocks</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.aiCockpit?.summary.providerUnlocks ?? dispatchState.storeOperatingPlan?.providerUnlocks.length ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">automation</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.aiCockpit?.summary.canClaimAutomation ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-4">
+                {(dispatchState.aiCockpit?.zones || [
+                  { id: 'today-operations', title: 'Today Operations', status: 'provider-gated', owner: 'store-manager', answer: 'Confirm the offer, service window, owner and proof requirements before today starts.', primaryAction: 'Run the store operating plan.', visibleProof: ['owner and proof requirements'], providerGate: 'merchant evidence and provider unlocks', stopLine: 'Do not push demand without confirmed store boundaries.' },
+                  { id: 'ai-consultant', title: 'AI Consultant', status: 'needs-evidence', owner: 'ops', answer: 'Turn advice into owner-visible plays.', primaryAction: 'Build restaurant consultant prescription.', visibleProof: ['owner-visible plays'], providerGate: 'training evidence', stopLine: 'Advice becomes a task only with evidence.' },
+                  { id: 'automation-launch', title: 'Automation Launch', status: 'provider-gated', owner: 'runtime-admin', answer: 'Choose one Provider lane and run a signed sandbox receipt.', primaryAction: 'Configure provider keys, merchant grants, callback and data contracts.', visibleProof: ['provider launch board'], providerGate: 'runtime and callback', stopLine: 'No external automation claim without receipt.' },
+                  { id: 'evidence-review', title: 'Evidence Review', status: 'needs-evidence', owner: 'finance', answer: 'Closeout only uses public proof and sanitized aggregate operating data.', primaryAction: 'Import accepted proof and aggregate rows.', visibleProof: ['proof receipt'], providerGate: 'POS/coupon field dictionary', stopLine: 'No raw POS or customer identifiers.' },
+                ]).slice(0, 4).map(zone => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={zone.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{zone.title}</span>
+                      <span className={zone.status === 'ready-internal' ? 'text-[10px] text-emerald-100/70' : zone.status === 'needs-evidence' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{zone.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{zone.answer}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-fuchsia-100/55">action: {zone.primaryAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">gate: {zone.providerGate}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-fuchsia-100/55">
+                daily runbook: {(dispatchState.aiCockpit?.primaryRunbook || ['Open Today Operations first and confirm merchant evidence.', 'Move Automation Launch one lane at a time through Provider health.', 'Close Evidence Review with public proof or sanitized aggregate imports.']).slice(0, 3).join(' / ')}
               </p>
             </div>
             {dispatchState.clawExperienceDefaultPath ? (

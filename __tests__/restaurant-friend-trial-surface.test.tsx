@@ -220,6 +220,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Default Path covers the restaurant AI product surface: public profile, content, publish proof, lead intake, coupon redemption and operating analysis.');
     expect(html).toContain('provider required');
     expect(html).toContain('pilot order');
+    expect(html).toContain('restaurant AI cockpit zones');
+    expect(html).toContain('Default Path now lands in an operator cockpit: today operations, AI consultant, automation launch and evidence review.');
+    expect(html).toContain('daily runbook');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');

@@ -993,6 +993,44 @@ export async function POST(request: NextRequest) {
       health: providerReadinessHealth,
     });
     const platformConnectorMatrix = buildRestaurantPlatformConnectorMatrix();
+    const aiConsultantCopilot = buildRestaurantAiConsultantCopilot({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      customerDemandGateway,
+      voiceOrderConsole,
+      providerLaunchBoard,
+    });
+    const dayZeroMissionPack = buildRestaurantDayZeroMissionPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      manualText: typeof body.evidence === 'string' ? body.evidence : undefined,
+    });
+    const storeOperatingPlan = buildRestaurantStoreOperatingPlan({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      aiConsultantCopilot,
+      customerDemandGateway,
+      voiceOrderConsole,
+      providerLaunchBoard,
+      dayZeroMissionPack,
+    });
+    const aiCockpit = buildRestaurantAiCockpit({
+      storeOperatingPlan,
+      aiConsultantCopilot,
+      providerLaunchBoard,
+    });
     const controlledTrialRun = await runRestaurantControlledTrialRun({
       target: 'openclaw',
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
@@ -1042,6 +1080,10 @@ export async function POST(request: NextRequest) {
       providerUnlockLadder,
       providerLaunchBoard,
       platformConnectorMatrix,
+      aiConsultantCopilot,
+      dayZeroMissionPack,
+      storeOperatingPlan,
+      aiCockpit,
       customerDemandGateway,
       voiceOrderConsole,
       capabilityTrainingPlan,

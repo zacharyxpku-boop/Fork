@@ -76,11 +76,22 @@ describe('restaurant claw experience default path', () => {
     expect(payload.providerUnlockLadder.payloadShape).toBe('restaurant-provider-unlock-ladder-v1');
     expect(payload.providerLaunchBoard.payloadShape).toBe('restaurant-provider-launch-board-v1');
     expect(payload.platformConnectorMatrix.payloadShape).toBe('restaurant-platform-connector-matrix-v1');
+    expect(payload.aiConsultantCopilot.payloadShape).toBe('restaurant-ai-consultant-copilot-v1');
+    expect(payload.dayZeroMissionPack.payloadShape).toBe('restaurant-day-zero-mission-pack-v1');
+    expect(payload.storeOperatingPlan.payloadShape).toBe('restaurant-store-operating-plan-v1');
+    expect(payload.aiCockpit.payloadShape).toBe('restaurant-ai-cockpit-v1');
     expect(payload.customerDemandGateway.payloadShape).toBe('restaurant-customer-demand-gateway-v1');
     expect(payload.voiceOrderConsole.payloadShape).toBe('restaurant-voice-order-console-v1');
     expect(payload.providerUnlockLadder.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerLaunchBoard.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.platformConnectorMatrix.verdict).toBe('provider-setup-required');
+    expect(payload.aiCockpit.zones.map((item: { id: string }) => item.id)).toEqual([
+      'today-operations',
+      'ai-consultant',
+      'automation-launch',
+      'evidence-review',
+    ]);
+    expect(payload.aiCockpit.summary.canClaimAutomation).toBe(false);
     expect(payload.receipts.length).toBeGreaterThan(0);
     expect(payload.providerSetupPack.summary.readyForExternalExecution).toBe(false);
     expect(payload.externalUnlockRequestPack.summary.canClaimExternalAutomation).toBe(false);
