@@ -48,6 +48,17 @@ describe('restaurant external unlock request pack', () => {
       'merchant-owner',
       'data-owner',
     ]));
+    expect(pack.setupStateProjection.configuredEnvKeys).toEqual(expect.arrayContaining([
+      'RESTAURANT_AGENT_LOBU_RUNTIME_URL',
+      'RESTAURANT_AGENT_HERMES_RUNTIME_URL',
+    ]));
+    expect(pack.setupStateProjection.merchantApprovals).toEqual(expect.arrayContaining([
+      expect.stringContaining('merchant-platform-auth'),
+    ]));
+    expect(pack.setupStateProjection.dataContracts).toEqual(expect.arrayContaining([
+      expect.stringContaining('pos'),
+    ]));
+    expect(pack.setupStateProjection.notes).toContain('source:external-unlock-request-pack');
     expect(pack.acceptanceReceiptTemplate.requiredFields).toContain('revocationOwner');
     expect(pack.acceptanceReceiptTemplate.forbiddenFields).toContain('API keys');
     expect(pack.exportDigest.markdown).toContain('Provider Unlock Signoff');
@@ -80,6 +91,7 @@ describe('restaurant external unlock request pack', () => {
     expect(payload.externalUnlockRequestPack.merchantAuthorizationPacket.length).toBeGreaterThan(0);
     expect(payload.externalUnlockRequestPack.operatingDataPacket.length).toBeGreaterThan(0);
     expect(payload.externalUnlockRequestPack.signoffChecklist.length).toBeGreaterThan(0);
+    expect(payload.externalUnlockRequestPack.setupStateProjection.notes).toContain('source:external-unlock-request-pack');
     expect(payload.externalUnlockRequestPack.acceptanceReceiptTemplate.acceptedWhen.join(' ')).toContain('health-checked');
     expect(payload.externalUnlockRequestPack.exportDigest.markdown).toContain('Signoff Checklist');
     expect(payload.externalUnlockRequestPack.safetyBoundary).toContain('does not claim external automation');

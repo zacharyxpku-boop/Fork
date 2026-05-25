@@ -79,6 +79,12 @@ export type RestaurantExternalUnlockRequestPack = {
     requests: number;
     firstAction: string;
   }>;
+  setupStateProjection: {
+    configuredEnvKeys: string[];
+    merchantApprovals: string[];
+    dataContracts: string[];
+    notes: string[];
+  };
   acceptanceReceiptTemplate: {
     title: string;
     requiredFields: string[];
@@ -268,6 +274,22 @@ export function buildRestaurantExternalUnlockRequestPack(input: RestaurantTrialI
       firstAction: ownerItems[0]?.title || 'No action required.',
     };
   });
+  const setupStateProjection = {
+    configuredEnvKeys: providerSetup.envTemplate.map(item => item.key).slice(0, 12),
+    merchantApprovals: providerSetup.priorityRequests
+      .filter(item => item.source === 'merchant-authorization' || item.source === 'platform-account')
+      .map(item => item.id)
+      .slice(0, 12),
+    dataContracts: providerSetup.priorityRequests
+      .filter(item => item.source === 'pos-contract')
+      .map(item => item.id)
+      .slice(0, 12),
+    notes: [
+      `signoff-checklist:${signoffChecklist.length}`,
+      `owner-handoff:${ownerHandoff.map(item => `${item.target}:${item.requests}`).join('|')}`,
+      'source:external-unlock-request-pack',
+    ],
+  };
   const acceptanceReceiptTemplate = {
     title: `${restaurant} / ${offer} external unlock acceptance receipt`,
     requiredFields: [
@@ -345,6 +367,7 @@ export function buildRestaurantExternalUnlockRequestPack(input: RestaurantTrialI
     internalFallbacks: providerSetup.internalFallbacks,
     signoffChecklist,
     ownerHandoff,
+    setupStateProjection,
     acceptanceReceiptTemplate,
     exportDigest,
     snapshots: {

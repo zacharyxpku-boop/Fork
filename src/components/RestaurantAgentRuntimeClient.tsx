@@ -1043,6 +1043,19 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const recordProviderSetupState = async () => {
     setDispatchState({ status: 'loading', message: 'Saving sanitized provider setup state into the restaurant setup ledger...' });
     try {
+      const unlockPack = dispatchState.externalUnlockRequestPack;
+      const configuredEnvKeys = unlockPack?.setupStateProjection.configuredEnvKeys.length
+        ? unlockPack.setupStateProjection.configuredEnvKeys
+        : ['RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL', 'RESTAURANT_AGENT_CALLBACK_SECRET'];
+      const merchantApprovals = unlockPack?.setupStateProjection.merchantApprovals.length
+        ? unlockPack.setupStateProjection.merchantApprovals
+        : ['merchant-platform-authorization:merchant-platform-login'];
+      const dataContracts = unlockPack?.setupStateProjection.dataContracts.length
+        ? unlockPack.setupStateProjection.dataContracts
+        : ['pos-coupon-and-redemption-data-contract:pos-field-dictionary'];
+      const notes = unlockPack
+        ? unlockPack.setupStateProjection.notes
+        : ['Demo setup state records identifiers only; secret values stay server-side.'];
       const response = await fetch('/api/restaurant-agent/runtime', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1050,10 +1063,10 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
           action: 'provider-setup-state-record',
           restaurant: runtimeIntake.restaurant,
           offer: runtimeIntake.offer,
-          configuredEnvKeys: ['RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL', 'RESTAURANT_AGENT_CALLBACK_SECRET'],
-          merchantApprovals: ['merchant-platform-authorization:merchant-platform-login'],
-          dataContracts: ['pos-coupon-and-redemption-data-contract:pos-field-dictionary'],
-          notes: ['Demo setup state records identifiers only; secret values stay server-side.'],
+          configuredEnvKeys,
+          merchantApprovals,
+          dataContracts,
+          notes,
           submittedBy: 'ops',
         }),
       });

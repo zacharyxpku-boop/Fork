@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { POST } from '@/app/api/restaurant-agent/runtime/route';
 import { buildRestaurantAgentCommandCenter } from '@/lib/restaurant-agent-command-center';
+import { buildRestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import {
   buildRestaurantProviderSetupStateSummary,
   clearRestaurantProviderSetupStateForTest,
@@ -10,6 +11,10 @@ import {
 
 describe('restaurant provider setup state store', () => {
   beforeEach(() => {
+    clearRestaurantProviderSetupStateForTest();
+  });
+
+  afterEach(() => {
     clearRestaurantProviderSetupStateForTest();
   });
 
@@ -81,5 +86,35 @@ describe('restaurant provider setup state store', () => {
     expect(payload.providerSetupWizard.payloadShape).toBe('restaurant-provider-setup-wizard-v1');
     expect(payload.providerSetupWizard.summary.configured).toBeGreaterThan(0);
     expect(payload.providerReadinessHealth.payloadShape).toBe('restaurant-provider-readiness-health-v1');
+  });
+
+  it('turns external unlock signoff projection into wizard-recognized setup state', async () => {
+    const pack = buildRestaurantExternalUnlockRequestPack({
+      restaurant: 'Signoff Bistro',
+      offer: 'Dinner launch set',
+      now: new Date('2026-05-24T06:00:00.000Z'),
+    });
+
+    const result = recordRestaurantProviderSetupState({
+      restaurant: pack.restaurant,
+      offer: pack.offer,
+      configuredEnvKeys: pack.setupStateProjection.configuredEnvKeys,
+      merchantApprovals: pack.setupStateProjection.merchantApprovals,
+      dataContracts: pack.setupStateProjection.dataContracts,
+      notes: pack.setupStateProjection.notes,
+      submittedBy: 'ops',
+      now: new Date('2026-05-24T06:01:00.000Z'),
+    });
+
+    const center = await buildRestaurantAgentCommandCenter({
+      restaurant: pack.restaurant,
+      offer: pack.offer,
+      now: new Date('2026-05-24T06:02:00.000Z'),
+    });
+
+    expect(result.record.notes).toContain('source:external-unlock-request-pack');
+    expect(center.providerSetupState.provided.envKeys).toEqual(expect.arrayContaining(pack.setupStateProjection.configuredEnvKeys.slice(0, 2)));
+    expect(center.providerSetupWizard.summary.configured).toBeGreaterThan(0);
+    expect(center.providerSetupWizard.handoffPayload.configuredEnvKeys).toEqual(expect.arrayContaining(pack.setupStateProjection.configuredEnvKeys.slice(0, 2)));
   });
 });
