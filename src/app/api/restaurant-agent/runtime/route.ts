@@ -13,6 +13,7 @@ import { buildRestaurantCommandRoute } from '@/lib/restaurant-command-router';
 import { buildRestaurantBrowserRunnerCallbackContract } from '@/lib/restaurant-agent-browser-runner-contract';
 import { buildRestaurantBrowserRunnerEventHealth, listRestaurantBrowserRunnerEvents, recordRestaurantBrowserRunnerEvent } from '@/lib/restaurant-agent-browser-runner-event-store';
 import { buildRestaurantBrowserRunbookPackage } from '@/lib/restaurant-agent-browser-runbook';
+import { buildRestaurantBrowserGatewayPack } from '@/lib/restaurant-browser-gateway-pack';
 import { buildRestaurantBrowserSessionManifest } from '@/lib/restaurant-agent-browser-session';
 import { buildRestaurantBrowserSessionHealth, heartbeatRestaurantBrowserSession, listRestaurantBrowserSessions, recordRestaurantBrowserSession } from '@/lib/restaurant-agent-browser-session-store';
 import { buildRestaurantCapabilityTrainingPlanFromLedger, listRestaurantCapabilityTrainingRecords, recordRestaurantCapabilityTrainingRecord } from '@/lib/restaurant-capability-training';
@@ -2785,6 +2786,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       browserRunnerContract: buildRestaurantBrowserRunnerCallbackContract({
+        runtimeTarget: body.runtimeTarget === 'hermes' ? 'hermes' : 'openclaw',
+        eventId: typeof body.eventId === 'string' ? body.eventId : undefined,
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        channel: typeof body.channel === 'string' ? body.channel : undefined,
+        targetUrl: typeof body.targetUrl === 'string' ? body.targetUrl : undefined,
+        allowedDomains: Array.isArray(body.allowedDomains) ? body.allowedDomains.filter((item): item is string => typeof item === 'string') : undefined,
+      }),
+    });
+  }
+
+  if (body.action === 'browser-gateway-pack') {
+    return NextResponse.json({
+      ok: true,
+      browserGatewayPack: buildRestaurantBrowserGatewayPack({
         runtimeTarget: body.runtimeTarget === 'hermes' ? 'hermes' : 'openclaw',
         eventId: typeof body.eventId === 'string' ? body.eventId : undefined,
         restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,

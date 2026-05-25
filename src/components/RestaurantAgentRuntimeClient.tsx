@@ -21,6 +21,7 @@ import type { RestaurantBusinessSignalReport } from '@/lib/restaurant-agent-busi
 import type { RestaurantBrowserSessionManifest } from '@/lib/restaurant-agent-browser-session';
 import type { RestaurantBrowserSessionHealth } from '@/lib/restaurant-agent-browser-session-store';
 import type { RestaurantBrowserRunbookPackage } from '@/lib/restaurant-agent-browser-runbook';
+import type { RestaurantBrowserGatewayPack } from '@/lib/restaurant-browser-gateway-pack';
 import type { RestaurantBrowserRunnerCallbackContract } from '@/lib/restaurant-agent-browser-runner-contract';
 import type { RestaurantBrowserRunnerEventHealth, RestaurantBrowserRunnerEventRecord } from '@/lib/restaurant-agent-browser-runner-event-store';
 import type { RestaurantCapabilityTrainingPlan, RestaurantCapabilityTrainingRecord } from '@/lib/restaurant-capability-training';
@@ -224,6 +225,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     recovery?: RestaurantAgentRecoveryPlan;
     browserSession?: RestaurantBrowserSessionManifest;
     browserRunbook?: RestaurantBrowserRunbookPackage;
+    browserGatewayPack?: RestaurantBrowserGatewayPack;
     browserRunnerContract?: RestaurantBrowserRunnerCallbackContract;
     runnerEvent?: RestaurantBrowserRunnerEventRecord;
     runnerEventHealth?: RestaurantBrowserRunnerEventHealth;
@@ -2064,6 +2066,36 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Browser runner callback contract is temporarily unavailable.' });
+    }
+  };
+
+  const buildBrowserGatewayPack = async () => {
+    setDispatchState({ status: 'loading', message: 'Building browser gateway pack...' });
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'browser-gateway-pack',
+          runtimeTarget: 'openclaw',
+          eventId: 'restaurant-agent-runner-contract',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          channel: runtimeIntake.channels,
+          targetUrl: 'merchant-approved-url-or-public-proof-url',
+          allowedDomains: ['dianping.com', 'xiaohongshu.com', 'douyin.com', 'weixin.qq.com'],
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.browserGatewayPack?.canExecuteNow ? 'queued' : 'blocked',
+        eventId: 'restaurant-agent-runner-contract',
+        message: `Browser gateway pack ${payload?.browserGatewayPack?.payloadShape || 'missing'}; accepted actions ${payload?.browserGatewayPack?.browserRequest?.acceptedActions?.length ?? 0}.`,
+        browserGatewayPack: payload?.browserGatewayPack || previous.browserGatewayPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Browser gateway pack is temporarily unavailable.' }));
     }
   };
 
@@ -6637,6 +6669,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               生成 Runner Callback Contract
             </button>
             <button
+              className="border border-cyan-200/40 bg-cyan-200/10 px-4 py-2 text-sm font-black text-cyan-100 transition hover:bg-cyan-200/20 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={dispatchState.status === 'loading'}
+              onClick={buildBrowserGatewayPack}
+              type="button"
+            >
+              Browser Gateway Pack
+            </button>
+            <button
               className="border border-cyan-200/40 px-4 py-2 text-sm font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={dispatchState.status === 'loading'}
               onClick={recordBrowserRunnerEvent}
@@ -8066,6 +8106,60 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
                 <div className="mt-2 border border-white/10 bg-white/[0.05] p-2 text-white/60">
                   {dispatchState.runnerEventHealth.safetyBoundary}
+                </div>
+              </div>
+            ) : null}
+            {dispatchState.browserGatewayPack ? (
+              <div className="md:col-span-3">
+                <div className="text-white/45">Browser Gateway Pack</div>
+                <div className="mt-2 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.browserGatewayPack.runtimeTarget}</div>
+                    <p className="mt-1 text-white/60">runtime</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.browserGatewayPack.canExecuteNow ? 'ready' : 'blocked'}</div>
+                    <p className="mt-1 text-white/60">execute now</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.browserGatewayPack.browserRequest.acceptedActions.length}</div>
+                    <p className="mt-1 text-white/60">accepted actions</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.browserGatewayPack.snapshotPolicy.maxCharacters}</div>
+                    <p className="mt-1 text-white/60">snapshot chars</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.browserGatewayPack.contextBudget.maxRuntimeMinutes}m</div>
+                    <p className="mt-1 text-white/60">runtime budget</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2">
+                    <div className="font-mono text-white">{dispatchState.browserGatewayPack.externalRequired.length}</div>
+                    <p className="mt-1 text-white/60">external gates</p>
+                  </div>
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-2">
+                  {dispatchState.browserGatewayPack.actionSchema.map(action => (
+                    <div className="border border-white/10 bg-white/[0.05] p-2" key={action.action}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-white">{action.action}</span>
+                        <span>{action.allowed ? 'allowed' : 'blocked'} / {action.writesTo}</span>
+                      </div>
+                      <p className="mt-1 text-white/60">evidence: {action.requiredEvidence.slice(0, 3).join(' / ')}</p>
+                      <p className="mt-1 text-white/45">stop: {action.stopIf.slice(0, 2).join(' / ')}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 grid gap-2 md:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    request: {dispatchState.browserGatewayPack.browserRequest.method} {dispatchState.browserGatewayPack.browserRequest.endpointPath} / {dispatchState.browserGatewayPack.browserRequest.authHeader}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    snapshot: {dispatchState.browserGatewayPack.snapshotPolicy.allowedFields.slice(0, 4).join(' / ')}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    {dispatchState.browserGatewayPack.safetyBoundary}
+                  </div>
                 </div>
               </div>
             ) : null}
