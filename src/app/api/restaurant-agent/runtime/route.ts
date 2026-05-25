@@ -79,6 +79,7 @@ import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-la
 import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
+import { buildRestaurantProviderSandboxSubmitWorkbench } from '@/lib/restaurant-provider-sandbox-submit-workbench';
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-profile-intake';
 import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
@@ -245,6 +246,102 @@ export async function POST(request: NextRequest) {
       providerReceiptInbox,
       storeManagerTaskQueue,
       providerSetupState,
+      runs,
+      receipts,
+    });
+  }
+
+  if (body.action === 'provider-sandbox-submit-workbench') {
+    const runtimeTarget = body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+      ? body.runtimeTarget
+      : 'openclaw';
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+      runtimeProbe,
+    });
+    const providerSetupWizard = buildRestaurantProviderSetupWizard({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      provided: providerSetupState.provided,
+    });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const taskProviderHandoff = buildRestaurantTaskProviderHandoff({
+      queue: storeManagerTaskQueue,
+      target: runtimeTarget,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness });
+    const providerSandboxContract = buildRestaurantProviderSandboxContract({
+      runtimeProbe,
+      providerReadinessHealth,
+      taskProviderHandoff,
+      providerReceiptInbox,
+    });
+    const operatingDataContract = buildRestaurantOperatingDataContract({
+      receipts,
+      readiness,
+    });
+    const browserGatewayPack = buildRestaurantBrowserGatewayPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+    });
+    const runtimeRunnerLoopPack = buildRestaurantRuntimeRunnerLoopPack({
+      runs,
+      receipts,
+      readiness,
+    });
+    const channelDeliveryReport = buildRestaurantAgentChannelDeliveryReport();
+    const businessSignals = buildRestaurantBusinessSignals(runs, receipts);
+    const recovery = buildRestaurantAgentRecoveryPlan(runs, receipts, readiness);
+    const publishExecutionInbox = buildRestaurantPublishExecutionInbox({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      browserGatewayPack,
+      runtimeRunnerLoopPack,
+      channelDeliveryReport,
+      businessSignals,
+      recovery,
+    });
+    const providerAcceptanceWorkbench = buildRestaurantProviderAcceptanceWorkbench({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      providerSetupWizard,
+      providerReadinessHealth,
+      providerSandboxContract,
+      operatingDataContract,
+      publishExecutionInbox,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      providerSandboxSubmitWorkbench: buildRestaurantProviderSandboxSubmitWorkbench({
+        providerAcceptanceWorkbench,
+        providerSandboxContract,
+        taskProviderHandoff,
+        providerReceiptInbox,
+        target: runtimeTarget,
+      }),
+      providerAcceptanceWorkbench,
+      providerSandboxContract,
+      taskProviderHandoff,
+      providerReceiptInbox,
+      providerSetupState,
+      providerReadinessHealth,
+      storeManagerTaskQueue,
       runs,
       receipts,
     });
@@ -1261,6 +1358,14 @@ export async function POST(request: NextRequest) {
       operatingDataContract,
       publishExecutionInbox,
     });
+    const providerSandboxSubmitWorkbench = buildRestaurantProviderSandboxSubmitWorkbench({
+      providerAcceptanceWorkbench,
+      providerSandboxContract,
+      taskProviderHandoff,
+      providerReceiptInbox,
+      target: 'openclaw',
+      now,
+    });
     const leadSandboxAcceptanceFlow = buildRestaurantLeadSandboxAcceptanceFlow({
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
       offer: typeof body.offer === 'string' ? body.offer : undefined,
@@ -1452,6 +1557,7 @@ export async function POST(request: NextRequest) {
       providerSetupPack,
       providerSandboxContract,
       providerAcceptanceWorkbench,
+      providerSandboxSubmitWorkbench,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,

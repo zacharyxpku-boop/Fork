@@ -145,6 +145,16 @@ describe('restaurant claw experience default path', () => {
       'staff-delivery',
     ]);
     expect(payload.providerAcceptanceWorkbench.capabilityAcceptanceMatrix.every((item: { productionClaim: string }) => item.productionClaim === 'blocked-until-accepted-receipts')).toBe(true);
+    expect(payload.providerSandboxSubmitWorkbench.payloadShape).toBe('restaurant-provider-sandbox-submit-workbench-v1');
+    expect(payload.providerSandboxSubmitWorkbench.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerSandboxSubmitWorkbench.submitPackages.map((item: { capabilityId: string }) => item.capabilityId)).toEqual([
+      'auto-publish-proof',
+      'auto-lead-acquisition',
+      'auto-coupon-redemption',
+      'true-operating-analysis',
+      'staff-delivery',
+    ]);
+    expect(payload.providerSandboxSubmitWorkbench.submitPackages.every((item: { callback: { header: string } }) => item.callback.header === 'x-restaurant-agent-signature')).toBe(true);
     expect(payload.residentAgentMissionControl.payloadShape).toBe('restaurant-resident-agent-mission-control-v1');
     expect(payload.residentAgentMissionControl.summary.canClaimAutonomousOutcomes).toBe(false);
     expect(payload.shiftAutopilot.payloadShape).toBe('restaurant-shift-autopilot-v1');
