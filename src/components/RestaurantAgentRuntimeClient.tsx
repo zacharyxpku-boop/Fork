@@ -51,6 +51,7 @@ import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-u
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-autopilot-run-store';
+import type { RestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
 import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
 import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
@@ -258,6 +259,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     gmCommandDeck?: RestaurantGmCommandDeck;
     shiftAutopilot?: RestaurantShiftAutopilot;
     shiftAutopilotRun?: RestaurantShiftAutopilotRunRecord;
+    shiftFirstForwardableRun?: RestaurantShiftFirstForwardableRun;
     shiftProviderHandoff?: RestaurantShiftProviderHandoff;
     shiftSandboxAcceptance?: RestaurantShiftSandboxAcceptance;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
@@ -2318,6 +2320,37 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildShiftFirstForwardableRun = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Shift First Forwardable Run...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'shift-first-forwardable-run', runtimeTarget: 'openclaw' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftFirstForwardableRun?.summary?.canForwardFirstShiftRun ? 'queued' : 'blocked',
+        message: `Shift First Forwardable Run: ${payload?.shiftFirstForwardableRun?.verdict || 'unknown'}; ${payload?.shiftFirstForwardableRun?.summary?.blockedStages ?? 0} blocked, ${payload?.shiftFirstForwardableRun?.summary?.waitingExternalStages ?? 0} waiting.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        shiftFirstForwardableRun: payload?.shiftFirstForwardableRun || previous.shiftFirstForwardableRun,
+        shiftProviderHandoff: payload?.shiftProviderHandoff || previous.shiftProviderHandoff,
+        shiftSandboxAcceptance: payload?.shiftSandboxAcceptance || previous.shiftSandboxAcceptance,
+        firstForwardableRunPack: payload?.firstForwardableRunPack || previous.firstForwardableRunPack,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
+        providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift First Forwardable Run is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -2869,6 +2902,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       safetyBoundary: 'Shift Autopilot preview builds a bounded shift plan only; it does not run forever, publish, contact customers, redeem coupons, write POS orders or expose secrets.',
     } satisfies Pick<RestaurantShiftAutopilot, 'payloadShape' | 'summary' | 'steps' | 'nowQueue' | 'nextWakeups' | 'providerQueue' | 'evidenceQueue' | 'operatingPolicy' | 'safetyBoundary'>;
   const commandShiftAutopilotRun = dispatchState.shiftAutopilotRun;
+  const commandShiftFirstForwardableRun = dispatchState.shiftFirstForwardableRun;
   const commandShiftProviderHandoff = dispatchState.shiftProviderHandoff;
   const commandShiftSandboxAcceptance = dispatchState.shiftSandboxAcceptance;
   const commandChannelDeliveryReport = dispatchState.commandCenter?.channelDeliveryReport || dispatchState.channelDeliveryReport;
@@ -3433,6 +3467,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Check Sandbox Acceptance
                         </button>
+                        <button
+                          className="ml-2 mt-3 border border-orange-200/70 px-3 py-2 text-xs font-black text-orange-100 transition hover:bg-orange-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildShiftFirstForwardableRun}
+                          type="button"
+                        >
+                          Build Shift First Forwardable Run
+                        </button>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
                         <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -3644,6 +3686,65 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                           ))}
                         </div>
                         <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftSandboxAcceptance.safetyBoundary}</p>
+                      </div>
+                    ) : null}
+                    {commandShiftFirstForwardableRun ? (
+                      <div className="mt-3 border border-orange-200/25 bg-orange-200/[0.05] p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-100/70">shift first forwardable run</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftFirstForwardableRun.verdict}</h5>
+                            <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                              {commandShiftFirstForwardableRun.payloadShape} converts the latest shift ledger, provider asks, sandbox acceptance and sanitized package into one provider-ready preflight.
+                            </p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftFirstForwardableRun.summary.shiftRuns}</div>
+                              <p className="mt-1 text-white/55">shift runs</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftFirstForwardableRun.summary.providerRequests}</div>
+                              <p className="mt-1 text-white/55">provider asks</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftFirstForwardableRun.summary.forwardablePackages}</div>
+                              <p className="mt-1 text-white/55">packages</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftFirstForwardableRun.summary.canSubmitSandbox ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">sandbox</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftFirstForwardableRun.summary.canForwardFirstShiftRun ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">first run</p>
+                            </div>
+                          </div>
+                        </div>
+                        {commandShiftFirstForwardableRun.selectedShiftRun ? (
+                          <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/55">
+                            selected shift: {commandShiftFirstForwardableRun.selectedShiftRun.restaurant} / {commandShiftFirstForwardableRun.selectedShiftRun.offer} / provider-held {commandShiftFirstForwardableRun.selectedShiftRun.providerHeldActions} / owner tasks {commandShiftFirstForwardableRun.selectedShiftRun.createdStoreManagerTasks}
+                          </p>
+                        ) : null}
+                        <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                          {commandShiftFirstForwardableRun.stages.map(stage => (
+                            <div className="border border-white/10 bg-stone-950/50 p-2" key={stage.id}>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-black text-white">{stage.id}</span>
+                                <span className={stage.status === 'passed' ? 'text-[11px] text-emerald-100/70' : stage.status === 'waiting-external' ? 'text-[11px] text-amber-100/70' : 'text-[11px] text-rose-100/70'}>
+                                  {stage.status}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[11px] leading-4 text-white/55">{stage.nextAction}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {commandShiftFirstForwardableRun.selectedPackage ? (
+                          <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-orange-100/65">
+                            package: {commandShiftFirstForwardableRun.selectedPackage.runtimeTarget} / {commandShiftFirstForwardableRun.selectedPackage.requestedAction} / {commandShiftFirstForwardableRun.selectedPackage.canForward ? 'sanitized' : commandShiftFirstForwardableRun.selectedPackage.blockedReasons[0]}
+                          </p>
+                        ) : null}
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftFirstForwardableRun.safetyBoundary}</p>
                       </div>
                     ) : null}
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>
