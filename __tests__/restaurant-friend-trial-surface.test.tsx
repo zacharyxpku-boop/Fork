@@ -201,6 +201,7 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('外部 Runtime Health Probe');
     expect(html).toContain('Runtime Adapter Contract');
     expect(html).toContain('Browser Gateway Pack');
+    expect(html).toContain('Competitor Training Blueprint');
     expect(html).toContain('Runner Loop Pack');
     expect(html).toContain('Resident Agent Control');
     expect(html).toContain('带 grant、browser session、callback 和停止条件的执行投递包');

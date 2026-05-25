@@ -17,6 +17,7 @@ import type { RestaurantAiEmployeeInbox } from '@/lib/restaurant-ai-employee-inb
 import type { RestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
 import type { RestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
 import type { RestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
+import type { RestaurantCompetitorTrainingBlueprint } from '@/lib/restaurant-competitor-training-blueprint';
 import type { RestaurantBusinessSignalReport } from '@/lib/restaurant-agent-business-signals';
 import type { RestaurantBrowserSessionManifest } from '@/lib/restaurant-agent-browser-session';
 import type { RestaurantBrowserSessionHealth } from '@/lib/restaurant-agent-browser-session-store';
@@ -234,6 +235,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     grantChecklist?: RestaurantGrantChecklist;
     activationGates?: RestaurantActivationGateReport;
     competitorAudit?: RestaurantCompetitorAuditReport;
+    competitorTrainingBlueprint?: RestaurantCompetitorTrainingBlueprint;
     buildQueue?: RestaurantBuildQueueReport;
     executionPackage?: RestaurantExecutionPackage;
     externalExecutionWizard?: RestaurantExternalExecutionWizard;
@@ -646,6 +648,33 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       });
     } catch {
       setDispatchState({ status: 'failed', message: '公开竞品能力审计暂不可用。' });
+    }
+  };
+
+  const buildCompetitorTrainingBlueprint = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building competitor-grade training blueprint...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'competitor-training-blueprint',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.competitorTrainingBlueprint?.summary?.providerContracts ? 'blocked' : 'queued',
+        message: `Training Blueprint: ${payload?.competitorTrainingBlueprint?.summary?.trainableNow ?? 0} internal items, ${payload?.competitorTrainingBlueprint?.summary?.providerContracts ?? 0} provider contracts, parity claim ${payload?.competitorTrainingBlueprint?.summary?.canClaimCompetitorParity ? 'allowed' : 'blocked'}.`,
+        competitorTrainingBlueprint: payload?.competitorTrainingBlueprint || previous.competitorTrainingBlueprint,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Competitor Training Blueprint is temporarily unavailable.' }));
     }
   };
 
@@ -3604,6 +3633,62 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
                     {dispatchState.residentAgentMissionControl.safetyBoundary}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {dispatchState.competitorTrainingBlueprint ? (
+              <div className="mb-4 border border-cyan-200/30 bg-cyan-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/75">Competitor Training Blueprint</div>
+                    <h4 className="mt-1 text-base font-black text-white">{dispatchState.competitorTrainingBlueprint.verdict} / parity blocked</h4>
+                    <p className="mt-1 text-xs leading-5 text-white/60">
+                      Maps Claw/Cloud-style abilities into internal training, acceptance proof and provider contracts before any auto-publish, lead capture, redemption or POS analytics claim.
+                    </p>
+                  </div>
+                  <div className="grid min-w-[360px] grid-cols-4 gap-2 text-xs">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{dispatchState.competitorTrainingBlueprint.summary.internalReady}</div>
+                      <p className="mt-1 text-white/55">internal</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{dispatchState.competitorTrainingBlueprint.summary.trainableNow}</div>
+                      <p className="mt-1 text-white/55">train now</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{dispatchState.competitorTrainingBlueprint.summary.providerContracts}</div>
+                      <p className="mt-1 text-white/55">providers</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{dispatchState.competitorTrainingBlueprint.summary.canClaimCompetitorParity ? 'yes' : 'no'}</div>
+                      <p className="mt-1 text-white/55">parity</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {dispatchState.competitorTrainingBlueprint.lanes.slice(0, 6).map(item => (
+                    <div className="border border-white/10 bg-white/[0.05] p-2" key={item.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-white">{item.title}</span>
+                        <span>{item.currentStatus} / {item.owner}</span>
+                      </div>
+                      <p className="mt-1 text-white/60">{item.targetState}</p>
+                      <p className="mt-1 text-white/45">{item.nextAction}</p>
+                      <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-cyan-100/60">acceptance</p>
+                      <p className="mt-1 text-white/45">{item.acceptanceEvidence.join(' / ')}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    internal backlog: {dispatchState.competitorTrainingBlueprint.internalTrainingBacklog.slice(0, 3).map(item => item.material).join(' / ') || 'none'}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    provider backlog: {dispatchState.competitorTrainingBlueprint.providerContractBacklog.slice(0, 3).map(item => item.provider).join(' / ') || 'none'}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    {dispatchState.competitorTrainingBlueprint.safetyBoundary}
                   </div>
                 </div>
               </div>
@@ -6719,6 +6804,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               type="button"
             >
               生成竞品能力审计
+            </button>
+            <button
+              className="border border-yellow-200/40 px-4 py-2 text-sm font-black text-yellow-100 transition hover:bg-yellow-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={dispatchState.status === 'loading'}
+              onClick={buildCompetitorTrainingBlueprint}
+              type="button"
+            >
+              Competitor Training Blueprint
             </button>
             <button
               className="border border-yellow-200/40 px-4 py-2 text-sm font-black text-yellow-100 transition hover:bg-yellow-200/10 disabled:cursor-not-allowed disabled:opacity-60"

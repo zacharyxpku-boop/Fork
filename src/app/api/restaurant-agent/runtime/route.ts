@@ -20,6 +20,7 @@ import { buildRestaurantCapabilityTrainingPlanFromLedger, listRestaurantCapabili
 import { runRestaurantCallbackSimulator } from '@/lib/restaurant-agent-callback-simulator';
 import { verifyRestaurantAgentCallback } from '@/lib/restaurant-agent-callback';
 import { buildRestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
+import { buildRestaurantCompetitorTrainingBlueprint } from '@/lib/restaurant-competitor-training-blueprint';
 import { buildRestaurantAgentDispatch } from '@/lib/restaurant-agent-dispatch';
 import { buildRestaurantAgentExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import { buildRestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
@@ -2648,6 +2649,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       competitorAudit: buildRestaurantCompetitorAuditReport(),
+    });
+  }
+
+  if (body.action === 'competitor-training-blueprint') {
+    return NextResponse.json({
+      ok: true,
+      competitorTrainingBlueprint: await buildRestaurantCompetitorTrainingBlueprint({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        runs: listRestaurantAgentRuns(),
+        receipts: listRestaurantAgentReceipts(),
+        runnerEvents: listRestaurantBrowserRunnerEvents(),
+      }),
     });
   }
 
