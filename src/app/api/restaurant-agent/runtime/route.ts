@@ -74,6 +74,7 @@ import { buildRestaurantShiftCapabilityActivationPack } from '@/lib/restaurant-s
 import { buildRestaurantShiftCloseoutTrainingPack, buildRestaurantShiftCloseoutTrainingRecordAttempt, selectRecordableShiftTrainingDrafts } from '@/lib/restaurant-shift-closeout-training-pack';
 import { listRestaurantShiftAutopilotRuns, runRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot-run-store';
 import { buildRestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
+import { buildRestaurantShiftOperatingLoopPack } from '@/lib/restaurant-shift-operating-loop-pack';
 import { buildRestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
 import { buildRestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import { blockedShiftSandboxBridge, buildRestaurantShiftSandboxForwardAttempt, selectShiftForwardPackage } from '@/lib/restaurant-shift-sandbox-forward';
@@ -1450,6 +1451,160 @@ export async function POST(request: NextRequest) {
       providerReadinessHealth,
       providerSetupState,
       runtimeProbe,
+    });
+  }
+
+  if (body.action === 'shift-operating-loop-pack') {
+    const runtimeTarget = body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+      ? body.runtimeTarget
+      : 'openclaw';
+    const now = new Date();
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerSetupState = buildRestaurantProviderSetupStateSummary(now);
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+      runtimeProbe,
+    });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue(now);
+    const taskProviderHandoff = buildRestaurantTaskProviderHandoff({
+      queue: storeManagerTaskQueue,
+      target: runtimeTarget,
+      now,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({
+      runs,
+      receipts,
+      readiness,
+      now,
+    });
+    const providerSandboxContract = buildRestaurantProviderSandboxContract({
+      runtimeProbe,
+      providerReadinessHealth,
+      taskProviderHandoff,
+      providerReceiptInbox,
+      now,
+    });
+    const firstForwardableRunPack = buildRestaurantFirstForwardableRunPack({
+      queue: storeManagerTaskQueue,
+      target: runtimeTarget,
+      runtimeProbe,
+      providerReadinessHealth,
+      providerReceiptInbox,
+      now,
+    });
+    const shiftRuns = listRestaurantShiftAutopilotRuns();
+    const shiftProviderHandoff = buildRestaurantShiftProviderHandoff({
+      shiftRuns,
+      providerReadinessHealth,
+      now,
+    });
+    const shiftSandboxAcceptance = buildRestaurantShiftSandboxAcceptance({
+      shiftProviderHandoff,
+      providerReadinessHealth,
+      providerSandboxContract,
+      now,
+    });
+    const shiftFirstForwardableRun = buildRestaurantShiftFirstForwardableRun({
+      shiftRuns,
+      shiftProviderHandoff,
+      shiftSandboxAcceptance,
+      firstForwardableRunPack,
+      taskProviderHandoff,
+      providerSandboxContract,
+      now,
+    });
+    const commandCenter = await buildRestaurantAgentCommandCenter({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      runs,
+      receipts,
+      readiness,
+      browserSessions: listRestaurantBrowserSessions(),
+      now,
+    });
+    const postRunReviewPack = buildRestaurantPostRunReviewPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      queue: storeManagerTaskQueue,
+      runs,
+      receipts,
+      readiness,
+      posImports: [],
+      target: runtimeTarget,
+      runtimeProbe,
+      providerReadinessHealth,
+      providerReceiptInbox,
+      now,
+    });
+    const recovery = buildRestaurantAgentRecoveryPlan(runs, receipts, readiness, now);
+    const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger();
+    const shiftCloseoutTrainingPack = buildRestaurantShiftCloseoutTrainingPack({
+      providerReceiptInbox,
+      recovery,
+      postRunReviewPack,
+      capabilityTrainingPlan,
+      now,
+    });
+    const trainingRecords = listRestaurantCapabilityTrainingRecords();
+    const shiftCapabilityActivationPack = buildRestaurantShiftCapabilityActivationPack({
+      capabilityTrainingPlan,
+      trainingRecords,
+      providerReadinessHealth,
+      now,
+    });
+    const shiftOperatingLoopPack = buildRestaurantShiftOperatingLoopPack({
+      commandCenter,
+      shiftRuns,
+      shiftProviderHandoff,
+      shiftSandboxAcceptance,
+      shiftFirstForwardableRun,
+      taskProviderHandoff,
+      providerSandboxContract,
+      providerReceiptInbox,
+      providerReadinessHealth,
+      recovery,
+      shiftCloseoutTrainingPack,
+      shiftCapabilityActivationPack,
+      capabilityTrainingPlan,
+      trainingRecords,
+      now,
+    });
+
+    return NextResponse.json({
+      ok: true,
+      shiftOperatingLoopPack,
+      commandCenter,
+      shiftRuns,
+      shiftFirstForwardableRun,
+      shiftProviderHandoff,
+      shiftSandboxAcceptance,
+      firstForwardableRunPack,
+      taskProviderHandoff,
+      providerSandboxContract,
+      providerReceiptInbox,
+      providerReadinessHealth,
+      recovery,
+      shiftCloseoutTrainingPack,
+      shiftCapabilityActivationPack,
+      capabilityTrainingPlan,
+      trainingRecords,
+      providerSetupState,
+      storeManagerTaskQueue,
+      runs,
+      receipts,
     });
   }
 

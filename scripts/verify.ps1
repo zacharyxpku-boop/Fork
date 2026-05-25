@@ -44,6 +44,10 @@ Invoke-Step "Vitest restaurant shift capability activation" {
   npm.cmd run test -- __tests__/restaurant-shift-capability-activation-pack.test.ts
 }
 
+Invoke-Step "Vitest restaurant shift operating loop" {
+  npm.cmd run test -- __tests__/restaurant-shift-operating-loop-pack.test.ts
+}
+
 Invoke-Step "Vitest restaurant first run control tower" {
   npm.cmd run test -- __tests__/restaurant-first-run-control-tower.test.ts
 }

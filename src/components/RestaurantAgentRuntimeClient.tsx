@@ -54,6 +54,7 @@ import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-a
 import type { RestaurantShiftCapabilityActivationPack } from '@/lib/restaurant-shift-capability-activation-pack';
 import type { RestaurantShiftCloseoutTrainingPack, RestaurantShiftCloseoutTrainingRecordAttempt } from '@/lib/restaurant-shift-closeout-training-pack';
 import type { RestaurantShiftFirstForwardableRun } from '@/lib/restaurant-shift-first-forwardable-run';
+import type { RestaurantShiftOperatingLoopPack } from '@/lib/restaurant-shift-operating-loop-pack';
 import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
 import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shift-sandbox-forward';
 import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
@@ -266,6 +267,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftCloseoutTrainingPack?: RestaurantShiftCloseoutTrainingPack;
     shiftCloseoutTrainingRecordAttempt?: RestaurantShiftCloseoutTrainingRecordAttempt;
     shiftFirstForwardableRun?: RestaurantShiftFirstForwardableRun;
+    shiftOperatingLoopPack?: RestaurantShiftOperatingLoopPack;
     shiftProviderHandoff?: RestaurantShiftProviderHandoff;
     shiftSandboxAcceptance?: RestaurantShiftSandboxAcceptance;
     shiftSandboxForwardAttempt?: RestaurantShiftSandboxForwardAttempt;
@@ -2526,6 +2528,54 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildShiftOperatingLoopPack = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building one-path Shift Operating Loop...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'shift-operating-loop-pack',
+          runtimeTarget: 'openclaw',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftOperatingLoopPack?.summary?.canSubmitSandbox ? 'queued' : 'blocked',
+        message: `Shift Operating Loop: ${payload?.shiftOperatingLoopPack?.verdict || 'unknown'}; next ${payload?.shiftOperatingLoopPack?.nextBestAction?.label || 'n/a'}.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        commandCenter: payload?.commandCenter || previous.commandCenter,
+        shiftOperatingLoopPack: payload?.shiftOperatingLoopPack || previous.shiftOperatingLoopPack,
+        shiftFirstForwardableRun: payload?.shiftFirstForwardableRun || previous.shiftFirstForwardableRun,
+        shiftProviderHandoff: payload?.shiftProviderHandoff || previous.shiftProviderHandoff,
+        shiftSandboxAcceptance: payload?.shiftSandboxAcceptance || previous.shiftSandboxAcceptance,
+        firstForwardableRunPack: payload?.firstForwardableRunPack || previous.firstForwardableRunPack,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
+        providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        recovery: payload?.recovery || previous.recovery,
+        shiftCloseoutTrainingPack: payload?.shiftCloseoutTrainingPack || previous.shiftCloseoutTrainingPack,
+        shiftCapabilityActivationPack: payload?.shiftCapabilityActivationPack || previous.shiftCapabilityActivationPack,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        capabilityTrainingRecords: payload?.trainingRecords || previous.capabilityTrainingRecords,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift Operating Loop Pack is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -3081,6 +3131,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandShiftCloseoutTrainingPack = dispatchState.shiftCloseoutTrainingPack;
   const commandShiftCloseoutTrainingRecordAttempt = dispatchState.shiftCloseoutTrainingRecordAttempt;
   const commandShiftFirstForwardableRun = dispatchState.shiftFirstForwardableRun;
+  const commandShiftOperatingLoopPack = dispatchState.shiftOperatingLoopPack;
   const commandShiftProviderHandoff = dispatchState.shiftProviderHandoff;
   const commandShiftSandboxAcceptance = dispatchState.shiftSandboxAcceptance;
   const commandShiftSandboxForwardAttempt = dispatchState.shiftSandboxForwardAttempt;
@@ -3625,6 +3676,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <button
                           className="mt-3 border border-sky-200 bg-sky-200 px-3 py-2 text-xs font-black text-stone-950 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
                           disabled={dispatchState.status === 'loading'}
+                          onClick={buildShiftOperatingLoopPack}
+                          type="button"
+                        >
+                          Run Full Shift Loop
+                        </button>
+                        <button
+                          className="ml-2 mt-3 border border-sky-200 bg-sky-200 px-3 py-2 text-xs font-black text-stone-950 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
                           onClick={runShiftAutopilot}
                           type="button"
                         >
@@ -3710,6 +3769,60 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         </div>
                       </div>
                     </div>
+                    {commandShiftOperatingLoopPack ? (
+                      <div className="mt-3 border border-emerald-200/25 bg-emerald-200/[0.05] p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/70">Shift Operating Loop</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftOperatingLoopPack.verdict}</h5>
+                            <p className="mt-1 max-w-3xl text-xs leading-5 text-white/55">
+                              One customer path: command, shift run, provider unlock, sandbox submit, receipt, closeout training and capability activation.
+                            </p>
+                            <p className="mt-2 text-[11px] leading-4 text-emerald-100/70">
+                              next: {commandShiftOperatingLoopPack.nextBestAction.label} / {commandShiftOperatingLoopPack.nextBestAction.owner}
+                            </p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftOperatingLoopPack.summary.ready}/{commandShiftOperatingLoopPack.summary.stages}</div>
+                              <p className="mt-1 text-white/55">ready stages</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftOperatingLoopPack.summary.waitingProvider}</div>
+                              <p className="mt-1 text-white/55">provider gates</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftOperatingLoopPack.summary.waitingProof}</div>
+                              <p className="mt-1 text-white/55">proof gates</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftOperatingLoopPack.summary.activatedInternal}</div>
+                              <p className="mt-1 text-white/55">internal active</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftOperatingLoopPack.summary.canSubmitSandbox ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">sandbox submit</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                          {commandShiftOperatingLoopPack.stages.map(stage => (
+                            <div className="border border-white/10 bg-stone-950/50 p-3" key={stage.id}>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-black text-white">{stage.title}</span>
+                                <span className={stage.status === 'ready' ? 'text-[11px] text-emerald-100/70' : stage.status === 'waiting-provider' ? 'text-[11px] text-amber-100/70' : stage.status === 'waiting-proof' ? 'text-[11px] text-sky-100/70' : 'text-[11px] text-rose-100/70'}>
+                                  {stage.status}
+                                </span>
+                              </div>
+                              <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-white/55">{stage.customerVisible}</p>
+                              <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-emerald-100/65">action: {stage.primaryAction}</p>
+                              <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/40">proof: {stage.evidence.join(' / ')}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftOperatingLoopPack.safetyBoundary}</p>
+                      </div>
+                    ) : null}
                     <div className="mt-3 grid gap-2 lg:grid-cols-5">
                       {commandShiftAutopilot.steps.map(step => (
                         <div className="border border-white/10 bg-stone-950/50 p-3" key={step.id}>

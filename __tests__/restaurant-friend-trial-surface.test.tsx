@@ -143,6 +143,7 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Open-shift command');
     expect(html).toContain('AI autopilot queue');
     expect(html).toContain('Shift Autopilot');
+    expect(html).toContain('Run Full Shift Loop');
     expect(html).toContain('Run Shift Autopilot');
     expect(html).toContain('Build Provider Handoff');
     expect(html).toContain('Check Sandbox Acceptance');
