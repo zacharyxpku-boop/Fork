@@ -52,6 +52,7 @@ import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-autopilot-run-store';
 import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
+import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
@@ -258,6 +259,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftAutopilot?: RestaurantShiftAutopilot;
     shiftAutopilotRun?: RestaurantShiftAutopilotRunRecord;
     shiftProviderHandoff?: RestaurantShiftProviderHandoff;
+    shiftSandboxAcceptance?: RestaurantShiftSandboxAcceptance;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -2292,6 +2294,30 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildShiftSandboxAcceptance = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Shift Sandbox Acceptance...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'shift-sandbox-acceptance' }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftSandboxAcceptance?.summary?.canSubmitSandbox ? 'queued' : 'blocked',
+        message: `Shift Sandbox Acceptance: ${payload?.shiftSandboxAcceptance?.summary?.passed ?? 0}/${payload?.shiftSandboxAcceptance?.summary?.stages ?? 0} stages passed, verdict ${payload?.shiftSandboxAcceptance?.verdict || 'unknown'}.`,
+        shiftSandboxAcceptance: payload?.shiftSandboxAcceptance || previous.shiftSandboxAcceptance,
+        shiftProviderHandoff: payload?.shiftProviderHandoff || previous.shiftProviderHandoff,
+        providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift Sandbox Acceptance is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -2844,6 +2870,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     } satisfies Pick<RestaurantShiftAutopilot, 'payloadShape' | 'summary' | 'steps' | 'nowQueue' | 'nextWakeups' | 'providerQueue' | 'evidenceQueue' | 'operatingPolicy' | 'safetyBoundary'>;
   const commandShiftAutopilotRun = dispatchState.shiftAutopilotRun;
   const commandShiftProviderHandoff = dispatchState.shiftProviderHandoff;
+  const commandShiftSandboxAcceptance = dispatchState.shiftSandboxAcceptance;
   const commandChannelDeliveryReport = dispatchState.commandCenter?.channelDeliveryReport || dispatchState.channelDeliveryReport;
   const commandChannelDeliveryAttempt = dispatchState.channelDeliveryAttempt;
   const commandChannelScheduleRun = dispatchState.channelScheduleRun;
@@ -3398,6 +3425,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         >
                           Build Provider Handoff
                         </button>
+                        <button
+                          className="ml-2 mt-3 border border-lime-200/70 px-3 py-2 text-xs font-black text-lime-100 transition hover:bg-lime-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={buildShiftSandboxAcceptance}
+                          type="button"
+                        >
+                          Check Sandbox Acceptance
+                        </button>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
                         <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -3562,6 +3597,53 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                           </div>
                         ))}
                         <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftProviderHandoff.safetyBoundary}</p>
+                      </div>
+                    ) : null}
+                    {commandShiftSandboxAcceptance ? (
+                      <div className="mt-3 border border-lime-200/25 bg-lime-200/[0.05] p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/70">shift sandbox acceptance</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftSandboxAcceptance.verdict}</h5>
+                            <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">{commandShiftSandboxAcceptance.payloadShape}</p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxAcceptance.summary.passed}/{commandShiftSandboxAcceptance.summary.stages}</div>
+                              <p className="mt-1 text-white/55">passed</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxAcceptance.summary.waitingExternal}</div>
+                              <p className="mt-1 text-white/55">waiting</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxAcceptance.summary.providerRequests}</div>
+                              <p className="mt-1 text-white/55">provider asks</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxAcceptance.summary.canSubmitSandbox ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">sandbox submit</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftSandboxAcceptance.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                              <p className="mt-1 text-white/55">external claim</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                          {commandShiftSandboxAcceptance.stages.slice(0, 6).map(stage => (
+                            <div className="border border-white/10 bg-stone-950/50 p-2" key={stage.id}>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-black text-white">{stage.id}</span>
+                                <span className={stage.status === 'passed' ? 'text-[11px] text-emerald-100/70' : stage.status === 'waiting-external' ? 'text-[11px] text-amber-100/70' : 'text-[11px] text-rose-100/70'}>
+                                  {stage.status}
+                                </span>
+                              </div>
+                              <p className="mt-1 text-[11px] leading-4 text-white/55">{stage.nextAction}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftSandboxAcceptance.safetyBoundary}</p>
                       </div>
                     ) : null}
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>

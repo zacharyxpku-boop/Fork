@@ -72,6 +72,7 @@ import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mis
 import { buildRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
 import { listRestaurantShiftAutopilotRuns, runRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot-run-store';
 import { buildRestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-provider-handoff';
+import { buildRestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import { buildRestaurantStoreOperatingPlan } from '@/lib/restaurant-store-operating-plan';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, recordRestaurantStoreManagerTasksFromDayZeroMissionPack, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
@@ -1046,6 +1047,44 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       shiftProviderHandoff,
+      providerReadinessHealth,
+      providerSetupState,
+    }, { status: shiftProviderHandoff.summary.requests > 0 ? 409 : 200 });
+  }
+
+  if (body.action === 'shift-sandbox-acceptance') {
+    const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+      runtimeProbe,
+    });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const taskProviderHandoff = buildRestaurantTaskProviderHandoff({ queue: storeManagerTaskQueue });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({
+      runs: listRestaurantAgentRuns(),
+      receipts: listRestaurantAgentReceipts(),
+      readiness: buildRestaurantExternalReadiness(),
+    });
+    const providerSandboxContract = buildRestaurantProviderSandboxContract({
+      runtimeProbe,
+      providerReadinessHealth,
+      taskProviderHandoff,
+      providerReceiptInbox,
+    });
+    const shiftProviderHandoff = buildRestaurantShiftProviderHandoff({
+      shiftRuns: listRestaurantShiftAutopilotRuns(),
+      providerReadinessHealth,
+    });
+    return NextResponse.json({
+      ok: true,
+      shiftSandboxAcceptance: buildRestaurantShiftSandboxAcceptance({
+        shiftProviderHandoff,
+        providerReadinessHealth,
+        providerSandboxContract,
+      }),
+      shiftProviderHandoff,
+      providerSandboxContract,
       providerReadinessHealth,
       providerSetupState,
     }, { status: shiftProviderHandoff.summary.requests > 0 ? 409 : 200 });
