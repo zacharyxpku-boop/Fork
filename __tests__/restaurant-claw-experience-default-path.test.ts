@@ -92,6 +92,16 @@ describe('restaurant claw experience default path', () => {
       'evidence-review',
     ]);
     expect(payload.aiCockpit.summary.canClaimAutomation).toBe(false);
+    expect(payload.posImport.payloadShape).toBe('restaurant-pos-import-v1');
+    expect(payload.posImport.status).toBe('accepted');
+    expect(payload.operatingDataContract.payloadShape).toBe('restaurant-operating-data-contract');
+    expect(payload.operatingInsightReport.payloadShape).toBe('restaurant-operating-insight-report-v1');
+    expect(payload.postRunReviewPack.payloadShape).toBe('restaurant-post-run-review-pack-v1');
+    expect(payload.nextLoopChannelPlan.payloadShape).toBe('restaurant-next-loop-channel-plan-v1');
+    expect(payload.nextLoopChannelPlan.summary.canRunInternallyNow).toBe(true);
+    expect(payload.operatingInsightReport.summary.canClaimTrueOperatingAnalysis).toBe(false);
+    expect(JSON.stringify(payload)).not.toMatch(/1[3-9]\d{9}/);
+    expect(JSON.stringify(payload)).not.toContain('rawPrivateMessage');
     expect(payload.receipts.length).toBeGreaterThan(0);
     expect(payload.providerSetupPack.summary.readyForExternalExecution).toBe(false);
     expect(payload.externalUnlockRequestPack.summary.canClaimExternalAutomation).toBe(false);

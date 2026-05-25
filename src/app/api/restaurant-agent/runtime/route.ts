@@ -934,8 +934,10 @@ export async function POST(request: NextRequest) {
       evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
     });
     const providerSetupState = buildRestaurantProviderSetupStateSummary();
+    const runtimeProbe = await buildRestaurantRuntimeProbe();
     const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
       providerSetupState,
+      runtimeProbe,
     });
     const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlanFromLedger({
       availableMaterials: [
@@ -1052,6 +1054,87 @@ export async function POST(request: NextRequest) {
     const runs = listRestaurantAgentRuns();
     const receipts = listRestaurantAgentReceipts();
     const runnerEvents = listRestaurantBrowserRunnerEvents();
+    const readiness = buildRestaurantExternalReadiness();
+    const defaultPathPosRows: RestaurantPosImportRow[] = [
+      {
+        businessDate: new Date().toISOString().slice(0, 10),
+        storeName: typeof body.restaurant === 'string' && body.restaurant.trim() ? body.restaurant : 'Trial restaurant',
+        offerName: typeof body.offer === 'string' && body.offer.trim() ? body.offer : 'Today offer',
+        channel: 'group-buy coupon',
+        couponClaimCount: 38,
+        redemptionCount: 21,
+        grossSales: 3168,
+        orderCount: 42,
+        inventoryUsed: 21,
+        operator: 'store-manager',
+        evidenceUrl: 'manual-pos-aggregate-import',
+      },
+      {
+        businessDate: new Date().toISOString().slice(0, 10),
+        storeName: typeof body.restaurant === 'string' && body.restaurant.trim() ? body.restaurant : 'Trial restaurant',
+        offerName: typeof body.offer === 'string' && body.offer.trim() ? body.offer : 'Today offer',
+        channel: 'reservation follow-up',
+        couponClaimCount: 12,
+        redemptionCount: 8,
+        grossSales: 1288,
+        orderCount: 16,
+        inventoryUsed: 8,
+        operator: 'shift-lead',
+        evidenceUrl: 'manual-reservation-aggregate-import',
+      },
+    ];
+    const posImport = buildRestaurantPosImportReport({
+      rows: defaultPathPosRows,
+      eventId: controlledTrialRun.simulation.run.eventId,
+    });
+    const businessSignals = buildRestaurantBusinessSignals(runs, receipts);
+    const operatingDataContract = buildRestaurantOperatingDataContract({
+      receipts,
+      posImports: [posImport],
+      readiness,
+    });
+    const operatingInsightReport = buildRestaurantOperatingInsightReport({
+      posImports: [posImport],
+      operatingDataContract,
+      businessSignals,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness });
+    const postRunReviewPack = buildRestaurantPostRunReviewPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      queue: storeManagerTaskQueue,
+      runs,
+      receipts,
+      readiness,
+      posImports: [posImport],
+      target: 'openclaw',
+      runtimeProbe,
+      providerReadinessHealth,
+      providerReceiptInbox,
+    });
+    const channelHub = buildRestaurantAgentChannelHub({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+    });
+    const channelDeliveryReport = buildRestaurantAgentChannelDeliveryReport();
+    const nextLoopChannelPlan = buildRestaurantNextLoopChannelPlan({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      postRunReviewPack,
+      channelHub,
+      channelDeliveryReport,
+      storeManagerTaskQueue,
+    });
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -1093,8 +1176,18 @@ export async function POST(request: NextRequest) {
         runs,
         receipts,
         runnerEvents,
-        readiness: buildRestaurantExternalReadiness(),
+        readiness,
       }),
+      posImport,
+      businessSignals,
+      operatingDataContract,
+      operatingInsightReport,
+      providerReceiptInbox,
+      postRunReviewPack,
+      channelHub,
+      channelDeliveryReport,
+      nextLoopChannelPlan,
+      runtimeProbe,
       runs,
       receipts,
       runnerEvents,

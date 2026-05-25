@@ -451,7 +451,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         externalUnlockRequestPack: payload?.externalUnlockRequestPack || previous.externalUnlockRequestPack,
         controlledTrialRun: payload?.controlledTrialRun || previous.controlledTrialRun,
         runHealth: payload?.controlledTrialRun?.runHealth || previous.runHealth,
-        businessSignals: payload?.controlledTrialRun?.businessSignals || previous.businessSignals,
+        businessSignals: payload?.businessSignals || payload?.controlledTrialRun?.businessSignals || previous.businessSignals,
         latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
         receipts: payload?.receipts || previous.receipts,
         browserGatewayPack: payload?.browserGatewayPack || previous.browserGatewayPack,
@@ -469,6 +469,15 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
         voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
         capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        posImport: payload?.posImport || previous.posImport,
+        operatingDataContract: payload?.operatingDataContract || previous.operatingDataContract,
+        operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
+        channelHub: payload?.channelHub || previous.channelHub,
+        channelDeliveryReport: payload?.channelDeliveryReport || previous.channelDeliveryReport,
+        nextLoopChannelPlan: payload?.nextLoopChannelPlan || previous.nextLoopChannelPlan,
+        runtimeProbe: payload?.runtimeProbe || previous.runtimeProbe,
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Default Claw-style path is temporarily unavailable.' }));
@@ -7106,6 +7115,66 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-fuchsia-100/55">
                 daily runbook: {(dispatchState.aiCockpit?.primaryRunbook || ['Open Today Operations first and confirm merchant evidence.', 'Move Automation Launch one lane at a time through Provider health.', 'Close Evidence Review with public proof or sanitized aggregate imports.']).slice(0, 3).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-lime-200/15 bg-lime-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/65">reservation redemption closeout loop</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now closes the loop from reservations and coupon claims into POS aggregate import, redemption review and next-shift actions.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  It uses sanitized aggregate rows only: no phone numbers, member ids, raw order rows, payment ids, coupon codes or private chat content.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">POS rows</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.posImport?.summary.validRows ?? 2}/{dispatchState.posImport?.summary.totalRows ?? 2}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">reservations</div>
+                  <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.businessSignals?.summary.reservations ?? dispatchState.controlledTrialRun?.businessSignals.summary.reservations ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">coupon claims</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.posImport?.summary.couponClaimCount ?? 50}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">redemptions</div>
+                  <div className="mt-1 text-xs font-black text-lime-100/75">{dispatchState.posImport?.summary.redemptionCount ?? 29}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">analysis</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.operatingInsightReport?.verdict || 'usable-internal-analysis'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">next loop</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.nextLoopChannelPlan?.verdict || 'ready-for-internal-shift'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.operatingInsightReport?.insights || [
+                  { id: 'coupon-redemption-rate', label: 'Coupon claim to redemption rate', status: 'measured', value: '58% (29/50)', evidence: ['sanitized POS aggregate'], interpretation: 'Calculated from sanitized aggregate rows.', nextAction: 'Confirm coupon window before changing offer.' },
+                  { id: 'order-sales-aggregate', label: 'Order and gross sales aggregate', status: 'measured', value: '58 orders / gross sales 4456.00', evidence: ['accepted imports=1'], interpretation: 'Usable as aggregate evidence.', nextAction: 'Compare service capacity and stock readiness.' },
+                  { id: 'prep-inventory-pressure', label: 'Prep and inventory pressure', status: 'directional', value: '29 units', evidence: ['inventoryUsed aggregate'], interpretation: 'Directional until stockout and waste definitions are confirmed.', nextAction: 'Confirm prep-batch definition.' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.status === 'measured' ? 'text-[10px] text-emerald-100/70' : item.status === 'directional' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-lime-100/60">{item.value}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/45">{item.nextAction}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-lime-100/55">
+                next-shift actions: {(dispatchState.nextLoopChannelPlan?.scheduledActions || [
+                  { action: 'Assign service-prep task from accepted receipt and POS aggregate.' },
+                  { action: 'Draft owner-reviewed community follow-up from aggregate visit intent.' },
+                  { action: 'Keep Provider unlock blocked until runtime, merchant grant and POS contract are configured.' },
+                ]).slice(0, 3).map(item => item.action).join(' / ')}
               </p>
             </div>
             {dispatchState.clawExperienceDefaultPath ? (

@@ -223,6 +223,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('restaurant AI cockpit zones');
     expect(html).toContain('Default Path now lands in an operator cockpit: today operations, AI consultant, automation launch and evidence review.');
     expect(html).toContain('daily runbook');
+    expect(html).toContain('reservation redemption closeout loop');
+    expect(html).toContain('Default Path now closes the loop from reservations and coupon claims into POS aggregate import, redemption review and next-shift actions.');
+    expect(html).toContain('next-shift actions');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');
