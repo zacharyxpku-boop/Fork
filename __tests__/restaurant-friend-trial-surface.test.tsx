@@ -216,6 +216,10 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Default Path now shows exactly which Claw/Cloud-style abilities are internal-ready and which need external Provider setup.');
     expect(html).toContain('automation claim');
     expect(html).toContain('external asks');
+    expect(html).toContain('restaurant capability coverage map');
+    expect(html).toContain('Default Path covers the restaurant AI product surface: public profile, content, publish proof, lead intake, coupon redemption and operating analysis.');
+    expect(html).toContain('provider required');
+    expect(html).toContain('pilot order');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');

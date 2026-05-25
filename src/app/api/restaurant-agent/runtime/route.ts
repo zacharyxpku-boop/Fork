@@ -992,6 +992,7 @@ export async function POST(request: NextRequest) {
       setupState: providerSetupState,
       health: providerReadinessHealth,
     });
+    const platformConnectorMatrix = buildRestaurantPlatformConnectorMatrix();
     const controlledTrialRun = await runRestaurantControlledTrialRun({
       target: 'openclaw',
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
@@ -1040,6 +1041,7 @@ export async function POST(request: NextRequest) {
       providerSetupWizard,
       providerUnlockLadder,
       providerLaunchBoard,
+      platformConnectorMatrix,
       customerDemandGateway,
       voiceOrderConsole,
       capabilityTrainingPlan,

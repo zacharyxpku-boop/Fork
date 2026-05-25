@@ -461,6 +461,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
         providerUnlockLadder: payload?.providerUnlockLadder || previous.providerUnlockLadder,
         providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
+        platformConnectorMatrix: payload?.platformConnectorMatrix || previous.platformConnectorMatrix,
         customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
         voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
         capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
@@ -6997,6 +6998,56 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-amber-100/55">
                 external asks: {(dispatchState.providerUnlockLadder?.nextExternalAsks || dispatchState.providerLaunchBoard?.externalRequired || ['runtime URL/key', 'merchant platform authorization', 'signed callback secret', 'aggregate POS/coupon data contract']).slice(0, 5).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-emerald-200/15 bg-emerald-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/65">restaurant capability coverage map</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path covers the restaurant AI product surface: public profile, content, publish proof, lead intake, coupon redemption and operating analysis.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  It separates internal workbench value from Provider-required lanes across Dianping/Meituan, Xiaohongshu, Douyin, WeChat community, POS/coupon systems and persistent runtime.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-5">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">connectors</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.platformConnectorMatrix?.summary.connectors ?? 7}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">internal ready</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.platformConnectorMatrix?.summary.internalReady ?? 1}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider required</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.platformConnectorMatrix?.summary.providerRequired ?? dispatchState.platformConnectorMatrix?.summary.blocked ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">env keys</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.platformConnectorMatrix ? `${dispatchState.platformConnectorMatrix.summary.configuredEnvKeys}/${dispatchState.platformConnectorMatrix.summary.totalEnvKeys}` : '0/required'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.platformConnectorMatrix?.verdict || 'provider-setup-required'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.platformConnectorMatrix?.capabilityCoverage || [
+                  { capability: 'auto-publish', internalConnectors: [], providerConnectors: ['dianping-meituan', 'xiaohongshu', 'douyin', 'agent-runtime-provider'], missingEvidence: ['merchant authorization', 'signed callback receipt'] },
+                  { capability: 'coupon-redemption', internalConnectors: [], providerConnectors: ['dianping-meituan', 'pos-redemption'], missingEvidence: ['aggregate redemption counts', 'field dictionary'] },
+                  { capability: 'operating-analysis', internalConnectors: [], providerConnectors: ['pos-redemption'], missingEvidence: ['sanitized POS sample', 'source time window'] },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.capability}>
+                    <div className="text-xs font-black text-white">{item.capability}</div>
+                    <p className="mt-1 text-[11px] leading-4 text-emerald-100/55">internal: {item.internalConnectors.slice(0, 2).join(' / ') || 'planning and proof slots only'}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/55">provider: {item.providerConnectors.slice(0, 3).join(' / ') || 'none'}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">proof: {item.missingEvidence.slice(0, 2).join(' / ')}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/55">
+                pilot order: {(dispatchState.platformConnectorMatrix?.pilotOrder || ['Start with public-profile-intake and internal content draft.', 'Configure one browser runtime and callback secret for sandbox submit.', 'Add POS/redemption aggregate sample before claiming operating analysis.']).slice(0, 3).join(' / ')}
               </p>
             </div>
             {dispatchState.clawExperienceDefaultPath ? (
