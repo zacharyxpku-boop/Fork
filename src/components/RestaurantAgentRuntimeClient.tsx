@@ -439,6 +439,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         status: payload?.clawExperienceDefaultPath?.summary?.providerGated ? 'blocked' : 'queued',
         message: `Default Path: ${payload?.clawExperienceDefaultPath?.summary?.readyNow ?? 0} ready, ${payload?.clawExperienceDefaultPath?.summary?.trainingNeeded ?? 0} training, ${payload?.clawExperienceDefaultPath?.summary?.providerGated ?? 0} provider/boundary gates.`,
         clawExperienceDefaultPath: payload?.clawExperienceDefaultPath || previous.clawExperienceDefaultPath,
+        clawSkillWorkbench: payload?.clawSkillWorkbench || previous.clawSkillWorkbench,
+        clawSkillExecutionRecord: payload?.clawSkillExecutionRecord || previous.clawSkillExecutionRecord,
+        clawSkillExecutionLedger: payload?.clawSkillExecutionLedger || previous.clawSkillExecutionLedger,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        storeManagerTaskWatcher: payload?.storeManagerTaskWatcher || previous.storeManagerTaskWatcher,
+        staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
+        staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.staffNotificationDeliveryBridge,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Default Claw-style path is temporarily unavailable.' }));

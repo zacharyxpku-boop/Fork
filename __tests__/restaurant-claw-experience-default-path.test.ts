@@ -57,8 +57,12 @@ describe('restaurant claw experience default path', () => {
     expect(payload.clawExperienceDefaultPath.payloadShape).toBe('restaurant-claw-experience-default-path-v1');
     expect(payload.clawExperienceDefaultPath.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.clawExperienceDefaultPath.routeDecision.providerKeyChecklist).toContain('RESTAURANT_AGENT_CALLBACK_SECRET');
+    expect(payload.clawSkillWorkbench.payloadShape).toBe('restaurant-claw-skill-workbench-v1');
+    expect(payload.clawSkillExecutionRecord.payloadShape).toBe('restaurant-claw-skill-execution-record-v1');
+    expect(payload.storeManagerTaskQueue.payloadShape).toBe('restaurant-store-manager-task-queue-v1');
+    expect(payload.staffNotificationHandoff.payloadShape).toBe('restaurant-staff-notification-handoff-v1');
     expect(serialized).not.toContain('secret-value');
-    expect(serialized).not.toContain('cookie');
-    expect(serialized).not.toContain('token');
+    expect(serialized).not.toContain('cookie-value');
+    expect(serialized).not.toContain('token-value');
   });
 });

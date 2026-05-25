@@ -898,6 +898,23 @@ export async function POST(request: NextRequest) {
   }
 
   if (body.action === 'claw-experience-default-path') {
+    const clawSkillWorkbench = buildRestaurantClawSkillWorkbench({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+    });
+    const clawSkillExecutionRecord = recordRestaurantClawSkillExecution(clawSkillWorkbench);
+    const storeManagerTaskRecords = recordRestaurantStoreManagerTasksFromClawExecution(clawSkillExecutionRecord);
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const storeManagerTaskWatcher = buildRestaurantStoreManagerTaskWatcher(storeManagerTaskQueue);
+    const staffNotificationHandoff = buildRestaurantStaffNotificationHandoff(storeManagerTaskWatcher);
+    const staffNotificationDeliveryBridge = buildRestaurantStaffNotificationDeliveryBridge({
+      handoff: staffNotificationHandoff,
+    });
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -909,6 +926,15 @@ export async function POST(request: NextRequest) {
         constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
         evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
       }),
+      clawSkillWorkbench,
+      clawSkillExecutionRecord,
+      clawSkillExecutionLedger: buildRestaurantClawSkillExecutionLedger(),
+      storeManagerTaskRecords,
+      storeManagerTaskQueue,
+      storeManagerTaskWatcher,
+      staffNotificationHandoff,
+      staffNotificationDeliveryBridge,
+      taskProviderHandoff: buildRestaurantTaskProviderHandoff({ queue: storeManagerTaskQueue }),
     });
   }
 
