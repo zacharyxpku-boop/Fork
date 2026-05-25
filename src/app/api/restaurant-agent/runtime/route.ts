@@ -56,6 +56,7 @@ import { buildRestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-w
 import { buildRestaurantClawSkillExecutionLedger, recordRestaurantClawSkillExecution } from '@/lib/restaurant-claw-skill-execution-store';
 import { runRestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
 import { buildRestaurantCustomerDemandGateway } from '@/lib/restaurant-customer-demand-gateway';
+import { buildRestaurantLeadCaptureInbox } from '@/lib/restaurant-lead-capture-inbox';
 import { buildRestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
 import { buildRestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import { buildRestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
@@ -1154,6 +1155,20 @@ export async function POST(request: NextRequest) {
       nextLoopChannelPlan,
       businessSignals,
     });
+    const leadCaptureInbox = buildRestaurantLeadCaptureInbox({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      customerDemandGateway,
+      businessSignals,
+      channelHub,
+      nextLoopChannelPlan,
+      reputationCloseoutPack,
+    });
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -1208,6 +1223,7 @@ export async function POST(request: NextRequest) {
       nextLoopChannelPlan,
       publicIntelligenceBrief,
       reputationCloseoutPack,
+      leadCaptureInbox,
       runtimeProbe,
       runs,
       receipts,

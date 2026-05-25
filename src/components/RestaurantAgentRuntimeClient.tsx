@@ -34,6 +34,7 @@ import type { RestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-w
 import type { RestaurantClawSkillExecutionLedger, RestaurantClawSkillExecutionRecord } from '@/lib/restaurant-claw-skill-execution-store';
 import type { RestaurantControlledTrialRun } from '@/lib/restaurant-controlled-trial-run';
 import type { RestaurantCustomerDemandGateway } from '@/lib/restaurant-customer-demand-gateway';
+import type { RestaurantLeadCaptureInbox } from '@/lib/restaurant-lead-capture-inbox';
 import type { RestaurantVoiceOrderConsole } from '@/lib/restaurant-voice-order-console';
 import type { RestaurantOperatingDataContract } from '@/lib/restaurant-operating-data-contract';
 import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
@@ -264,6 +265,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawExperienceDefaultPath?: RestaurantClawExperienceDefaultPath;
     controlledTrialRun?: RestaurantControlledTrialRun;
     customerDemandGateway?: RestaurantCustomerDemandGateway;
+    leadCaptureInbox?: RestaurantLeadCaptureInbox;
     voiceOrderConsole?: RestaurantVoiceOrderConsole;
     aiOsAuditReport?: RestaurantAiOsAuditReport;
     platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
@@ -469,6 +471,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         storeOperatingPlan: payload?.storeOperatingPlan || previous.storeOperatingPlan,
         aiCockpit: payload?.aiCockpit || previous.aiCockpit,
         customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
+        leadCaptureInbox: payload?.leadCaptureInbox || previous.leadCaptureInbox,
         voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
         capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
         posImport: payload?.posImport || previous.posImport,
@@ -7065,6 +7068,82 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/55">
                 pilot order: {(dispatchState.platformConnectorMatrix?.pilotOrder || ['Start with public-profile-intake and internal content draft.', 'Configure one browser runtime and callback secret for sandbox submit.', 'Add POS/redemption aggregate sample before claiming operating analysis.']).slice(0, 3).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-sky-200/15 bg-sky-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/65">lead capture inbox</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now turns reservations, coupon claims, private-domain inquiries, visit intent and review recovery into a governed lead queue.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  Auto lead capture and customer contact stay blocked until merchant authorization, channel provider, callback receipts and no-PII data contracts are configured.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadCaptureInbox?.verdict || 'provider-unlock-first'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">signals</div>
+                  <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.leadCaptureInbox?.summary.aggregateSignals ?? dispatchState.businessSignals?.summary.visitIntent ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">lead items</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadCaptureInbox?.summary.leadItems ?? 5}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">today</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.leadCaptureInbox?.summary.todayItems ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">auto lead capture</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.leadCaptureInbox?.summary.canClaimAutoLeadCapture ? 'ready' : 'blocked'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">customer contact</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.leadCaptureInbox?.summary.canClaimAutoCustomerContact ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                {(dispatchState.leadCaptureInbox?.sources || [
+                  { id: 'reservation', label: 'Reservation and waitlist intent', status: 'provider-gated', signalCount: 0, nextAction: 'Import sanitized reservation aggregate before routing table intent.' },
+                  { id: 'coupon-claim', label: 'Coupon and group-buy claims', status: 'provider-gated', signalCount: 0, nextAction: 'Collect coupon rule proof and aggregate claim count.' },
+                  { id: 'private-domain-inquiry', label: 'Private-domain inquiry summary', status: 'provider-gated', signalCount: 0, nextAction: 'Keep as manual summary until staff channel provider is configured.' },
+                  { id: 'visit-intent', label: 'Visit intent from public proof', status: 'needs-evidence', signalCount: 0, nextAction: 'Collect public proof or accepted receipt before claiming visit intent.' },
+                  { id: 'review-recovery', label: 'Review-triggered service recovery', status: 'needs-evidence', signalCount: 0, nextAction: 'Build a reputation closeout pack before review-led follow-up.' },
+                ]).slice(0, 5).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.status === 'internal-ready' ? 'text-[10px] text-emerald-100/70' : item.status === 'needs-evidence' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-sky-100/60">signals: {item.signalCount}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/45">{item.nextAction}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.leadCaptureInbox?.leadItems || [
+                  { id: 'lead-reservation-capacity', title: 'Confirm reservation capacity before replying', priority: 'blocked', owner: 'store-manager', signalCount: 0, staffAction: 'Check service window, table capacity and queue pressure.', evidenceRequired: 'service window + capacity note + aggregate reservation count', stopLine: 'No automatic confirmation without provider authorization.' },
+                  { id: 'lead-coupon-redemption-prep', title: 'Prepare coupon claim to redemption follow-up', priority: 'blocked', owner: 'ops', signalCount: 0, staffAction: 'Clarify coupon validity, exclusions and redemption window.', evidenceRequired: 'coupon rule proof + aggregate claim count', stopLine: 'No coupon redemption or ROI claim without evidence.' },
+                  { id: 'lead-private-domain-summary', title: 'Classify private-domain inquiries without storing chats', priority: 'blocked', owner: 'community-ops', signalCount: 0, staffAction: 'Summarize aggregate inquiry themes and draft staff-approved replies.', evidenceRequired: 'source channel + aggregate count + approved reply script', stopLine: 'No private message read or customer contact automation.' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.title}</span>
+                      <span className={item.priority === 'today' ? 'text-[10px] text-emerald-100/70' : item.priority === 'next-shift' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-rose-100/70'}>{item.priority}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-sky-100/55">{item.owner} / signals {item.signalCount}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.staffAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">proof: {item.evidenceRequired}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/50">{item.stopLine}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-sky-100/55">
+                provider unlocks: {(dispatchState.leadCaptureInbox?.providerUnlocks || ['merchant platform authorization for lead sources', 'staff channel provider and recipient-role approval', 'callback secret and accepted receipt schema']).slice(0, 4).join(' / ')}
               </p>
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">

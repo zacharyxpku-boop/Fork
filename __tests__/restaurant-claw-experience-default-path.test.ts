@@ -103,6 +103,10 @@ describe('restaurant claw experience default path', () => {
     expect(payload.reputationCloseoutPack.payloadShape).toBe('restaurant-reputation-closeout-pack-v1');
     expect(payload.reputationCloseoutPack.summary.canClaimAutoReviewReply).toBe(false);
     expect(payload.reputationCloseoutPack.sources.map((item: { id: string }) => item.id)).toContain('manual-review-import');
+    expect(payload.leadCaptureInbox.payloadShape).toBe('restaurant-lead-capture-inbox-v1');
+    expect(payload.leadCaptureInbox.summary.canClaimAutoLeadCapture).toBe(false);
+    expect(payload.leadCaptureInbox.summary.canClaimAutoCustomerContact).toBe(false);
+    expect(payload.leadCaptureInbox.sources.map((item: { id: string }) => item.id)).toContain('private-domain-inquiry');
     expect(payload.operatingInsightReport.summary.canClaimTrueOperatingAnalysis).toBe(false);
     expect(JSON.stringify(payload)).not.toMatch(/1[3-9]\d{9}/);
     expect(JSON.stringify(payload)).not.toContain('rawPrivateMessage');
