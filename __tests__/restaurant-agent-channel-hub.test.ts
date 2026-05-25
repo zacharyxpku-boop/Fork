@@ -23,6 +23,10 @@ describe('restaurant agent channel hub', () => {
     expect(hub.channels.find(item => item.id === 'wecom')?.externalRequired).toContain('RESTAURANT_AGENT_WECOM_WEBHOOK_URL');
     expect(hub.scheduledJobs.map(item => item.id)).toContain('night-closeout');
     expect(hub.commandSuggestions[0].routeTo).toBe('publish-and-proof');
+    expect(hub.commandSuggestions[0].command).toContain('今晚把 Tomato beef noodle set 做成到店活动');
+    expect(hub.commandSuggestions[1].command).toContain('店长待办');
+    expect(hub.commandSuggestions[2].command).toContain('库存异常');
+    expect(JSON.stringify(hub.commandSuggestions)).not.toMatch(/[鍟椁骞涓绛鎺鐗璐缁妗鏁浠]{2,}/);
     expect(hub.safetyBoundary).toContain('does not send messages without provider configuration');
   });
 

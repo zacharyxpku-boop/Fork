@@ -244,17 +244,17 @@ export function buildRestaurantAgentChannelHub(input: RestaurantTrialIntake & {
     scheduledJobs: schedules,
     commandSuggestions: [
       {
-        command: `今晚把 ${offer} 做成到店活动，先给我可发版和发布证据要求`,
+        command: `今晚把 ${offer} 做成到店活动，先给我可发布版本和发布证据要求。`,
         routeTo: 'publish-and-proof',
         expectedEvidence: 'approved content id, target platform and receipt schema',
       },
       {
-        command: '把今天领券和到店意向整理成店长待办',
+        command: '把今天领券、预约和到店意向整理成店长待办。',
         routeTo: 'lead-and-community-followup',
         expectedEvidence: 'aggregate lead counts, channel and owner',
       },
       {
-        command: '收盘后告诉我哪些菜品、核销和库存异常需要明天处理',
+        command: '收盘后告诉我哪些菜品、核销和库存异常需要明天处理。',
         routeTo: 'redemption-and-operating-analysis',
         expectedEvidence: 'POS aggregate batch, field dictionary and accepted receipt',
       },
