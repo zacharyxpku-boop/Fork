@@ -30,6 +30,13 @@ describe('restaurant agent channel scheduler', () => {
     expect(run.acceptance.nextWakeupAt).toBe('2026-05-24T16:00:00.000Z');
     expect(run.operatorTimeline[0].status).toBe('blocked');
     expect(run.operatorTimeline[0].externalGate).not.toBe('none');
+    expect(run.cloudJobTable[0]).toEqual(expect.objectContaining({
+      status: 'blocked',
+      providerMode: 'external-provider-required',
+      lastRunAt: '2026-05-24T15:00:00.000Z',
+      nextRunAt: '2026-05-25T01:30:00.000Z',
+    }));
+    expect(run.cloudJobTable[0].durationMs).toBeGreaterThan(0);
     expect(run.recovery[0].nextAction).toContain('Configure');
     expect(run.deliveryReport.summary.total).toBeGreaterThanOrEqual(3);
     expect(run.safetyBoundary).toContain('does not run forever');
@@ -59,6 +66,7 @@ describe('restaurant agent channel scheduler', () => {
     expect(run.acceptance.canRunStaffSchedule).toBe(true);
     expect(run.acceptance.canClaimAlwaysOnAutomation).toBe(false);
     expect(run.operatorTimeline.some(item => item.status === 'forwarded')).toBe(true);
+    expect(run.cloudJobTable.some(item => item.providerMode === 'local-governed-attempt')).toBe(true);
     expect(calls.length).toBeGreaterThan(0);
     expect(JSON.stringify(run)).not.toContain(secretWebhook);
   });
@@ -80,6 +88,8 @@ describe('restaurant agent channel scheduler', () => {
     expect(payload.channelScheduleRun.payloadShape).toBe('restaurant-agent-channel-schedule-run-v1');
     expect(payload.channelScheduleRun.summary.attempted).toBeGreaterThan(0);
     expect(payload.channelScheduleRun.acceptance.canClaimAlwaysOnAutomation).toBe(false);
+    expect(payload.channelScheduleRun.cloudJobTable.length).toBeGreaterThan(0);
+    expect(payload.channelScheduleRun.cloudJobTable[0].nextRunAt).toBeTruthy();
     expect(payload.channelScheduleRun.operatorTimeline.length).toBeGreaterThan(0);
     expect(payload.channelDeliveryReport.payloadShape).toBe('restaurant-agent-channel-delivery-report-v1');
   });

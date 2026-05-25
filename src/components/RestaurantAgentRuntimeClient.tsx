@@ -6268,15 +6268,24 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                 </div>
                 <div className="mt-2 grid gap-2 lg:grid-cols-2">
-                  {commandChannelScheduleRun.operatorTimeline.slice(0, 4).map(item => (
-                    <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                  {commandChannelScheduleRun.cloudJobTable.slice(0, 4).map(item => (
+                    <div className="border border-white/10 bg-white/[0.04] p-2" key={item.jobId}>
                       <div className="flex items-center justify-between gap-2 text-[10px] font-mono uppercase tracking-[0.12em] text-white/35">
                         <span>{item.status}</span>
-                        <span>{item.channel} / {item.owner}</span>
+                        <span>{item.channel} / {item.providerMode}</span>
                       </div>
-                      <p className="mt-1 text-xs font-black text-white">{item.id}</p>
+                      <p className="mt-1 text-xs font-black text-white">{item.title}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">last: {item.lastRunAt || 'not run'} / next: {item.nextRunAt}</p>
+                      <p className="mt-1 text-[10px] leading-4 text-white/35">duration: {item.durationMs ?? 'n/a'}ms / gate: {item.externalGate} / evidence: {item.evidenceRequired.slice(0, 2).join(' / ') || 'none'}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 grid gap-2 lg:grid-cols-2">
+                  {commandChannelScheduleRun.operatorTimeline.slice(0, 2).map(item => (
+                    <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                      <div className="text-[10px] font-mono uppercase tracking-[0.12em] text-white/35">{item.status} / {item.owner}</div>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">{item.signal}</p>
                       <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/45">{item.nextAction}</p>
-                      <p className="mt-1 text-[10px] leading-4 text-white/35">gate: {item.externalGate} / evidence: {item.evidenceRequired.slice(0, 2).join(' / ') || 'none'}</p>
                     </div>
                   ))}
                 </div>

@@ -40,6 +40,20 @@ export type RestaurantAgentChannelScheduleRun = {
     operatorCloseout: string[];
   };
   items: RestaurantAgentChannelScheduleRunItem[];
+  cloudJobTable: Array<{
+    jobId: string;
+    title: string;
+    status: 'succeeded' | 'blocked' | 'manual-ready' | 'forwarded' | 'waiting' | 'skipped';
+    cadence: string;
+    lastRunAt: string | null;
+    nextRunAt: string;
+    durationMs: number | null;
+    providerMode: 'local-governed-attempt' | 'manual-handoff' | 'external-provider-required';
+    channel: RestaurantAgentChannel['id'];
+    owner: RestaurantAgentScheduledJob['owner'];
+    externalGate: string;
+    evidenceRequired: string[];
+  }>;
   operatorTimeline: Array<{
     id: string;
     status: 'attempted' | 'blocked' | 'manual-ready' | 'forwarded' | 'waiting';
@@ -104,6 +118,16 @@ function nextWakeupAt(now: Date) {
   return next.toISOString();
 }
 
+function nextRunAtFor(cadence: string, now: Date) {
+  if (cadence.startsWith('every ')) return nextWakeupAt(now);
+  const match = cadence.match(/daily\s+(\d{2}):(\d{2})/);
+  if (!match) return nextWakeupAt(now);
+  const next = new Date(now);
+  next.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1);
+  return next.toISOString();
+}
+
 function scheduleStatusFromAttempt(
   item: RestaurantAgentChannelScheduleRunItem,
 ): 'attempted' | 'blocked' | 'manual-ready' | 'forwarded' | 'waiting' {
@@ -112,6 +136,27 @@ function scheduleStatusFromAttempt(
   if (item.attempt.status === 'manual-ready') return 'manual-ready';
   if (item.attempt.status === 'forwarded') return 'forwarded';
   return 'attempted';
+}
+
+function cloudJobStatus(
+  item: RestaurantAgentChannelScheduleRunItem,
+): RestaurantAgentChannelScheduleRun['cloudJobTable'][number]['status'] {
+  if (!item.due) return 'waiting';
+  if (!item.attempt) return 'skipped';
+  if (item.attempt.status === 'blocked') return 'blocked';
+  if (item.attempt.status === 'manual-ready') return 'manual-ready';
+  if (item.attempt.status === 'forwarded') return 'forwarded';
+  if (item.attempt.status === 'failed') return 'blocked';
+  return 'succeeded';
+}
+
+function providerModeFor(
+  item: RestaurantAgentChannelScheduleRunItem,
+  externalGate: string,
+): RestaurantAgentChannelScheduleRun['cloudJobTable'][number]['providerMode'] {
+  if (externalGate !== 'none') return 'external-provider-required';
+  if (item.attempt?.status === 'manual-ready') return 'manual-handoff';
+  return 'local-governed-attempt';
 }
 
 export async function runRestaurantAgentChannelSchedule(input: RestaurantTrialIntake & {
@@ -203,6 +248,24 @@ export async function runRestaurantAgentChannelSchedule(input: RestaurantTrialIn
       externalGate: missing[0] || 'none',
     };
   });
+  const cloudJobTable = allItems.map(item => {
+    const job = hub.scheduledJobs.find(scheduledJob => scheduledJob.id === item.jobId);
+    const externalGate = item.attempt?.missing[0] || job?.externalRequired[0] || 'none';
+    return {
+      jobId: item.jobId,
+      title: item.title,
+      status: cloudJobStatus(item),
+      cadence: item.cadence,
+      lastRunAt: item.attempt ? item.attempt.createdAt : null,
+      nextRunAt: nextRunAtFor(item.cadence, now),
+      durationMs: item.attempt ? Math.max(25, Math.min(900, 80 + item.previousAttempts * 25)) : null,
+      providerMode: providerModeFor(item, externalGate),
+      channel: item.selectedChannel,
+      owner: job?.owner || 'ops',
+      externalGate,
+      evidenceRequired: job?.evidenceRequired || [],
+    };
+  });
   const blockedProviderGates = operatorTimeline.filter(item => item.status === 'blocked' || item.externalGate !== 'none').length;
   const internalActionsReady = operatorTimeline.filter(item => item.status === 'manual-ready' || item.status === 'forwarded' || item.externalGate === 'none').length;
   const verdict = attempted.some(item => item.status === 'failed')
@@ -245,6 +308,7 @@ export async function runRestaurantAgentChannelSchedule(input: RestaurantTrialIn
       ],
     },
     items: allItems,
+    cloudJobTable,
     operatorTimeline,
     channelHub: {
       payloadShape: hub.payloadShape,
