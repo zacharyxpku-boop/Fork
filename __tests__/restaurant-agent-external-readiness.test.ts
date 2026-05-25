@@ -11,6 +11,8 @@ describe('restaurant agent external readiness', () => {
     expect(readiness.summary.blocked).toBe(4);
     expect(readiness.missingExternal.join(' ')).toContain('Lobu runtime URL');
     expect(readiness.safetyBoundary).toContain('不返回 API key');
+    expect(readiness.groups.map(group => group.name).join(' ')).toContain('门店平台授权');
+    expect(JSON.stringify(readiness)).not.toMatch(/[鎶璇闂澶绛涓]{2,}/);
   });
 
   it('marks only configured requirements without exposing secret values', () => {
