@@ -216,6 +216,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Default Path now converts publish, browser runner, receipt, recovery and memory work into one execution queue.');
     expect(html).toContain('auto publish');
     expect(html).toContain('browser execute');
+    expect(html).toContain('provider acceptance workbench');
+    expect(html).toContain('Default Path now turns Provider keys, merchant grants, browser profile, callback, data contract and sandbox receipt into an acceptance checklist.');
+    expect(html).toContain('provider handoff');
     expect(html).toContain('provider readiness ladder');
     expect(html).toContain('Default Path now shows exactly which Claw/Cloud-style abilities are internal-ready and which need external Provider setup.');
     expect(html).toContain('automation claim');

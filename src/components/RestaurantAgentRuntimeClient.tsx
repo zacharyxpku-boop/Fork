@@ -67,6 +67,7 @@ import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-prov
 import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shift-sandbox-forward';
 import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
+import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import type { RestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
@@ -293,6 +294,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftSandboxAcceptance?: RestaurantShiftSandboxAcceptance;
     shiftSandboxForwardAttempt?: RestaurantShiftSandboxForwardAttempt;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
+    providerAcceptanceWorkbench?: RestaurantProviderAcceptanceWorkbench;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
     firstForwardableRunPack?: RestaurantFirstForwardableRunPack;
@@ -482,6 +484,8 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         operatingDataContract: payload?.operatingDataContract || previous.operatingDataContract,
         operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
+        providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
         postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
         channelHub: payload?.channelHub || previous.channelHub,
         channelDeliveryReport: payload?.channelDeliveryReport || previous.channelDeliveryReport,
@@ -7047,6 +7051,68 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   { nextStep: 'Configure runtime key, callback secret, isolated browser profile and merchant authorization before external browser execution.' },
                   { nextStep: 'Use manual fallback and import public proof if Provider proof does not arrive.' },
                 ]).slice(0, 3).map(item => item.nextStep).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-orange-200/15 bg-orange-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-100/65">provider acceptance workbench</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now turns Provider keys, merchant grants, browser profile, callback, data contract and sandbox receipt into an acceptance checklist.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This is the customer-facing bridge from internal workbench to real automation: every external ability needs evidence before it moves from blocked to sandbox-ready.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.providerAcceptanceWorkbench?.verdict || 'provider-setup-required'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">passed</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.providerAcceptanceWorkbench?.summary.passed ?? 0}/{dispatchState.providerAcceptanceWorkbench?.summary.stages ?? 7}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">setup</div>
+                  <div className="mt-1 text-xs font-black text-orange-100/75">{dispatchState.providerAcceptanceWorkbench?.summary.setupCompletionPercent ?? dispatchState.providerSetupWizard?.summary.completionPercent ?? 0}%</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">health</div>
+                  <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.providerAcceptanceWorkbench?.summary.readinessScore ?? dispatchState.providerReadinessHealth?.summary.readinessScore ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sandbox</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.providerAcceptanceWorkbench?.summary.canRunSandbox ? 'ready' : 'blocked'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external claim</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerAcceptanceWorkbench?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-4">
+                {(dispatchState.providerAcceptanceWorkbench?.stages || [
+                  { id: 'runtime', label: 'Runtime URL and server-side API key', status: 'blocked', owner: 'runtime-admin', nextAction: 'Configure one reachable runtime URL/key pair and rerun Provider Health.', evidenceRequired: ['runtime URL', 'API key name'], stopLine: 'Never paste or return API key values in the client payload.' },
+                  { id: 'callback', label: 'Signed callback secret and receipt schema', status: 'blocked', owner: 'runtime-admin', nextAction: 'Configure callback secret outside the UI before accepting provider completion.', evidenceRequired: ['callback secret', 'signature validation'], stopLine: 'Unsigned callbacks and private payloads must be rejected.' },
+                  { id: 'merchant-auth', label: 'Merchant platform authorization', status: 'blocked', owner: 'merchant', nextAction: 'Collect merchant authorization for the first platform lane.', evidenceRequired: ['platform grant', 'allowed actions'], stopLine: 'Public store context is not merchant authorization.' },
+                  { id: 'operating-data', label: 'POS, coupon, member and finance data contract', status: 'blocked', owner: 'data-ops', nextAction: 'Collect POS/coupon/member field dictionary before claiming real analysis.', evidenceRequired: ['field dictionary', 'no-PII sample'], stopLine: 'No raw POS rows, payment ids or customer identifiers.' },
+                ]).slice(0, 4).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.status === 'passed' ? 'text-[10px] text-emerald-100/70' : item.status === 'needs-evidence' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-orange-100/55">{item.owner}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.nextAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">proof: {item.evidenceRequired.slice(0, 2).join(' / ')}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/50">{item.stopLine}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-orange-100/55">
+                provider handoff: {(dispatchState.providerAcceptanceWorkbench?.providerHandOffCopy || [
+                  'Send only setup evidence, authorization scope, callback receipt fields and aggregate data contracts.',
+                  'Do not send secrets or customer data.',
+                ]).slice(0, 4).join(' / ')}
               </p>
             </div>
             <div className="mt-3 border border-amber-200/15 bg-amber-200/[0.035] p-3">

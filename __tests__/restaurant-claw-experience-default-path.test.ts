@@ -110,6 +110,9 @@ describe('restaurant claw experience default path', () => {
     expect(payload.publishExecutionInbox.payloadShape).toBe('restaurant-publish-execution-inbox-v1');
     expect(payload.publishExecutionInbox.summary.canClaimAutoPublish).toBe(false);
     expect(payload.publishExecutionInbox.tasks.map((item: { id: string }) => item.id)).toContain('submit-browser-runner');
+    expect(payload.providerAcceptanceWorkbench.payloadShape).toBe('restaurant-provider-acceptance-workbench-v1');
+    expect(payload.providerAcceptanceWorkbench.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerAcceptanceWorkbench.stages.map((item: { id: string }) => item.id)).toContain('callback');
     expect(payload.operatingInsightReport.summary.canClaimTrueOperatingAnalysis).toBe(false);
     expect(JSON.stringify(payload)).not.toMatch(/1[3-9]\d{9}/);
     expect(JSON.stringify(payload)).not.toContain('rawPrivateMessage');
