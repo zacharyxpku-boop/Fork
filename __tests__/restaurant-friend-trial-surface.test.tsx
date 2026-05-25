@@ -243,6 +243,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('lead sandbox acceptance flow');
     expect(html).toContain('Provider submit now has a governed path: sanitized package, signed lead receipt, failed callback recovery, staff approval and aggregate-only memory gate.');
     expect(html).toContain('aggregate-only-after-accepted-receipt');
+    expect(html).toContain('today command cockpit');
+    expect(html).toContain('Default Path now collapses the restaurant AI surface into four lanes: get customers, publish proof, redeem/POS and review/train.');
+    expect(html).toContain('accepted-proof-or-sanitized-aggregate-only');
     expect(html).toContain('restaurant AI cockpit zones');
     expect(html).toContain('Default Path now lands in an operator cockpit: today operations, AI consultant, automation launch and evidence review.');
     expect(html).toContain('daily runbook');

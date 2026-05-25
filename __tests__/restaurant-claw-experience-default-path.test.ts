@@ -116,6 +116,9 @@ describe('restaurant claw experience default path', () => {
     expect(payload.leadSandboxAcceptanceFlow.payloadShape).toBe('restaurant-lead-sandbox-acceptance-flow-v1');
     expect(payload.leadSandboxAcceptanceFlow.summary.canClaimAutoAcquisition).toBe(false);
     expect(payload.leadSandboxAcceptanceFlow.sanitizedProviderPackage.callbackAction).toBe('lead-acquisition-receipt');
+    expect(payload.todayCommandCockpit.payloadShape).toBe('restaurant-today-command-cockpit-v1');
+    expect(payload.todayCommandCockpit.lanes.map((item: { id: string }) => item.id)).toEqual(['get-customers', 'publish-proof', 'redeem-and-pos', 'review-and-train']);
+    expect(payload.todayCommandCockpit.proofLedgerContract.memoryWriteRule).toBe('accepted-proof-or-sanitized-aggregate-only');
     expect(payload.publishExecutionInbox.payloadShape).toBe('restaurant-publish-execution-inbox-v1');
     expect(payload.publishExecutionInbox.summary.canClaimAutoPublish).toBe(false);
     expect(payload.publishExecutionInbox.tasks.map((item: { id: string }) => item.id)).toContain('submit-browser-runner');

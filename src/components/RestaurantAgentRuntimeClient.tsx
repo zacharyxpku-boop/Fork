@@ -103,6 +103,7 @@ import type { RestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-
 import type { RestaurantStaffNotificationDeliveryBridge } from '@/lib/restaurant-staff-notification-delivery-bridge';
 import type { RestaurantStaffNotificationAuditLog } from '@/lib/restaurant-staff-notification-audit-store';
 import type { RestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
+import type { RestaurantTodayCommandCockpit } from '@/lib/restaurant-today-command-cockpit';
 import type { RestaurantTrialWorkflowPack } from '@/lib/restaurant-trial-workflow-pack';
 import type { RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
 
@@ -318,6 +319,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     publicTrialSeed?: RestaurantPublicTrialSeed;
     dayZeroMissionPack?: RestaurantDayZeroMissionPack;
     storeOperatingPlan?: RestaurantStoreOperatingPlan;
+    todayCommandCockpit?: RestaurantTodayCommandCockpit;
     opsConsole?: RestaurantAgentOpsConsole;
     commandCenter?: RestaurantAgentCommandCenter;
     aiCockpit?: RestaurantAiCockpit;
@@ -480,6 +482,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         aiConsultantCopilot: payload?.aiConsultantCopilot || previous.aiConsultantCopilot,
         dayZeroMissionPack: payload?.dayZeroMissionPack || previous.dayZeroMissionPack,
         storeOperatingPlan: payload?.storeOperatingPlan || previous.storeOperatingPlan,
+        todayCommandCockpit: payload?.todayCommandCockpit || previous.todayCommandCockpit,
         aiCockpit: payload?.aiCockpit || previous.aiCockpit,
         customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
         leadCaptureInbox: payload?.leadCaptureInbox || previous.leadCaptureInbox,
@@ -7603,6 +7606,71 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-[11px] leading-4 text-rose-100/45">forbidden: {(dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.forbiddenFields || ['phone', 'WeChat ID', 'raw private message', 'coupon code']).slice(0, 5).join(' / ')}</p>
                 </div>
               </div>
+            </div>
+            <div className="mt-3 border border-emerald-200/15 bg-emerald-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/65">today command cockpit</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now collapses the restaurant AI surface into four lanes: get customers, publish proof, redeem/POS and review/train.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  The operator sees one next action, one owner and one evidence gate instead of hunting through expert modules.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.todayCommandCockpit?.verdict || 'provider-unlock-first'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">lanes</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.todayCommandCockpit?.summary.lanes ?? 4}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">run now</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.todayCommandCockpit?.summary.runNow ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">proof</div>
+                  <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.todayCommandCockpit?.summary.needsProof ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.todayCommandCockpit?.summary.providerGated ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">auto claims</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.todayCommandCockpit?.summary.canClaimAutoAcquisition || dispatchState.todayCommandCockpit?.summary.canClaimAutoPublish ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 border border-white/10 bg-white/[0.04] p-2">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">next best action</div>
+                <p className="mt-1 text-xs font-black text-white">{dispatchState.todayCommandCockpit?.nextBestAction.action || 'Configure provider gates or collect accepted proof before claiming automation.'}</p>
+                <p className="mt-1 text-[11px] leading-4 text-emerald-100/55">
+                  owner: {dispatchState.todayCommandCockpit?.nextBestAction.owner || 'runtime-admin'} / reason: {dispatchState.todayCommandCockpit?.nextBestAction.reason || 'Provider setup and proof gates are not complete.'}
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-4">
+                {(dispatchState.todayCommandCockpit?.lanes || [
+                  { id: 'get-customers', title: 'Get customers into the store', status: 'provider-gated', owner: 'community-ops', businessQuestion: 'Can reservations, coupons and inquiries become owner-visible tasks?', todayAction: 'Create staff-reviewed lead follow-up tasks.', proofToCollect: ['signed lead receipt'], providerGate: ['merchant authorization'], acceptance: 'Accepted receipt and staff approval exist.', stopLine: 'No customer contact automation.', sourceEvidence: ['leadFlow:waiting-provider'] },
+                  { id: 'publish-proof', title: 'Publish only with proof slots', status: 'needs-proof', owner: 'ops', businessQuestion: 'Can content close with public proof?', todayAction: 'Prepare content and proof slot.', proofToCollect: ['public URL or screenshot id'], providerGate: ['browser runtime'], acceptance: 'Proof id exists before closeout.', stopLine: 'No auto publish claim.', sourceEvidence: ['publishInbox:waiting-receipt'] },
+                  { id: 'redeem-and-pos', title: 'Redeem coupons and import POS aggregates', status: 'blocked', owner: 'finance', businessQuestion: 'Can redemption and sales be explained from aggregate data?', todayAction: 'Import sanitized POS and coupon aggregate fields.', proofToCollect: ['couponClaimCount', 'redemptionCount'], providerGate: ['POS field dictionary'], acceptance: 'Aggregate import accepted.', stopLine: 'No raw POS rows.', sourceEvidence: ['operatingInsight:provider-gated'] },
+                  { id: 'review-and-train', title: 'Review the shift and train the agent', status: 'waiting-proof', owner: 'store-manager', businessQuestion: 'Can the next shift reuse accepted proof?', todayAction: 'Close the loop with proof and training.', proofToCollect: ['accepted receipt'], providerGate: ['training record'], acceptance: 'Next shift has one action.', stopLine: 'No training from unverified proof.', sourceEvidence: ['shiftLoop:waiting-proof'] },
+                ]).slice(0, 4).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.title}</span>
+                      <span className={item.status === 'run-now' ? 'text-[10px] text-emerald-100/70' : item.status === 'blocked' ? 'text-[10px] text-rose-100/70' : item.status === 'provider-gated' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-cyan-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-emerald-100/55">{item.owner} / {item.businessQuestion}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/50">{item.todayAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-cyan-100/45">proof: {item.proofToCollect.slice(0, 3).join(' / ')}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/55">
+                proof ledger: {dispatchState.todayCommandCockpit?.proofLedgerContract.memoryWriteRule || 'accepted-proof-or-sanitized-aggregate-only'} / rejected: {(dispatchState.todayCommandCockpit?.proofLedgerContract.rejectedProof || ['sample link', 'unsigned callback', 'private message text', 'raw POS row']).slice(0, 4).join(' / ')}
+              </p>
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
