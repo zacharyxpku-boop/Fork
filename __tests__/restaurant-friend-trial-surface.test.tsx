@@ -181,6 +181,7 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('生成任务和话术');
     expect(html).toContain('6 外部缺口');
     expect(html).toContain('Expert Runtime Tools');
+    expect(html).toContain('Merchant Activation Packet');
     expect(html).toContain('发布链接');
     expect(html).toContain('到店跟进');
     expect(html).toContain('竞品能力覆盖');

@@ -35,6 +35,7 @@ import type { RestaurantOperatingDataContract } from '@/lib/restaurant-operating
 import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operating-insight-report';
 import type { RestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
 import type { RestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
+import type { RestaurantMerchantActivationPacket } from '@/lib/restaurant-merchant-activation-packet';
 import type { RestaurantExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import type { RestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
 import type { RestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
@@ -253,6 +254,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     platformConnectorMatrix?: RestaurantPlatformConnectorMatrix;
     operatingInsightReport?: RestaurantOperatingInsightReport;
     platformOperatingSpine?: RestaurantPlatformOperatingSpine;
+    merchantActivationPacket?: RestaurantMerchantActivationPacket;
     operatingDataContract?: RestaurantOperatingDataContract;
     providerSetupPack?: RestaurantProviderSetupPack;
     externalUnlockRequestPack?: RestaurantExternalUnlockRequestPack;
@@ -2805,6 +2807,45 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const buildMerchantActivationPacket = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Merchant Activation Packet...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'merchant-activation-packet',
+          command: restaurantCommand,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.merchantActivationPacket?.summary?.canClaimExternalAutomation ? 'queued' : 'blocked',
+        message: `Merchant Activation Packet: ${payload?.merchantActivationPacket?.verdict || 'unknown'}; asks ${payload?.merchantActivationPacket?.summary?.providerKeys ?? 0} keys, ${payload?.merchantActivationPacket?.summary?.merchantApprovals ?? 0} approvals, ${payload?.merchantActivationPacket?.summary?.dataContracts ?? 0} data contracts.`,
+        merchantActivationPacket: payload?.merchantActivationPacket || previous.merchantActivationPacket,
+        providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
+        providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
+        providerUnlockLadder: payload?.providerUnlockLadder || previous.providerUnlockLadder,
+        customerDemandGateway: payload?.customerDemandGateway || previous.customerDemandGateway,
+        voiceOrderConsole: payload?.voiceOrderConsole || previous.voiceOrderConsole,
+        commandRoute: payload?.commandRoute || previous.commandRoute,
+        capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Merchant Activation Packet is temporarily unavailable.' }));
+    }
+  };
+
   const buildAiConsultantCopilot = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building Restaurant AI Consultant Copilot...' }));
     try {
@@ -2978,6 +3019,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandProviderLaunchBoard = dispatchState.providerLaunchBoard;
+  const commandMerchantActivationPacket = dispatchState.merchantActivationPacket;
   const commandAiConsultantCopilot = dispatchState.aiConsultantCopilot;
   const commandStoreOperatingPlan = dispatchState.storeOperatingPlan;
   const commandAiCockpit = dispatchState.aiCockpit;
@@ -3487,6 +3529,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       type="button"
                     >
                       Launch Board
+                    </button>
+                    <button
+                      className="w-full border border-amber-200/60 px-3 py-2 text-sm font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={buildMerchantActivationPacket}
+                      type="button"
+                    >
+                      Merchant Activation Packet
                     </button>
                   </div>
                 </details>
@@ -4914,6 +4964,79 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <p className="mt-2 text-xs leading-5 text-white/55">{commandProviderLaunchBoard.safetyBoundary}</p>
                   </div>
                 </div>
+              </div>
+            ) : null}
+            {commandMerchantActivationPacket ? (
+              <div className="mt-3 border border-amber-200/30 bg-amber-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">Merchant Activation Packet</div>
+                    <h4 className="mt-1 text-base font-black text-white">{commandMerchantActivationPacket.verdict}</h4>
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                      {commandMerchantActivationPacket.restaurant} / {commandMerchantActivationPacket.offer}: a forwardable implementation ask for provider keys, merchant approvals, data contracts and sandbox acceptance.
+                    </p>
+                    <p className="mt-2 text-[11px] leading-4 text-amber-100/70">{commandMerchantActivationPacket.nextAskForUser}</p>
+                  </div>
+                  <div className="grid gap-2 text-xs sm:grid-cols-5 lg:min-w-[620px]">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandMerchantActivationPacket.summary.capabilities}</div>
+                      <p className="mt-1 text-white/55">capabilities</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandMerchantActivationPacket.summary.providerKeys}</div>
+                      <p className="mt-1 text-white/55">key names</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandMerchantActivationPacket.summary.merchantApprovals}</div>
+                      <p className="mt-1 text-white/55">approvals</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandMerchantActivationPacket.summary.dataContracts}</div>
+                      <p className="mt-1 text-white/55">data contracts</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{commandMerchantActivationPacket.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                      <p className="mt-1 text-white/55">claim</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  {commandMerchantActivationPacket.sections.slice(0, 6).map(section => (
+                    <div className="border border-white/10 bg-white/[0.05] p-3" key={section.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-xs text-white">{section.title}</span>
+                        <span className="text-[11px] text-amber-100/70">{section.status}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">owner: {section.owner}</p>
+                      <div className="mt-2 space-y-2">
+                        {section.requestedItems.slice(0, 3).map(item => (
+                          <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                            <div className="text-[11px] font-black text-white">{item.label}</div>
+                            <p className="mt-1 text-[11px] leading-4 text-white/45">{item.safeInstruction}</p>
+                            <p className="mt-1 text-[11px] leading-4 text-amber-100/55">proof: {item.evidenceRequired}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider key names</div>
+                    <p className="mt-2 text-xs leading-5 text-amber-100/65">{commandMerchantActivationPacket.providerKeyChecklist.slice(0, 12).join(' / ') || 'none'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sandbox acceptance</div>
+                    <p className="mt-2 text-xs leading-5 text-white/55">
+                      {commandMerchantActivationPacket.sandboxAcceptancePlan.slice(0, 3).map(item => `${item.capabilityId}: ${item.action}`).join(' / ')}
+                    </p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">do not send</div>
+                    <p className="mt-2 text-xs leading-5 text-white/55">{commandMerchantActivationPacket.doNotSend.slice(0, 4).join(' / ')}</p>
+                  </div>
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandMerchantActivationPacket.safetyBoundary}</p>
               </div>
             ) : null}
           </div>

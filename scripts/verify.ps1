@@ -80,6 +80,10 @@ Invoke-Step "Vitest restaurant provider launch board" {
   npm.cmd run test -- __tests__/restaurant-provider-launch-board.test.ts
 }
 
+Invoke-Step "Vitest restaurant merchant activation packet" {
+  npm.cmd run test -- __tests__/restaurant-merchant-activation-packet.test.ts
+}
+
 Invoke-Step "Vitest restaurant AI consultant copilot" {
   npm.cmd run test -- __tests__/restaurant-ai-consultant-copilot.test.ts
 }
