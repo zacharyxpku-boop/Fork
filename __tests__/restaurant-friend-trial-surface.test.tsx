@@ -139,6 +139,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Refresh Center');
     expect(html).toContain('restaurant-agent-command-center-v1');
     expect(html).toContain('Restaurant AI Cockpit');
+    expect(html).toContain('GM Command Deck');
+    expect(html).toContain('Open-shift command');
+    expect(html).toContain('AI autopilot queue');
     expect(html).toContain('Competitor Parity Board');
     expect(html).toContain('Persistent Browser Agent');
     expect(html).toContain('Auto Publish');

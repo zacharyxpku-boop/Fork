@@ -60,6 +60,16 @@ describe('restaurant agent command center', () => {
     expect(center.providerUnlockLadder.payloadShape).toBe('restaurant-provider-unlock-ladder-v1');
     expect(center.providerUnlockLadder.summary.capabilities).toBe(6);
     expect(center.providerUnlockLadder.summary.canClaimExternalAutomation).toBe(false);
+    expect(center.gmCommandDeck.payloadShape).toBe('restaurant-gm-command-deck-v1');
+    expect(center.gmCommandDeck.lanes.map(item => item.id)).toEqual([
+      'opening',
+      'demand',
+      'publish-proof',
+      'service-window',
+      'closeout',
+    ]);
+    expect(center.gmCommandDeck.summary.canRunWithoutProvider).toBe(true);
+    expect(center.gmCommandDeck.summary.canClaimExternalAutomation).toBe(false);
     expect(center.staffNotificationAuditLog.payloadShape).toBe('restaurant-staff-notification-audit-log-v1');
     expect(center.safetyBoundary).toContain('does not log in, publish');
     expect(center.operatorBrief.join('\n')).toContain('provider gates');
@@ -170,6 +180,7 @@ describe('restaurant agent command center', () => {
     expect(payload.commandCenter.providerSetupState.payloadShape).toBe('restaurant-provider-setup-state-summary-v1');
     expect(payload.commandCenter.providerReadinessHealth.payloadShape).toBe('restaurant-provider-readiness-health-v1');
     expect(payload.commandCenter.providerUnlockLadder.payloadShape).toBe('restaurant-provider-unlock-ladder-v1');
+    expect(payload.commandCenter.gmCommandDeck.payloadShape).toBe('restaurant-gm-command-deck-v1');
     expect(payload.commandCenter.staffNotificationAuditLog.payloadShape).toBe('restaurant-staff-notification-audit-log-v1');
     expect(payload.commandCenter.restaurant).toBe('北城面馆');
     expect(payload.commandCenter.secondaryActions.map((item: { label: string }) => item.label)).toEqual(['Open Timeline', 'Setup Gates']);

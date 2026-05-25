@@ -19,6 +19,7 @@ import { buildRestaurantProviderSetupWizard, type RestaurantProviderSetupWizard 
 import { buildRestaurantProviderSetupStateSummary, type RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import { buildRestaurantProviderReadinessHealth, type RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import { buildRestaurantProviderUnlockLadder, type RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
+import { buildRestaurantGmCommandDeck, type RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import { buildRestaurantPublicIntelligenceBrief, type RestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantBenchmarkStrategy, type RestaurantBenchmarkStrategy } from '@/lib/restaurant-benchmark-strategy';
 import { buildRestaurantActivationCockpit, type RestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
@@ -91,6 +92,7 @@ export type RestaurantAgentCommandCenter = {
   providerSetupState: Pick<RestaurantProviderSetupStateSummary, 'payloadShape' | 'summary' | 'provided' | 'latest' | 'safetyBoundary'>;
   providerReadinessHealth: Pick<RestaurantProviderReadinessHealth, 'payloadShape' | 'summary' | 'items' | 'nextActions' | 'externalRequired' | 'safetyBoundary'>;
   providerUnlockLadder: Pick<RestaurantProviderUnlockLadder, 'payloadShape' | 'summary' | 'items' | 'nextExternalAsks' | 'safetyBoundary'>;
+  gmCommandDeck: Pick<RestaurantGmCommandDeck, 'payloadShape' | 'shiftMode' | 'answerForOwner' | 'summary' | 'lanes' | 'aiAutopilotQueue' | 'staffQueue' | 'providerQueue' | 'evidenceQueue' | 'safetyBoundary'>;
   externalWizard: Pick<RestaurantExternalExecutionWizard, 'payloadShape' | 'verdict' | 'canForward' | 'summary' | 'steps' | 'safetyBoundary'>;
   operatorBrief: string[];
   externalRequired: string[];
@@ -498,7 +500,7 @@ export async function buildRestaurantAgentCommandCenter(input: RestaurantTrialIn
     ],
     externalRequired,
     safetyBoundary: 'Command Center is a read-only orchestration payload over internal trial runs, public-proof receipts, setup gates and aggregate signals. It does not log in, publish, scrape private messages, redeem coupons, expose secrets, pull POS rows, or convert simulator output into real operating claims.',
-  } satisfies Omit<RestaurantAgentCommandCenter, 'aiEmployeeInbox' | 'channelHub'>;
+  } satisfies Omit<RestaurantAgentCommandCenter, 'aiEmployeeInbox' | 'channelHub' | 'gmCommandDeck'>;
   const aiEmployeeInbox = buildRestaurantAiEmployeeInbox(baseCommandCenter, now);
   const channelHub = buildRestaurantAgentChannelHub({
     restaurant,
@@ -508,9 +510,29 @@ export async function buildRestaurantAgentCommandCenter(input: RestaurantTrialIn
     activationCockpit,
     inbox: aiEmployeeInbox,
   });
+  const gmCommandDeck = buildRestaurantGmCommandDeck({
+    restaurant,
+    offer,
+    storeManagerTaskQueue,
+    aiEmployeeInbox,
+    providerUnlockLadder,
+    now,
+  });
 
   return {
     ...baseCommandCenter,
+    gmCommandDeck: {
+      payloadShape: gmCommandDeck.payloadShape,
+      shiftMode: gmCommandDeck.shiftMode,
+      answerForOwner: gmCommandDeck.answerForOwner,
+      summary: gmCommandDeck.summary,
+      lanes: gmCommandDeck.lanes,
+      aiAutopilotQueue: gmCommandDeck.aiAutopilotQueue,
+      staffQueue: gmCommandDeck.staffQueue,
+      providerQueue: gmCommandDeck.providerQueue,
+      evidenceQueue: gmCommandDeck.evidenceQueue,
+      safetyBoundary: gmCommandDeck.safetyBoundary,
+    },
     aiEmployeeInbox: {
       payloadShape: aiEmployeeInbox.payloadShape,
       employee: aiEmployeeInbox.employee,

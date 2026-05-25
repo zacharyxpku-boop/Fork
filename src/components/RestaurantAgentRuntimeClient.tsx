@@ -48,6 +48,7 @@ import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-se
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
+import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
@@ -246,6 +247,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerSetupState?: RestaurantProviderSetupStateSummary;
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerUnlockLadder?: RestaurantProviderUnlockLadder;
+    gmCommandDeck?: RestaurantGmCommandDeck;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -2654,6 +2656,84 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderUnlockLadder =
     dispatchState.commandCenter?.providerUnlockLadder ||
     dispatchState.providerUnlockLadder;
+  const commandGmCommandDeck =
+    dispatchState.commandCenter?.gmCommandDeck ||
+    dispatchState.gmCommandDeck || {
+      payloadShape: 'restaurant-gm-command-deck-v1',
+      shiftMode: 'pre-open',
+      answerForOwner: 'Use the internal AI store-manager loop first; Provider keys and merchant grants unlock external automation later.',
+      summary: {
+        lanes: 5,
+        aiCanRunInternal: 1,
+        staffReview: 2,
+        providerRequired: 1,
+        evidenceRequired: 1,
+        canRunWithoutProvider: true,
+        canClaimExternalAutomation: false,
+      },
+      lanes: [
+        {
+          id: 'opening',
+          title: 'Open-shift command',
+          status: 'ai-can-run-internal',
+          owner: 'ai-employee',
+          customerPromise: 'Confirm offer, owner, service window and proof before pushing traffic.',
+          actionNow: 'Build the morning brief, task owners and stop line.',
+          visibleProof: 'store facts, offer, service window',
+          providerAsk: 'staff delivery channel for autonomous follow-up',
+          stopLine: 'No external account action without merchant authorization.',
+        },
+        {
+          id: 'demand',
+          title: 'Demand and lead capture',
+          status: 'staff-review',
+          owner: 'store-manager',
+          customerPromise: 'Turn reservations, coupon claims and visit intent into owner-visible follow-up.',
+          actionNow: 'Classify imported demand signals and assign manager tasks.',
+          visibleProof: 'accepted proof or imported lead aggregate',
+          providerAsk: 'platform inbox/export permission',
+          stopLine: 'No private-message scraping or customer identifiers.',
+        },
+        {
+          id: 'publish-proof',
+          title: 'Publish and proof',
+          status: 'provider-required',
+          owner: 'ops',
+          customerPromise: 'Close every channel action with public proof or signed receipt.',
+          actionNow: 'Prepare one governed channel package.',
+          visibleProof: 'public link, screenshot id or callback receipt',
+          providerAsk: 'merchant platform authorization and callback secret',
+          stopLine: 'No auto-publish claim before Provider health is ready.',
+        },
+        {
+          id: 'service-window',
+          title: 'Service window watch',
+          status: 'staff-review',
+          owner: 'store-manager',
+          customerPromise: 'Watch stock, coupon pressure and service risk as tasks.',
+          actionNow: 'Review coupon pressure and recovery queue.',
+          visibleProof: 'coupon rule screenshot and staff acknowledgement',
+          providerAsk: 'POS/coupon aggregate contract',
+          stopLine: 'No POS write, payment, delivery or coupon mutation.',
+        },
+        {
+          id: 'closeout',
+          title: 'Closeout and next loop',
+          status: 'evidence-required',
+          owner: 'finance',
+          customerPromise: 'End the day with measured evidence and tomorrow actions.',
+          actionNow: 'Separate public proof, lead counts and redemption aggregate.',
+          visibleProof: 'sanitized POS/coupon/member aggregate',
+          providerAsk: 'aggregate field dictionary',
+          stopLine: 'No operating-analysis claim without accepted data proof.',
+        },
+      ],
+      aiAutopilotQueue: ['Open-shift command: Build the morning brief, task owners and stop line.'],
+      staffQueue: ['Demand and lead capture: accepted proof or imported lead aggregate', 'Service window watch: coupon rule screenshot and staff acknowledgement'],
+      providerQueue: ['Publish and proof: merchant platform authorization and callback secret'],
+      evidenceQueue: ['Closeout and next loop: sanitized POS/coupon/member aggregate'],
+      safetyBoundary: 'GM Command Deck preview does not log in, publish, scrape private messages, redeem coupons, write POS orders, expose secrets or claim growth without accepted proof.',
+    } satisfies Pick<RestaurantGmCommandDeck, 'payloadShape' | 'shiftMode' | 'answerForOwner' | 'summary' | 'lanes' | 'aiAutopilotQueue' | 'staffQueue' | 'providerQueue' | 'evidenceQueue' | 'safetyBoundary'>;
   const commandChannelDeliveryReport = dispatchState.commandCenter?.channelDeliveryReport || dispatchState.channelDeliveryReport;
   const commandChannelDeliveryAttempt = dispatchState.channelDeliveryAttempt;
   const commandChannelScheduleRun = dispatchState.channelScheduleRun;
@@ -3119,6 +3199,70 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     </div>
                   </div>
                 </div>
+                {commandGmCommandDeck ? (
+                  <div className="mt-3 border border-lime-200/25 bg-lime-200/[0.05] p-3">
+                    <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                      <div>
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/70">GM Command Deck</div>
+                        <h4 className="mt-1 text-sm font-black text-white">{commandGmCommandDeck.shiftMode} / {commandGmCommandDeck.payloadShape}</h4>
+                        <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">{commandGmCommandDeck.answerForOwner}</p>
+                      </div>
+                      <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandGmCommandDeck.summary.aiCanRunInternal}</div>
+                          <p className="mt-1 text-white/55">AI internal</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandGmCommandDeck.summary.staffReview}</div>
+                          <p className="mt-1 text-white/55">staff review</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandGmCommandDeck.summary.providerRequired}</div>
+                          <p className="mt-1 text-white/55">provider needed</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandGmCommandDeck.summary.evidenceRequired}</div>
+                          <p className="mt-1 text-white/55">evidence needed</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.05] p-2">
+                          <div className="font-mono text-white">{commandGmCommandDeck.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                          <p className="mt-1 text-white/55">external claim</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                      {commandGmCommandDeck.lanes.map(lane => (
+                        <div className="border border-white/10 bg-stone-950/50 p-3" key={lane.id}>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-black text-white">{lane.title}</span>
+                            <span className={lane.status === 'ai-can-run-internal' ? 'text-[11px] text-emerald-100/70' : lane.status === 'provider-required' ? 'text-[11px] text-amber-100/70' : 'text-[11px] text-lime-100/70'}>
+                              {lane.status}
+                            </span>
+                          </div>
+                          <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-white/60">{lane.customerPromise}</p>
+                          <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-lime-100/65">now: {lane.actionNow}</p>
+                          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/40">proof: {lane.visibleProof}</p>
+                          <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-amber-100/55">provider: {lane.providerAsk}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                      <div className="border border-white/10 bg-white/[0.04] p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">AI autopilot queue</div>
+                        <p className="mt-1 text-[11px] leading-4 text-emerald-100/65">{commandGmCommandDeck.aiAutopilotQueue.join(' / ') || 'none'}</p>
+                      </div>
+                      <div className="border border-white/10 bg-white/[0.04] p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">staff queue</div>
+                        <p className="mt-1 text-[11px] leading-4 text-lime-100/65">{commandGmCommandDeck.staffQueue.join(' / ') || 'none'}</p>
+                      </div>
+                      <div className="border border-white/10 bg-white/[0.04] p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider queue</div>
+                        <p className="mt-1 text-[11px] leading-4 text-amber-100/65">{commandGmCommandDeck.providerQueue.join(' / ') || 'none'}</p>
+                      </div>
+                    </div>
+                    <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandGmCommandDeck.safetyBoundary}</p>
+                  </div>
+                ) : null}
                 <div className="mt-3 grid gap-2 lg:grid-cols-4">
                   {commandCockpitZones.map(zone => (
                     <div className="border border-white/10 bg-white/[0.05] p-3" key={zone.id}>

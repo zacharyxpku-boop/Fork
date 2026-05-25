@@ -42,7 +42,7 @@ export type RestaurantAiEmployeeInbox = {
   safetyBoundary: string;
 };
 
-type RestaurantAiEmployeeInboxSource = Omit<RestaurantAgentCommandCenter, 'aiEmployeeInbox' | 'channelHub'>;
+type RestaurantAiEmployeeInboxSource = Omit<RestaurantAgentCommandCenter, 'aiEmployeeInbox' | 'channelHub' | 'gmCommandDeck'>;
 
 function statusFor(center: RestaurantAiEmployeeInboxSource): RestaurantAiEmployeeInbox['employee']['status'] {
   if (center.mode === 'waiting-receipt') return 'waiting-for-proof';
