@@ -230,6 +230,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Default Path covers the restaurant AI product surface: public profile, content, publish proof, lead intake, coupon redemption and operating analysis.');
     expect(html).toContain('provider required');
     expect(html).toContain('pilot order');
+    expect(html).toContain('store data import center');
+    expect(html).toContain('Default Path now maps real store data sources: public profile, publish proof, reservations, coupon redemption, POS sales, members, inventory and margin.');
+    expect(html).toContain('missing required');
     expect(html).toContain('lead capture inbox');
     expect(html).toContain('Default Path now turns reservations, coupon claims, private-domain inquiries, visit intent and review recovery into a governed lead queue.');
     expect(html).toContain('auto lead capture');

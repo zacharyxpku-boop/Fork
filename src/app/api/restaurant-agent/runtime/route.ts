@@ -91,6 +91,7 @@ import { buildRestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-prov
 import { buildRestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import { blockedShiftSandboxBridge, buildRestaurantShiftSandboxForwardAttempt, selectShiftForwardPackage } from '@/lib/restaurant-shift-sandbox-forward';
 import { buildRestaurantStoreOperatingPlan } from '@/lib/restaurant-store-operating-plan';
+import { buildRestaurantStoreDataImportCenter } from '@/lib/restaurant-store-data-import-center';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, recordRestaurantStoreManagerTasksFromDayZeroMissionPack, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
 import { buildRestaurantStoreManagerTaskWatcher } from '@/lib/restaurant-store-manager-task-watcher';
@@ -728,12 +729,24 @@ export async function POST(request: NextRequest) {
       eventId: typeof body.eventId === 'string' ? body.eventId : undefined,
     }) : undefined;
     const receipts = listRestaurantAgentReceipts();
+    const operatingDataContract = buildRestaurantOperatingDataContract({
+      receipts,
+      posImports: posImport ? [posImport] : [],
+      readiness: buildRestaurantExternalReadiness(),
+    });
     return NextResponse.json({
       ok: true,
-      operatingDataContract: buildRestaurantOperatingDataContract({
-        receipts,
-        posImports: posImport ? [posImport] : [],
-        readiness: buildRestaurantExternalReadiness(),
+      operatingDataContract,
+      storeDataImportCenter: buildRestaurantStoreDataImportCenter({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        operatingDataContract,
+        posImport,
       }),
       posImport,
       receipts,
@@ -1105,6 +1118,17 @@ export async function POST(request: NextRequest) {
       posImports: [posImport],
       readiness,
     });
+    const storeDataImportCenter = buildRestaurantStoreDataImportCenter({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      operatingDataContract,
+      posImport,
+    });
     const operatingInsightReport = buildRestaurantOperatingInsightReport({
       posImports: [posImport],
       operatingDataContract,
@@ -1391,6 +1415,7 @@ export async function POST(request: NextRequest) {
       posImport,
       businessSignals,
       operatingDataContract,
+      storeDataImportCenter,
       operatingInsightReport,
       providerReceiptInbox,
       postRunReviewPack,

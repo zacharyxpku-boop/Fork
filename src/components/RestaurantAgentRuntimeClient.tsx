@@ -92,6 +92,7 @@ import type { RestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-
 import type { RestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
 import type { RestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
 import type { RestaurantStoreOperatingPlan } from '@/lib/restaurant-store-operating-plan';
+import type { RestaurantStoreDataImportCenter } from '@/lib/restaurant-store-data-import-center';
 import type { RestaurantAgentOpsConsole } from '@/lib/restaurant-agent-ops-console';
 import type { RestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import type { RestaurantStoreManagerTaskQueue } from '@/lib/restaurant-store-manager-task-store';
@@ -276,6 +277,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     merchantActivationPacket?: RestaurantMerchantActivationPacket;
     publishExecutionInbox?: RestaurantPublishExecutionInbox;
     operatingDataContract?: RestaurantOperatingDataContract;
+    storeDataImportCenter?: RestaurantStoreDataImportCenter;
     providerSetupPack?: RestaurantProviderSetupPack;
     externalUnlockRequestPack?: RestaurantExternalUnlockRequestPack;
     providerSetupWizard?: RestaurantProviderSetupWizard;
@@ -482,6 +484,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         capabilityTrainingPlan: payload?.capabilityTrainingPlan || previous.capabilityTrainingPlan,
         posImport: payload?.posImport || previous.posImport,
         operatingDataContract: payload?.operatingDataContract || previous.operatingDataContract,
+        storeDataImportCenter: payload?.storeDataImportCenter || previous.storeDataImportCenter,
         operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
@@ -1971,6 +1974,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         receipts: payload?.receipts,
         posImport: payload?.posImport,
         operatingDataContract: payload?.operatingDataContract,
+        storeDataImportCenter: payload?.storeDataImportCenter,
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Operating data contract is temporarily unavailable.' });
@@ -7294,6 +7298,82 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/55">
                 pilot order: {(dispatchState.platformConnectorMatrix?.pilotOrder || ['Start with public-profile-intake and internal content draft.', 'Configure one browser runtime and callback secret for sandbox submit.', 'Add POS/redemption aggregate sample before claiming operating analysis.']).slice(0, 3).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-cyan-200/15 bg-cyan-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/65">store data import center</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now maps real store data sources: public profile, publish proof, reservations, coupon redemption, POS sales, members, inventory and margin.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This is the data spine behind true operating analysis: every source has owner, canonical fields, sample rows, forbidden fields, next action and Provider boundary.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.storeDataImportCenter?.verdict || 'provider-gated'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sources</div>
+                  <div className="mt-1 text-xs font-black text-cyan-100/75">{dispatchState.storeDataImportCenter?.summary.sources ?? 8}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">mapped fields</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.storeDataImportCenter?.summary.mappedFields ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">missing required</div>
+                  <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.storeDataImportCenter?.summary.missingRequiredFields ?? 'field map'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sample rows</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.storeDataImportCenter?.sampleRows.length ?? dispatchState.posImport?.summary.validRows ?? 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">true analysis</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.storeDataImportCenter?.summary.canClaimTrueOperatingAnalysis ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-4">
+                {(dispatchState.storeDataImportCenter?.sources || [
+                  { id: 'coupon-redemption', label: 'Coupon claim and redemption export', status: 'sample-ready', owner: 'data-ops', nextAction: 'Map claim/redemption fields from merchant export.', acceptedInputs: ['couponClaimCount', 'redemptionCount'], forbiddenInputs: ['coupon code', 'payment id'] },
+                  { id: 'pos-sales', label: 'POS sales and order aggregate', status: 'sample-ready', owner: 'data-ops', nextAction: 'Import sanitized POS aggregate rows.', acceptedInputs: ['grossSales', 'orderCount'], forbiddenInputs: ['raw order rows', 'payment id'] },
+                  { id: 'member-retention', label: 'Member and community retention aggregate', status: 'provider-gated', owner: 'data-ops', nextAction: 'Define privacy-safe segment exports with the merchant.', acceptedInputs: ['segmentName', 'followupCount'], forbiddenInputs: ['phone', 'WeChat ID'] },
+                  { id: 'finance-margin', label: 'Finance, margin and discount guardrail', status: 'provider-gated', owner: 'finance', nextAction: 'Collect merchant-approved aggregate cost fields before recommending discount scale.', acceptedInputs: ['ingredientCost', 'platformFee'], forbiddenInputs: ['bank account', 'payment transaction id'] },
+                ]).slice(0, 4).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.status === 'sample-ready' || item.status === 'ready-internal' ? 'text-[10px] text-emerald-100/70' : item.status === 'needs-field-mapping' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-cyan-100/55">{item.owner}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.nextAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-emerald-100/50">accepts: {item.acceptedInputs.slice(0, 2).join(' / ')}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/50">rejects: {item.forbiddenInputs.slice(0, 2).join(' / ')}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.storeDataImportCenter?.validationQueue || [
+                  { id: 'field-dictionary', owner: 'data-ops', priority: 'today', action: 'Confirm canonical fields, source headers, time grain and definitions.', evidenceRequired: 'merchant-approved field dictionary', stopLine: 'Do not import raw order rows or customer identifiers.' },
+                  { id: 'sample-import', owner: 'store-manager', priority: 'today', action: 'Upload or paste a sanitized aggregate sample.', evidenceRequired: 'accepted sample row', stopLine: 'No true operating analysis claim before validation.' },
+                  { id: 'provider-data-contract', owner: 'runtime-admin', priority: 'blocked', action: 'Collect Provider/API or browser-runner data contract.', evidenceRequired: 'authorization and callback receipt', stopLine: 'No auto redemption or POS write without Provider proof.' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-white">{item.owner}</span>
+                      <span className={item.priority === 'blocked' ? 'text-[10px] text-rose-100/70' : item.priority === 'today' ? 'text-[10px] text-emerald-100/70' : 'text-[10px] text-amber-100/70'}>{item.priority}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/60">{item.action}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-cyan-100/50">proof: {item.evidenceRequired}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/45">{item.stopLine}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-cyan-100/55">
+                next: {dispatchState.storeDataImportCenter?.nextBestAction.label || 'Confirm POS Definitions'} / external: {(dispatchState.storeDataImportCenter?.externalRequired || ['merchant-approved field dictionary', 'POS/coupon data source', 'finance export or owner cost sheet']).slice(0, 4).join(' / ')}
               </p>
             </div>
             <div className="mt-3 border border-sky-200/15 bg-sky-200/[0.035] p-3">
