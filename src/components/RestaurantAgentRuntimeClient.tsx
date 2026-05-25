@@ -6730,6 +6730,30 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 provider unlock sheet: External execution only unlocks after runtime URL, API key, merchant grant, callback and data contract are ready.
               </div>
             </div>
+            <div className="mt-3 border border-white/10 bg-white/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">competitor parity snapshot</div>
+                  <p className="mt-1 text-xs font-black text-white">Internal execution now, external automation after Provider proof.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This keeps the Claw/Cloud promise honest: the workbench can prepare, queue, remember and review today; publishing, lead capture, redemption and live analysis need real platform access.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-4">
+                {[
+                  { label: 'Ready inside', value: 'skill pack / task queue / memory', tone: 'text-emerald-100/70' },
+                  { label: 'Training inside', value: 'merchant-approved samples', tone: 'text-amber-100/70' },
+                  { label: 'Provider gated', value: 'publish / lead / redemption', tone: 'text-rose-100/70' },
+                  { label: 'Data gated', value: 'POS / coupon / member analysis', tone: 'text-sky-100/70' },
+                ].map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.label}>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">{item.label}</div>
+                    <div className={`mt-1 text-xs font-black ${item.tone}`}>{item.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
             {dispatchState.clawExperienceDefaultPath ? (
               <>
                 <div className="mt-3 grid gap-2 text-xs sm:grid-cols-6">

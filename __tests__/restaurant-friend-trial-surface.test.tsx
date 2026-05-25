@@ -187,6 +187,11 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('merchant inputs to collect');
     expect(html).toContain('provider unlock sheet');
     expect(html).toContain('External execution only unlocks');
+    expect(html).toContain('competitor parity snapshot');
+    expect(html).toContain('Internal execution now, external automation after Provider proof.');
+    expect(html).toContain('Ready inside');
+    expect(html).toContain('Provider gated');
+    expect(html).toContain('Data gated');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');
