@@ -16,6 +16,7 @@ import type { RestaurantCommandRoute } from '@/lib/restaurant-command-router';
 import type { RestaurantAiEmployeeInbox } from '@/lib/restaurant-ai-employee-inbox';
 import type { RestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
 import type { RestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
+import type { RestaurantClawExperienceDefaultPath } from '@/lib/restaurant-claw-experience-default-path';
 import type { RestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
 import type { RestaurantCompetitorRouteDecision } from '@/lib/restaurant-competitor-route-decision';
 import type { RestaurantCompetitorTrainingBlueprint } from '@/lib/restaurant-competitor-training-blueprint';
@@ -259,6 +260,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawSkillExecutionRecord?: RestaurantClawSkillExecutionRecord;
     clawSkillExecutionLedger?: RestaurantClawSkillExecutionLedger;
     clawTrainingBatch?: RestaurantClawTrainingBatch;
+    clawExperienceDefaultPath?: RestaurantClawExperienceDefaultPath;
     controlledTrialRun?: RestaurantControlledTrialRun;
     customerDemandGateway?: RestaurantCustomerDemandGateway;
     voiceOrderConsole?: RestaurantVoiceOrderConsole;
@@ -411,6 +413,35 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       });
     } catch {
       setDispatchState({ status: 'failed', message: 'Trial workflow pack is temporarily unavailable.' });
+    }
+  };
+
+  const buildClawExperienceDefaultPath = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building default Claw-style customer path...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'claw-experience-default-path',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.clawExperienceDefaultPath?.summary?.providerGated ? 'blocked' : 'queued',
+        message: `Default Path: ${payload?.clawExperienceDefaultPath?.summary?.readyNow ?? 0} ready, ${payload?.clawExperienceDefaultPath?.summary?.trainingNeeded ?? 0} training, ${payload?.clawExperienceDefaultPath?.summary?.providerGated ?? 0} provider/boundary gates.`,
+        clawExperienceDefaultPath: payload?.clawExperienceDefaultPath || previous.clawExperienceDefaultPath,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Default Claw-style path is temporarily unavailable.' }));
     }
   };
 
@@ -6633,6 +6664,83 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
             <p className="max-w-2xl text-xs leading-5 text-white/55">
               这条路径对应真实餐饮经营动作；专家工具仍保留在下方折叠区，用于接 runtime、授权、训练和审计。
             </p>
+          </div>
+          <div className="mt-4 border border-cyan-200/25 bg-cyan-200/[0.05] p-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">Claw Experience Default Path</div>
+                <h4 className="mt-1 text-sm font-black text-white">One operator path before expert tools</h4>
+                <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
+                  This is the customer-facing default path: route decision, merchant brief, runnable skill pack, controlled trial, training backlog and provider unlocks in one sequence.
+                </p>
+              </div>
+              <button
+                className="border border-cyan-200/60 bg-cyan-200/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-200/20 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={dispatchState.status === 'loading'}
+                onClick={buildClawExperienceDefaultPath}
+                type="button"
+              >
+                Build Default Path
+              </button>
+            </div>
+            {dispatchState.clawExperienceDefaultPath ? (
+              <>
+                <div className="mt-3 grid gap-2 text-xs sm:grid-cols-6">
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="font-mono text-white">{dispatchState.clawExperienceDefaultPath.summary.steps}</div>
+                    <p className="mt-1 text-white/55">steps</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="font-mono text-white">{dispatchState.clawExperienceDefaultPath.summary.readyNow}</div>
+                    <p className="mt-1 text-white/55">ready</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="font-mono text-white">{dispatchState.clawExperienceDefaultPath.summary.reviewNeeded}</div>
+                    <p className="mt-1 text-white/55">review</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="font-mono text-white">{dispatchState.clawExperienceDefaultPath.summary.trainingNeeded}</div>
+                    <p className="mt-1 text-white/55">training</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="font-mono text-white">{dispatchState.clawExperienceDefaultPath.summary.providerGated}</div>
+                    <p className="mt-1 text-white/55">gated</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="font-mono text-white">{dispatchState.clawExperienceDefaultPath.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                    <p className="mt-1 text-white/55">external auto</p>
+                  </div>
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-xs leading-5 text-cyan-100/70">{dispatchState.clawExperienceDefaultPath.answerForCustomer}</p>
+                <div className="mt-3 grid gap-2 lg:grid-cols-7">
+                  {dispatchState.clawExperienceDefaultPath.primaryPath.map(step => (
+                    <div className="border border-white/10 bg-stone-950/50 p-2" key={step.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-black text-white">{step.label}</span>
+                        <span className={step.status === 'ready-now' ? 'text-[10px] text-emerald-100/70' : step.status === 'review-needed' ? 'text-[10px] text-sky-100/70' : step.status === 'training-needed' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-rose-100/70'}>{step.status}</span>
+                      </div>
+                      <p className="mt-2 text-[11px] leading-4 text-white/55">{step.customerAction}</p>
+                      <p className="mt-2 text-[11px] leading-4 text-white/35">proof: {step.evidenceRequired}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">training now</div>
+                    <p className="mt-2 text-[11px] leading-4 text-amber-100/65">{dispatchState.clawExperienceDefaultPath.trainingNow.slice(0, 8).join(' / ') || 'none'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider needed</div>
+                    <p className="mt-2 text-[11px] leading-4 text-rose-100/65">{dispatchState.clawExperienceDefaultPath.providerNeeded.slice(0, 8).join(' / ') || 'none'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">quick actions</div>
+                    <p className="mt-2 text-[11px] leading-4 text-white/45">{dispatchState.clawExperienceDefaultPath.quickActions.map(item => item.label).join(' / ')}</p>
+                    <p className="mt-2 text-[11px] leading-4 text-white/35">{dispatchState.clawExperienceDefaultPath.safetyBoundary}</p>
+                  </div>
+                </div>
+              </>
+            ) : null}
           </div>
           <div className="mt-4 grid gap-2 md:grid-cols-6">
             <button

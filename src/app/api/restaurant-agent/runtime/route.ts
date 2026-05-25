@@ -50,6 +50,7 @@ import { buildRestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-too
 import { buildRestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
 import { buildRestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
 import { buildRestaurantBenchmarkStrategy } from '@/lib/restaurant-benchmark-strategy';
+import { buildRestaurantClawExperienceDefaultPath } from '@/lib/restaurant-claw-experience-default-path';
 import { buildRestaurantClawSkillCatalog, buildRestaurantClawTrainingBatch } from '@/lib/restaurant-claw-skill-catalog';
 import { buildRestaurantClawSkillWorkbench } from '@/lib/restaurant-claw-skill-workbench';
 import { buildRestaurantClawSkillExecutionLedger, recordRestaurantClawSkillExecution } from '@/lib/restaurant-claw-skill-execution-store';
@@ -885,6 +886,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       trialWorkflowPack: buildRestaurantTrialWorkflowPack({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      }),
+    });
+  }
+
+  if (body.action === 'claw-experience-default-path') {
+    return NextResponse.json({
+      ok: true,
+      clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
         restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
         offer: typeof body.offer === 'string' ? body.offer : undefined,
         audience: typeof body.audience === 'string' ? body.audience : undefined,

@@ -100,6 +100,10 @@ Invoke-Step "Vitest restaurant competitor route decision" {
   npm.cmd run test -- __tests__/restaurant-competitor-route-decision.test.ts
 }
 
+Invoke-Step "Vitest restaurant claw experience default path" {
+  npm.cmd run test -- __tests__/restaurant-claw-experience-default-path.test.ts
+}
+
 Invoke-Step "Vitest restaurant runtime adapter contract" {
   npm.cmd run test -- __tests__/restaurant-runtime-adapter-contract.test.ts
 }

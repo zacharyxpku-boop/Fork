@@ -175,6 +175,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Build Channel Hub');
     expect(html).toContain('Build Memory Pack');
     expect(html).toContain('Customer Operating Path');
+    expect(html).toContain('Claw Experience Default Path');
+    expect(html).toContain('One operator path before expert tools');
+    expect(html).toContain('Build Default Path');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');
