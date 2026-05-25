@@ -79,7 +79,7 @@ import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-la
 import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
-import { buildRestaurantProviderSandboxSubmitWorkbench } from '@/lib/restaurant-provider-sandbox-submit-workbench';
+import { blockedRestaurantProviderSandboxBridge, buildRestaurantProviderSandboxSubmitAttempt, buildRestaurantProviderSandboxSubmitWorkbench, selectRestaurantProviderSandboxSubmitPackage } from '@/lib/restaurant-provider-sandbox-submit-workbench';
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-profile-intake';
 import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
@@ -345,6 +345,169 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
     });
+  }
+
+  if (body.action === 'provider-sandbox-submit-attempt') {
+    const runtimeTarget = body.runtimeTarget === 'lobu' || body.runtimeTarget === 'openclaw' || body.runtimeTarget === 'hermes'
+      ? body.runtimeTarget
+      : 'openclaw';
+    const now = new Date();
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerSetupState = buildRestaurantProviderSetupStateSummary(now);
+    const runtimeProbe = await buildRestaurantRuntimeProbe({ now });
+    const providerReadinessHealth = await buildRestaurantProviderReadinessHealth({
+      providerSetupState,
+      runtimeProbe,
+      now,
+    });
+    const providerSetupWizard = buildRestaurantProviderSetupWizard({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      provided: providerSetupState.provided,
+      now,
+    });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue(now);
+    const taskProviderHandoff = buildRestaurantTaskProviderHandoff({
+      queue: storeManagerTaskQueue,
+      target: runtimeTarget,
+      now,
+    });
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness, now });
+    const providerSandboxContract = buildRestaurantProviderSandboxContract({
+      runtimeProbe,
+      providerReadinessHealth,
+      taskProviderHandoff,
+      providerReceiptInbox,
+      now,
+    });
+    const operatingDataContract = buildRestaurantOperatingDataContract({
+      receipts,
+      readiness,
+      now,
+    });
+    const browserGatewayPack = buildRestaurantBrowserGatewayPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      now,
+    });
+    const runtimeRunnerLoopPack = buildRestaurantRuntimeRunnerLoopPack({
+      runs,
+      receipts,
+      readiness,
+      now,
+    });
+    const channelDeliveryReport = buildRestaurantAgentChannelDeliveryReport(now);
+    const businessSignals = buildRestaurantBusinessSignals(runs, receipts, now);
+    const recovery = buildRestaurantAgentRecoveryPlan(runs, receipts, readiness, now);
+    const publishExecutionInbox = buildRestaurantPublishExecutionInbox({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      browserGatewayPack,
+      runtimeRunnerLoopPack,
+      channelDeliveryReport,
+      businessSignals,
+      recovery,
+      now,
+    });
+    const providerAcceptanceWorkbench = buildRestaurantProviderAcceptanceWorkbench({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      providerSetupWizard,
+      providerReadinessHealth,
+      providerSandboxContract,
+      operatingDataContract,
+      publishExecutionInbox,
+      now,
+    });
+    const providerSandboxSubmitWorkbench = buildRestaurantProviderSandboxSubmitWorkbench({
+      providerAcceptanceWorkbench,
+      providerSandboxContract,
+      taskProviderHandoff,
+      providerReceiptInbox,
+      target: runtimeTarget,
+      now,
+    });
+    const selectedSubmitPackage = selectRestaurantProviderSandboxSubmitPackage({
+      workbench: providerSandboxSubmitWorkbench,
+      capabilityId: typeof body.capabilityId === 'string' ? body.capabilityId : undefined,
+      packageId: typeof body.packageId === 'string' ? body.packageId : undefined,
+    });
+    const selectedHandoffPackage = selectedSubmitPackage?.selectedPackageId
+      ? taskProviderHandoff.packages.find(item => item.executionPackage.packageId === selectedSubmitPackage.selectedPackageId)
+      : undefined;
+    const bridge = selectedSubmitPackage?.status === 'ready-to-submit' && selectedHandoffPackage?.canForward
+      ? await forwardRestaurantAgentExecutionPackage(
+          selectedHandoffPackage.executionPackage,
+          readRestaurantRuntimeBridgeConfig(runtimeTarget),
+        )
+      : blockedRestaurantProviderSandboxBridge({
+          workbench: providerSandboxSubmitWorkbench,
+          selectedPackage: selectedSubmitPackage,
+        });
+    const run = selectedSubmitPackage?.safePayload ? recordRestaurantAgentRun(buildRestaurantAgentDispatch({
+      taskId: selectedSubmitPackage.safePayload.taskId,
+      restaurant: selectedSubmitPackage.safePayload.restaurant,
+      offer: selectedSubmitPackage.safePayload.offer,
+      owner: selectedSubmitPackage.safePayload.owner,
+      runtimeTarget: 'local',
+      source: 'provider_sandbox_submit_attempt',
+    }), runtimeTarget, bridge, now) : undefined;
+    const updatedRuns = listRestaurantAgentRuns();
+    const updatedReceipts = listRestaurantAgentReceipts();
+    const updatedReadiness = buildRestaurantExternalReadiness();
+    const updatedProviderReceiptInbox = buildRestaurantProviderReceiptInbox({
+      runs: updatedRuns,
+      receipts: updatedReceipts,
+      readiness: updatedReadiness,
+      now,
+    });
+    const updatedProviderSandboxSubmitWorkbench = buildRestaurantProviderSandboxSubmitWorkbench({
+      providerAcceptanceWorkbench,
+      providerSandboxContract,
+      taskProviderHandoff,
+      providerReceiptInbox: updatedProviderReceiptInbox,
+      target: runtimeTarget,
+      bridgeAttempt: bridge,
+      now,
+    });
+    const providerSandboxSubmitAttempt = buildRestaurantProviderSandboxSubmitAttempt({
+      workbench: providerSandboxSubmitWorkbench,
+      selectedPackage: selectedSubmitPackage,
+      bridge,
+      run,
+      now,
+    });
+
+    return NextResponse.json({
+      ok: bridge.ok,
+      providerSandboxSubmitAttempt,
+      providerSandboxSubmitWorkbench: updatedProviderSandboxSubmitWorkbench,
+      selectedSubmitPackage,
+      providerAcceptanceWorkbench,
+      providerSandboxContract,
+      taskProviderHandoff,
+      providerReceiptInbox: updatedProviderReceiptInbox,
+      providerSetupState,
+      providerReadinessHealth,
+      storeManagerTaskQueue,
+      run,
+      runs: updatedRuns,
+      receipts: updatedReceipts,
+      runHealth: buildRestaurantRunHealth(updatedRuns, updatedReceipts, updatedReadiness, now),
+      recovery: buildRestaurantAgentRecoveryPlan(updatedRuns, updatedReceipts, updatedReadiness, now),
+    }, { status: bridge.ok ? 202 : 200 });
   }
 
   if (body.action === 'first-forwardable-run-pack') {

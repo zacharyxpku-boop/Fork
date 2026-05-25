@@ -72,7 +72,7 @@ import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sa
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
-import type { RestaurantProviderSandboxSubmitWorkbench } from '@/lib/restaurant-provider-sandbox-submit-workbench';
+import type { RestaurantProviderSandboxSubmitAttempt, RestaurantProviderSandboxSubmitWorkbench } from '@/lib/restaurant-provider-sandbox-submit-workbench';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import type { RestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantExternalReadiness, type RestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
@@ -307,6 +307,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerAcceptanceWorkbench?: RestaurantProviderAcceptanceWorkbench;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerSandboxSubmitWorkbench?: RestaurantProviderSandboxSubmitWorkbench;
+    providerSandboxSubmitAttempt?: RestaurantProviderSandboxSubmitAttempt;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
     firstForwardableRunPack?: RestaurantFirstForwardableRunPack;
     firstRunControlTower?: RestaurantFirstRunControlTower;
@@ -1024,6 +1025,49 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider sandbox submit workbench is temporarily unavailable.' }));
+    }
+  };
+
+  const runProviderSandboxSubmitAttempt = async (capabilityId?: string) => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Submitting one provider sandbox package through the controlled bridge...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'provider-sandbox-submit-attempt',
+          runtimeTarget: 'openclaw',
+          capabilityId,
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.providerSandboxSubmitAttempt?.ok ? 'queued' : 'blocked',
+        message: `Provider sandbox attempt: ${payload?.providerSandboxSubmitAttempt?.verdict || 'blocked-before-dispatch'} / ${payload?.providerSandboxSubmitAttempt?.recoveryNextAction || payload?.providerSandboxSubmitAttempt?.bridge?.message || 'check provider setup'}`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        runHealth: payload?.runHealth || previous.runHealth,
+        recovery: payload?.recovery || previous.recovery,
+        providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
+        providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+        providerSandboxSubmitWorkbench: payload?.providerSandboxSubmitWorkbench || previous.providerSandboxSubmitWorkbench,
+        providerSandboxSubmitAttempt: payload?.providerSandboxSubmitAttempt || previous.providerSandboxSubmitAttempt,
+        providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        providerSetupState: payload?.providerSetupState || previous.providerSetupState,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider sandbox submit attempt is temporarily unavailable.' }));
     }
   };
 
@@ -3359,6 +3403,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandProviderSandboxSubmitWorkbench = dispatchState.providerSandboxSubmitWorkbench;
+  const commandProviderSandboxSubmitAttempt = dispatchState.providerSandboxSubmitAttempt;
   const commandProviderLaunchBoard = dispatchState.providerLaunchBoard;
   const commandMerchantActivationPacket = dispatchState.merchantActivationPacket;
   const commandAiConsultantCopilot = dispatchState.aiConsultantCopilot;
@@ -6643,6 +6688,19 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         {item.status}: {item.capabilityLabel} / {item.selectedPackageId || 'no package'} / {item.callback.header}
                       </p>
                     ))}
+                    <button
+                      className="mt-2 border border-orange-200/50 px-2 py-1 text-[11px] font-black text-orange-100 transition hover:bg-orange-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={() => runProviderSandboxSubmitAttempt(commandProviderSandboxSubmitWorkbench.submitPackages[0]?.capabilityId)}
+                      type="button"
+                    >
+                      Run Submit Attempt
+                    </button>
+                    {commandProviderSandboxSubmitAttempt ? (
+                      <p className="mt-2 border border-white/10 bg-stone-950/40 p-2 text-[11px] leading-4 text-white/55">
+                        attempt: {commandProviderSandboxSubmitAttempt.verdict} / bridge {commandProviderSandboxSubmitAttempt.summary.bridgeStatus} / run {commandProviderSandboxSubmitAttempt.summary.runRecorded ? 'recorded' : 'not recorded'}
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
                 {commandFirstForwardableRunPack ? (
@@ -7386,9 +7444,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <p className="mt-1 text-[11px] leading-4 text-white/35">receipt: {item.receiptExpectation.slice(0, 2).join(' / ')}</p>
                       <p className="mt-1 text-[11px] leading-4 text-white/55">{item.nextAction}</p>
                       <p className="mt-1 text-[11px] leading-4 text-rose-100/50">{item.stopLine}</p>
+                      <button
+                        className="mt-2 border border-cyan-200/40 px-2 py-1 text-[11px] font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={dispatchState.status === 'loading'}
+                        onClick={() => runProviderSandboxSubmitAttempt(item.capabilityId)}
+                        type="button"
+                      >
+                        Submit Attempt
+                      </button>
                     </div>
                   ))}
                 </div>
+                {dispatchState.providerSandboxSubmitAttempt ? (
+                  <div className="mt-3 border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">latest attempt</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {dispatchState.providerSandboxSubmitAttempt.payloadShape} / {dispatchState.providerSandboxSubmitAttempt.verdict} / bridge {dispatchState.providerSandboxSubmitAttempt.summary.bridgeStatus} / run {dispatchState.providerSandboxSubmitAttempt.summary.runRecorded ? 'recorded' : 'not recorded'}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-4 text-orange-100/55">{dispatchState.providerSandboxSubmitAttempt.recoveryNextAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">receipt: {dispatchState.providerSandboxSubmitAttempt.receiptExpectation.callbackHeader} / {dispatchState.providerSandboxSubmitAttempt.receiptExpectation.acceptedEvidence.slice(0, 3).join(' / ')}</p>
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className="mt-3 border border-amber-200/15 bg-amber-200/[0.035] p-3">

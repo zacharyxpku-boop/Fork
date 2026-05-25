@@ -1,4 +1,5 @@
 import type { RestaurantRuntimeBridgeResult, RestaurantRuntimeTarget } from '@/lib/restaurant-agent-runtime-bridge';
+import type { RestaurantAgentRunRecord } from '@/lib/restaurant-agent-run-store';
 import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
 import type { RestaurantProviderReceiptInbox, RestaurantProviderReceiptRequest } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
@@ -66,6 +67,34 @@ export type RestaurantProviderSandboxSubmitWorkbench = {
   }>;
   externalRequired: string[];
   bridgeAttempt?: Pick<RestaurantRuntimeBridgeResult, 'ok' | 'target' | 'status' | 'endpoint' | 'externalRunId' | 'message' | 'audit'>;
+  safetyBoundary: string;
+};
+
+export type RestaurantProviderSandboxSubmitAttempt = {
+  ok: boolean;
+  payloadShape: 'restaurant-provider-sandbox-submit-attempt-v1';
+  generatedAt: string;
+  verdict: 'forwarded-waiting-receipt' | 'blocked-before-dispatch' | 'provider-failed';
+  capabilityId?: CapabilityMatrixItem['id'];
+  capabilityLabel?: string;
+  summary: {
+    packageSelected: boolean;
+    packageCanForward: boolean;
+    workbenchStatus?: RestaurantProviderSandboxSubmitStatus;
+    bridgeStatus: RestaurantRuntimeBridgeResult['status'];
+    runRecorded: boolean;
+    canClaimExternalAutomation: false;
+  };
+  selectedPackage?: Pick<RestaurantProviderSandboxSubmitPackage, 'capabilityId' | 'capabilityLabel' | 'targetRuntime' | 'status' | 'selectedPackageId' | 'selectedTaskId' | 'selectedRequestedAction' | 'safePayload' | 'receiptExpectation' | 'recoveryOwner' | 'nextAction' | 'stopLine'>;
+  bridge: RestaurantRuntimeBridgeResult;
+  run?: RestaurantAgentRunRecord;
+  receiptExpectation: {
+    callbackAction: 'external-receipt';
+    callbackHeader: 'x-restaurant-agent-signature';
+    acceptedEvidence: string[];
+    closeoutRule: string;
+  };
+  recoveryNextAction: string;
   safetyBoundary: string;
 };
 
@@ -155,6 +184,108 @@ function blockedReasonFor(input: {
   if (!input.selectedPackage) return 'No provider handoff package exists yet.';
   if (!input.selectedPackage.canForward) return input.selectedPackage.blockedReasons[0] || input.selectedPackage.nextAction;
   return input.capability.nextAction;
+}
+
+function attemptVerdict(bridge: RestaurantRuntimeBridgeResult): RestaurantProviderSandboxSubmitAttempt['verdict'] {
+  if (bridge.status === 'forwarded') return 'forwarded-waiting-receipt';
+  if (bridge.status === 'failed') return 'provider-failed';
+  return 'blocked-before-dispatch';
+}
+
+export function selectRestaurantProviderSandboxSubmitPackage(input: {
+  workbench: RestaurantProviderSandboxSubmitWorkbench;
+  capabilityId?: CapabilityMatrixItem['id'] | string;
+  packageId?: string;
+}): RestaurantProviderSandboxSubmitPackage | undefined {
+  return input.workbench.submitPackages.find(item => input.packageId && item.selectedPackageId === input.packageId)
+    || input.workbench.submitPackages.find(item => input.capabilityId && item.capabilityId === input.capabilityId)
+    || input.workbench.submitPackages.find(item => item.status === 'ready-to-submit')
+    || input.workbench.submitPackages.find(item => item.status === 'waiting-receipt')
+    || input.workbench.submitPackages[0];
+}
+
+export function blockedRestaurantProviderSandboxBridge(input: {
+  workbench: RestaurantProviderSandboxSubmitWorkbench;
+  selectedPackage?: RestaurantProviderSandboxSubmitPackage;
+}): RestaurantRuntimeBridgeResult {
+  const target = input.selectedPackage?.targetRuntime || input.workbench.targetRuntime;
+  const blockedReasons = [
+    input.selectedPackage ? '' : 'No provider sandbox submit package is selected.',
+    input.selectedPackage?.status === 'blocked-data-contract' ? input.selectedPackage.blockedReason || 'Capability is blocked by data contract.' : '',
+    input.selectedPackage?.status === 'blocked-provider' ? input.selectedPackage.blockedReason || 'Capability is blocked by provider setup.' : '',
+    input.selectedPackage?.status === 'accepted' ? 'Capability already has an accepted receipt; do not resubmit without a new operator decision.' : '',
+    input.selectedPackage?.status === 'waiting-receipt' ? 'Capability is already waiting for signed provider receipt.' : '',
+    input.selectedPackage?.safePayload ? '' : 'Selected package has no sanitized safePayload.',
+  ].filter(Boolean);
+
+  return {
+    ok: false,
+    target,
+    status: 'blocked',
+    message: blockedReasons[0] || 'Provider sandbox submit is blocked before dispatch.',
+    audit: {
+      secretExposed: false,
+      payloadShape: 'restaurant-agent-external-execution-v1',
+      packageId: input.selectedPackage?.selectedPackageId,
+      canForward: false,
+      blockedReasons,
+      blockedActions: [],
+    },
+  };
+}
+
+export function buildRestaurantProviderSandboxSubmitAttempt(input: {
+  workbench: RestaurantProviderSandboxSubmitWorkbench;
+  bridge: RestaurantRuntimeBridgeResult;
+  selectedPackage?: RestaurantProviderSandboxSubmitPackage;
+  run?: RestaurantAgentRunRecord;
+  now?: Date;
+}): RestaurantProviderSandboxSubmitAttempt {
+  const now = input.now || new Date();
+  const selectedPackage = input.selectedPackage;
+  const verdict = attemptVerdict(input.bridge);
+  return {
+    ok: input.bridge.ok,
+    payloadShape: 'restaurant-provider-sandbox-submit-attempt-v1',
+    generatedAt: now.toISOString(),
+    verdict,
+    capabilityId: selectedPackage?.capabilityId,
+    capabilityLabel: selectedPackage?.capabilityLabel,
+    summary: {
+      packageSelected: Boolean(selectedPackage),
+      packageCanForward: selectedPackage?.status === 'ready-to-submit',
+      workbenchStatus: selectedPackage?.status,
+      bridgeStatus: input.bridge.status,
+      runRecorded: Boolean(input.run),
+      canClaimExternalAutomation: false,
+    },
+    selectedPackage: selectedPackage ? {
+      capabilityId: selectedPackage.capabilityId,
+      capabilityLabel: selectedPackage.capabilityLabel,
+      targetRuntime: selectedPackage.targetRuntime,
+      status: selectedPackage.status,
+      selectedPackageId: selectedPackage.selectedPackageId,
+      selectedTaskId: selectedPackage.selectedTaskId,
+      selectedRequestedAction: selectedPackage.selectedRequestedAction,
+      safePayload: selectedPackage.safePayload,
+      receiptExpectation: selectedPackage.receiptExpectation,
+      recoveryOwner: selectedPackage.recoveryOwner,
+      nextAction: selectedPackage.nextAction,
+      stopLine: selectedPackage.stopLine,
+    } : undefined,
+    bridge: input.bridge,
+    run: input.run,
+    receiptExpectation: {
+      callbackAction: 'external-receipt',
+      callbackHeader: 'x-restaurant-agent-signature',
+      acceptedEvidence: selectedPackage?.receiptExpectation || ['externalRunId', 'public proof URL or screenshot id', 'operator summary'],
+      closeoutRule: 'Do not close the task or claim external automation until a signed callback or public proof receipt is accepted.',
+    },
+    recoveryNextAction: verdict === 'forwarded-waiting-receipt'
+      ? 'Open Provider Receipt Inbox and wait for a signed external-receipt callback before closeout.'
+      : input.bridge.message,
+    safetyBoundary: 'Provider Sandbox Submit Attempt is the controlled bridge handoff audit. It sends only sanitized execution packages; it never exposes API keys, cookies, tokens, raw browser profile ids, private messages, customer identifiers, coupon codes, payment ids or raw POS rows, and it cannot claim production automation without accepted receipts.',
+  };
 }
 
 export function buildRestaurantProviderSandboxSubmitWorkbench(input: {
