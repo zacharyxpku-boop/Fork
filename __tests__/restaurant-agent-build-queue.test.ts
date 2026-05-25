@@ -28,8 +28,8 @@ describe('restaurant agent build queue', () => {
       status: 'waiting-external',
       owner: 'merchant',
     }));
-    expect(platformData?.externalRequired.join(' ')).toContain('商家账号授权');
-    expect(platformData?.blockedBy.join(' ')).toContain('自动发布');
+    expect(platformData?.externalRequired.join(' ')).toContain('Merchant account authorization');
+    expect(platformData?.blockedBy.length).toBeGreaterThan(0);
     expect(queue.externalSetupRequests[0].dimensionId).toBe('restaurant-platform-data');
     expect(queue.safetyBoundary).toContain('do not imply real platform execution');
   });

@@ -3659,7 +3659,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Competitor Parity Map</p>
-            <h3 className="mt-1 text-lg font-black text-stone-950">竞品能力覆盖：Lobu / OpenClaw / Hermes / 餐饮 SaaS</h3>
+            <h3 className="mt-1 text-lg font-black text-stone-950">竞品能力覆盖：Claw / Lobu / OpenClaw / Hermes / 餐饮 SaaS</h3>
             <p className="mt-2 max-w-3xl text-xs leading-5 text-stone-600">
               目标不是把外部账号假装接上，而是把竞品的运行时结构都拆进产品：事件、记忆、watcher、浏览器、工具权限、回执和恢复。
             </p>
