@@ -100,6 +100,11 @@ describe('restaurant claw experience default path', () => {
     expect(payload.storeDataImportCenter.sources.map((item: { id: string }) => item.id)).toContain('finance-margin');
     expect(payload.operatingInsightReport.payloadShape).toBe('restaurant-operating-insight-report-v1');
     expect(payload.postRunReviewPack.payloadShape).toBe('restaurant-post-run-review-pack-v1');
+    expect(payload.channelScheduleRun.payloadShape).toBe('restaurant-agent-channel-schedule-run-v1');
+    expect(payload.channelScheduleRun.acceptance.canRunStaffSchedule).toBe(true);
+    expect(payload.channelScheduleRun.acceptance.canClaimAlwaysOnAutomation).toBe(false);
+    expect(payload.channelScheduleRun.operatorTimeline.length).toBeGreaterThan(0);
+    expect(payload.channelDeliveryReport.payloadShape).toBe('restaurant-agent-channel-delivery-report-v1');
     expect(payload.nextLoopChannelPlan.payloadShape).toBe('restaurant-next-loop-channel-plan-v1');
     expect(payload.nextLoopChannelPlan.summary.canRunInternallyNow).toBe(true);
     expect(payload.publicIntelligenceBrief.payloadShape).toBe('restaurant-public-intelligence-brief-v1');

@@ -519,6 +519,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         capabilityTrainingRecords: payload?.trainingRecords || previous.capabilityTrainingRecords,
         postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
         channelHub: payload?.channelHub || previous.channelHub,
+        channelScheduleRun: payload?.channelScheduleRun || previous.channelScheduleRun,
         channelDeliveryReport: payload?.channelDeliveryReport || previous.channelDeliveryReport,
         nextLoopChannelPlan: payload?.nextLoopChannelPlan || previous.nextLoopChannelPlan,
         publicIntelligenceBrief: payload?.publicIntelligenceBrief || previous.publicIntelligenceBrief,
@@ -6243,21 +6244,44 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <div className="mt-3 border border-white/10 bg-white/[0.04] p-3">
                 <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase tracking-[0.12em] text-sky-100/70">
                   <span>schedule run</span>
+                  <span>{commandChannelScheduleRun.acceptance.verdict}</span>
                   <span>{commandChannelScheduleRun.summary.attempted} attempted</span>
                   <span>{commandChannelScheduleRun.summary.blocked} blocked</span>
                   <span>{commandChannelScheduleRun.summary.retryRecommended} retry/recovery</span>
                 </div>
+                <div className="mt-2 grid gap-2 text-xs lg:grid-cols-4">
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">staff schedule</div>
+                    <div className="mt-1 font-mono text-white">{commandChannelScheduleRun.acceptance.canRunStaffSchedule ? 'ran' : 'waiting'}</div>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">internal ready</div>
+                    <div className="mt-1 font-mono text-white">{commandChannelScheduleRun.acceptance.internalActionsReady}</div>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">provider gates</div>
+                    <div className="mt-1 font-mono text-white">{commandChannelScheduleRun.acceptance.blockedProviderGates}</div>
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.04] p-2">
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-white/35">next wakeup</div>
+                    <div className="mt-1 truncate font-mono text-white" title={commandChannelScheduleRun.acceptance.nextWakeupAt}>{commandChannelScheduleRun.acceptance.nextWakeupAt}</div>
+                  </div>
+                </div>
                 <div className="mt-2 grid gap-2 lg:grid-cols-2">
-                  {commandChannelScheduleRun.items.slice(0, 4).map(item => (
-                    <div className="border border-white/10 bg-white/[0.04] p-2" key={item.jobId}>
+                  {commandChannelScheduleRun.operatorTimeline.slice(0, 4).map(item => (
+                    <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
                       <div className="flex items-center justify-between gap-2 text-[10px] font-mono uppercase tracking-[0.12em] text-white/35">
-                        <span>{item.due ? 'due' : 'waiting'}</span>
-                        <span>{item.selectedChannel}</span>
+                        <span>{item.status}</span>
+                        <span>{item.channel} / {item.owner}</span>
                       </div>
-                      <p className="mt-1 text-xs font-black text-white">{item.title}</p>
+                      <p className="mt-1 text-xs font-black text-white">{item.id}</p>
                       <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/45">{item.nextAction}</p>
+                      <p className="mt-1 text-[10px] leading-4 text-white/35">gate: {item.externalGate} / evidence: {item.evidenceRequired.slice(0, 2).join(' / ') || 'none'}</p>
                     </div>
                   ))}
+                </div>
+                <div className="mt-2 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/45">
+                  {commandChannelScheduleRun.acceptance.operatorCloseout.join(' / ')}
                 </div>
               </div>
             ) : null}

@@ -30,7 +30,26 @@ export type RestaurantAgentChannelScheduleRun = {
     failed: number;
     retryRecommended: number;
   };
+  acceptance: {
+    verdict: 'internal-schedule-ran-provider-gated' | 'ready-for-staff-delivery' | 'needs-recovery';
+    canRunStaffSchedule: boolean;
+    canClaimAlwaysOnAutomation: false;
+    internalActionsReady: number;
+    blockedProviderGates: number;
+    nextWakeupAt: string;
+    operatorCloseout: string[];
+  };
   items: RestaurantAgentChannelScheduleRunItem[];
+  operatorTimeline: Array<{
+    id: string;
+    status: 'attempted' | 'blocked' | 'manual-ready' | 'forwarded' | 'waiting';
+    owner: 'runtime-admin' | 'ops' | 'store-manager' | 'Wenai Store Operator';
+    channel: RestaurantAgentChannel['id'];
+    signal: string;
+    nextAction: string;
+    evidenceRequired: string[];
+    externalGate: string;
+  }>;
   channelHub: Pick<RestaurantAgentChannelHub, 'payloadShape' | 'summary' | 'externalRequired'>;
   deliveryReport: ReturnType<typeof buildRestaurantAgentChannelDeliveryReport>;
   recovery: Array<{
@@ -76,6 +95,23 @@ function previousAttemptsFor(jobId: string, attempts: RestaurantAgentChannelDeli
 function retryRecommendedFor(jobId: string, attempts: RestaurantAgentChannelDeliveryAttempt[]) {
   const latest = attempts.find(item => item.jobId === jobId);
   return latest?.status === 'blocked' || latest?.status === 'failed';
+}
+
+function nextWakeupAt(now: Date) {
+  const next = new Date(now);
+  next.setMinutes(0, 0, 0);
+  next.setHours(next.getHours() + 1);
+  return next.toISOString();
+}
+
+function scheduleStatusFromAttempt(
+  item: RestaurantAgentChannelScheduleRunItem,
+): 'attempted' | 'blocked' | 'manual-ready' | 'forwarded' | 'waiting' {
+  if (!item.attempt) return item.due ? 'attempted' : 'waiting';
+  if (item.attempt.status === 'blocked') return 'blocked';
+  if (item.attempt.status === 'manual-ready') return 'manual-ready';
+  if (item.attempt.status === 'forwarded') return 'forwarded';
+  return 'attempted';
 }
 
 export async function runRestaurantAgentChannelSchedule(input: RestaurantTrialIntake & {
@@ -126,7 +162,7 @@ export async function runRestaurantAgentChannelSchedule(input: RestaurantTrialIn
     });
   }
 
-  const notDueItems = hub.scheduledJobs
+  const notDueItems: RestaurantAgentChannelScheduleRunItem[] = hub.scheduledJobs
     .filter(job => !candidateJobs.some(item => item.id === job.id))
     .slice(0, 4)
     .map(job => ({
@@ -153,6 +189,27 @@ export async function runRestaurantAgentChannelSchedule(input: RestaurantTrialIn
       owner: attempt.status === 'failed' ? 'runtime-admin' as const : 'ops' as const,
       nextAction: attempt.nextAction,
     }));
+  const operatorTimeline = allItems.map(item => {
+    const job = hub.scheduledJobs.find(scheduledJob => scheduledJob.id === item.jobId);
+    const missing = item.attempt?.missing || job?.externalRequired || [];
+    return {
+      id: item.jobId,
+      status: scheduleStatusFromAttempt(item),
+      owner: job?.owner || 'ops',
+      channel: item.selectedChannel,
+      signal: item.due ? `Due now: ${item.cadence}` : `Waiting: ${item.cadence}`,
+      nextAction: item.nextAction,
+      evidenceRequired: job?.evidenceRequired || [],
+      externalGate: missing[0] || 'none',
+    };
+  });
+  const blockedProviderGates = operatorTimeline.filter(item => item.status === 'blocked' || item.externalGate !== 'none').length;
+  const internalActionsReady = operatorTimeline.filter(item => item.status === 'manual-ready' || item.status === 'forwarded' || item.externalGate === 'none').length;
+  const verdict = attempted.some(item => item.status === 'failed')
+    ? 'needs-recovery'
+    : blockedProviderGates > 0
+      ? 'internal-schedule-ran-provider-gated'
+      : 'ready-for-staff-delivery';
 
   return {
     ok: true,
@@ -170,7 +227,25 @@ export async function runRestaurantAgentChannelSchedule(input: RestaurantTrialIn
       failed: attempted.filter(item => item.status === 'failed').length,
       retryRecommended: allItems.filter(item => item.retryRecommended).length,
     },
+    acceptance: {
+      verdict,
+      canRunStaffSchedule: attempted.length > 0,
+      canClaimAlwaysOnAutomation: false,
+      internalActionsReady,
+      blockedProviderGates,
+      nextWakeupAt: nextWakeupAt(now),
+      operatorCloseout: [
+        attempted.length
+          ? `${attempted.length} due staff jobs were converted into governed delivery attempts.`
+          : 'No due staff job was attempted in this run window.',
+        blockedProviderGates
+          ? `${blockedProviderGates} provider gates still block real staff delivery or external automation claims.`
+          : 'No provider gate blocked this staff schedule run.',
+        'Keep customer outreach, private messages, coupon redemption and POS writes out of scope until signed provider callbacks are accepted.',
+      ],
+    },
     items: allItems,
+    operatorTimeline,
     channelHub: {
       payloadShape: hub.payloadShape,
       summary: hub.summary,

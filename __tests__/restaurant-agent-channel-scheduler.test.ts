@@ -24,6 +24,12 @@ describe('restaurant agent channel scheduler', () => {
     expect(run.summary.attempted).toBe(3);
     expect(run.summary.blocked).toBeGreaterThan(0);
     expect(run.summary.retryRecommended).toBeGreaterThan(0);
+    expect(run.acceptance.verdict).toBe('internal-schedule-ran-provider-gated');
+    expect(run.acceptance.canClaimAlwaysOnAutomation).toBe(false);
+    expect(run.acceptance.blockedProviderGates).toBeGreaterThan(0);
+    expect(run.acceptance.nextWakeupAt).toBe('2026-05-24T16:00:00.000Z');
+    expect(run.operatorTimeline[0].status).toBe('blocked');
+    expect(run.operatorTimeline[0].externalGate).not.toBe('none');
     expect(run.recovery[0].nextAction).toContain('Configure');
     expect(run.deliveryReport.summary.total).toBeGreaterThanOrEqual(3);
     expect(run.safetyBoundary).toContain('does not run forever');
@@ -50,6 +56,9 @@ describe('restaurant agent channel scheduler', () => {
     });
 
     expect(run.summary.forwarded).toBeGreaterThan(0);
+    expect(run.acceptance.canRunStaffSchedule).toBe(true);
+    expect(run.acceptance.canClaimAlwaysOnAutomation).toBe(false);
+    expect(run.operatorTimeline.some(item => item.status === 'forwarded')).toBe(true);
     expect(calls.length).toBeGreaterThan(0);
     expect(JSON.stringify(run)).not.toContain(secretWebhook);
   });
@@ -70,6 +79,8 @@ describe('restaurant agent channel scheduler', () => {
     expect(response.status).toBe(409);
     expect(payload.channelScheduleRun.payloadShape).toBe('restaurant-agent-channel-schedule-run-v1');
     expect(payload.channelScheduleRun.summary.attempted).toBeGreaterThan(0);
+    expect(payload.channelScheduleRun.acceptance.canClaimAlwaysOnAutomation).toBe(false);
+    expect(payload.channelScheduleRun.operatorTimeline.length).toBeGreaterThan(0);
     expect(payload.channelDeliveryReport.payloadShape).toBe('restaurant-agent-channel-delivery-report-v1');
   });
 });

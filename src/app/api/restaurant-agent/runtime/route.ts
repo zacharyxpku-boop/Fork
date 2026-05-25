@@ -1161,7 +1161,13 @@ export async function POST(request: NextRequest) {
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
       offer: typeof body.offer === 'string' ? body.offer : undefined,
     });
-    const channelDeliveryReport = buildRestaurantAgentChannelDeliveryReport();
+    const channelScheduleRun = await runRestaurantAgentChannelSchedule({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      now,
+      limit: 4,
+    });
+    const channelDeliveryReport = channelScheduleRun.deliveryReport;
     const nextLoopChannelPlan = buildRestaurantNextLoopChannelPlan({
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
       offer: typeof body.offer === 'string' ? body.offer : undefined,
@@ -1488,6 +1494,7 @@ export async function POST(request: NextRequest) {
       providerReceiptInbox,
       postRunReviewPack,
       channelHub,
+      channelScheduleRun,
       channelDeliveryReport,
       nextLoopChannelPlan,
       publicIntelligenceBrief,
