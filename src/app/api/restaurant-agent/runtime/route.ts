@@ -915,6 +915,24 @@ export async function POST(request: NextRequest) {
     const staffNotificationDeliveryBridge = buildRestaurantStaffNotificationDeliveryBridge({
       handoff: staffNotificationHandoff,
     });
+    const providerSetupPack = buildRestaurantProviderSetupPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+    });
+    const externalUnlockRequestPack = buildRestaurantExternalUnlockRequestPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+    });
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -935,6 +953,8 @@ export async function POST(request: NextRequest) {
       staffNotificationHandoff,
       staffNotificationDeliveryBridge,
       taskProviderHandoff: buildRestaurantTaskProviderHandoff({ queue: storeManagerTaskQueue }),
+      providerSetupPack,
+      externalUnlockRequestPack,
     });
   }
 

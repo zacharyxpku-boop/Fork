@@ -447,6 +447,8 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
         staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.staffNotificationDeliveryBridge,
         taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
+        providerSetupPack: payload?.providerSetupPack || previous.providerSetupPack,
+        externalUnlockRequestPack: payload?.externalUnlockRequestPack || previous.externalUnlockRequestPack,
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Default Claw-style path is temporarily unavailable.' }));
@@ -3231,6 +3233,10 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
   const commandTaskProviderHandoff =
     dispatchState.commandCenter?.taskProviderHandoff ||
     dispatchState.taskProviderHandoff;
+  const commandProviderSetupPack =
+    dispatchState.commandCenter?.providerSetup ||
+    dispatchState.providerSetupPack;
+  const commandExternalUnlockRequestPack = dispatchState.externalUnlockRequestPack;
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandProviderLaunchBoard = dispatchState.providerLaunchBoard;
@@ -6711,7 +6717,11 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 },
                 {
                   label: 'Provider gates',
-                  value: commandTaskProviderHandoff ? `${commandTaskProviderHandoff.summary.blocked} blocked` : 'lists external keys',
+                  value: commandProviderSetupPack
+                    ? `${commandProviderSetupPack.summary.missing} missing`
+                    : commandTaskProviderHandoff
+                      ? `${commandTaskProviderHandoff.summary.blocked} blocked`
+                      : 'lists external keys',
                   note: 'runtime URL, grant, callback and data contract',
                 },
               ].map(item => (
@@ -6728,6 +6738,37 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="border border-rose-200/15 bg-rose-200/[0.03] p-2 text-rose-100/65">
                 provider unlock sheet: External execution only unlocks after runtime URL, API key, merchant grant, callback and data contract are ready.
+              </div>
+            </div>
+            <div className="mt-3 border border-amber-200/15 bg-amber-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/65">default path unlock package</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now creates Provider Setup Pack and External Unlock Request Pack.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  The customer does not need to find expert tools first: one run returns server env placeholders, merchant authorization asks, owner signoff rows and the receipt template.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-4">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">setup gates</div>
+                  <div className="mt-1 text-xs font-black text-amber-100/75">{commandProviderSetupPack ? `${commandProviderSetupPack.summary.missing} missing` : 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">env placeholders</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">
+                    {dispatchState.providerSetupPack?.envTemplate.length ?? commandProviderSetupPack?.priorityRequests.filter(item => item.source === 'env').length ?? 'server-side only'}
+                  </div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">signoff items</div>
+                  <div className="mt-1 text-xs font-black text-cyan-100/75">{commandExternalUnlockRequestPack ? commandExternalUnlockRequestPack.signoffChecklist.length : 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external automation</div>
+                  <div className="mt-1 text-xs font-black text-white">{commandExternalUnlockRequestPack?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                </div>
               </div>
             </div>
             <div className="mt-3 border border-white/10 bg-white/[0.035] p-3">
