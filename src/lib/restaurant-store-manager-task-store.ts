@@ -10,7 +10,7 @@ export type RestaurantStoreManagerTaskRecord = RestaurantStoreManagerFollowupTas
   status: RestaurantStoreManagerTaskStatus;
   createdAt: string;
   updatedAt: string;
-  source: 'followup-pack' | 'manual' | 'claw-skill-execution' | 'day-zero-mission-pack';
+  source: 'followup-pack' | 'manual' | 'claw-skill-execution' | 'day-zero-mission-pack' | 'shift-autopilot-run';
   auditNote: string;
   externalRequired: string[];
 };
@@ -238,6 +238,40 @@ export function recordRestaurantStoreManagerTasksFromClawExecution(
         : ['Provider health ready', 'Merchant authorization', 'Signed callback or public proof receipt'],
     };
     taskRecord.status = previous?.status || taskStatusFromSkillStatus(statusByTaskId.get(task.id) || 'provider-gated');
+
+    const previousIndex = memoryTasks.findIndex(item => item.taskMemoryId === taskRecord.taskMemoryId);
+    if (previousIndex >= 0) memoryTasks.splice(previousIndex, 1);
+    memoryTasks.unshift(taskRecord);
+    memoryTasks.splice(MAX_TASKS);
+    appendRestaurantAgentLedgerEntry('store-manager-task', taskRecord, now);
+    return taskRecord;
+  });
+}
+
+export function recordRestaurantStoreManagerTasksFromShiftAutopilotRun(input: {
+  runId: string;
+  restaurant: string;
+  offer: string;
+  tasks: Array<RestaurantStoreManagerFollowupTask & {
+    status: RestaurantStoreManagerTaskStatus;
+    externalRequired: string[];
+  }>;
+  now?: Date;
+}): RestaurantStoreManagerTaskRecord[] {
+  const now = input.now || new Date();
+  return input.tasks.map(task => {
+    const taskMemoryId = `store-task-${stableId([input.runId, task.id, task.restaurant, task.offer, task.evidenceRequired])}`;
+    const previous = listRestaurantStoreManagerTasks().find(item => item.taskMemoryId === taskMemoryId);
+    const taskRecord: RestaurantStoreManagerTaskRecord = {
+      ...task,
+      taskMemoryId,
+      status: previous?.status || task.status,
+      createdAt: previous?.createdAt || now.toISOString(),
+      updatedAt: now.toISOString(),
+      source: 'shift-autopilot-run',
+      auditNote: `Generated from Shift Autopilot run ${input.runId}. This is an internal owner task; external publish, customer contact, redemption, private-message access and POS pulls remain gated.`,
+      externalRequired: task.externalRequired,
+    };
 
     const previousIndex = memoryTasks.findIndex(item => item.taskMemoryId === taskRecord.taskMemoryId);
     if (previousIndex >= 0) memoryTasks.splice(previousIndex, 1);

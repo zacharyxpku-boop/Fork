@@ -69,6 +69,8 @@ import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-prof
 import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
 import { buildRestaurantPublicTrialSeed } from '@/lib/restaurant-public-trial-seed';
 import { buildRestaurantDayZeroMissionPack } from '@/lib/restaurant-day-zero-mission-pack';
+import { buildRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
+import { runRestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot-run-store';
 import { buildRestaurantStoreOperatingPlan } from '@/lib/restaurant-store-operating-plan';
 import { buildRestaurantStoreManagerFollowupPack } from '@/lib/restaurant-store-manager-followup';
 import { buildRestaurantStoreManagerTaskQueue, recordRestaurantStoreManagerTasks, recordRestaurantStoreManagerTasksFromClawExecution, recordRestaurantStoreManagerTasksFromDayZeroMissionPack, updateRestaurantStoreManagerTaskStatus } from '@/lib/restaurant-store-manager-task-store';
@@ -982,6 +984,46 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
     });
+  }
+
+  if (body.action === 'shift-autopilot-run') {
+    const now = new Date();
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const commandCenter = await buildRestaurantAgentCommandCenter({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      runs,
+      receipts,
+      readiness: buildRestaurantExternalReadiness(),
+      browserSessions: listRestaurantBrowserSessions(),
+      now,
+    });
+    const shiftAutopilot = buildRestaurantShiftAutopilot({
+      restaurant: commandCenter.restaurant,
+      offer: commandCenter.offer,
+      gmCommandDeck: commandCenter.gmCommandDeck,
+      channelHub: commandCenter.channelHub,
+      now,
+    });
+    const shiftAutopilotRun = runRestaurantShiftAutopilot({ autopilot: shiftAutopilot, now });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue(now);
+    const storeManagerTaskWatcher = buildRestaurantStoreManagerTaskWatcher(storeManagerTaskQueue, now);
+    return NextResponse.json({
+      ok: true,
+      commandCenter,
+      shiftAutopilot,
+      shiftAutopilotRun,
+      storeManagerTaskQueue,
+      storeManagerTaskWatcher,
+      runs,
+      receipts,
+    }, { status: shiftAutopilotRun.summary.providerHeldActions > 0 ? 409 : 201 });
   }
 
   if (body.action === 'command-route') {

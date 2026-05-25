@@ -50,6 +50,7 @@ import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provide
 import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
+import type { RestaurantShiftAutopilotRunRecord } from '@/lib/restaurant-shift-autopilot-run-store';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
@@ -250,6 +251,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerUnlockLadder?: RestaurantProviderUnlockLadder;
     gmCommandDeck?: RestaurantGmCommandDeck;
     shiftAutopilot?: RestaurantShiftAutopilot;
+    shiftAutopilotRun?: RestaurantShiftAutopilotRunRecord;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -2225,6 +2227,41 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const runShiftAutopilot = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Running Shift Autopilot internal lane...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'shift-autopilot-run',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.shiftAutopilotRun?.summary?.providerHeldActions ? 'blocked' : 'queued',
+        message: `Shift Autopilot run: ${payload?.shiftAutopilotRun?.summary?.acceptedInternalActions ?? 0} internal, ${payload?.shiftAutopilotRun?.summary?.createdStoreManagerTasks ?? 0} owner tasks, ${payload?.shiftAutopilotRun?.summary?.providerHeldActions ?? 0} provider-held.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        commandCenter: payload?.commandCenter || previous.commandCenter,
+        shiftAutopilot: payload?.shiftAutopilot || previous.shiftAutopilot,
+        shiftAutopilotRun: payload?.shiftAutopilotRun || previous.shiftAutopilotRun,
+        storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
+        storeManagerTaskWatcher: payload?.storeManagerTaskWatcher || previous.storeManagerTaskWatcher,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Shift Autopilot run is temporarily unavailable.' }));
+    }
+  };
+
   const routeRestaurantCommand = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Routing restaurant command into governed AI employee actions...' }));
     try {
@@ -2775,6 +2812,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       ],
       safetyBoundary: 'Shift Autopilot preview builds a bounded shift plan only; it does not run forever, publish, contact customers, redeem coupons, write POS orders or expose secrets.',
     } satisfies Pick<RestaurantShiftAutopilot, 'payloadShape' | 'summary' | 'steps' | 'nowQueue' | 'nextWakeups' | 'providerQueue' | 'evidenceQueue' | 'operatingPolicy' | 'safetyBoundary'>;
+  const commandShiftAutopilotRun = dispatchState.shiftAutopilotRun;
   const commandChannelDeliveryReport = dispatchState.commandCenter?.channelDeliveryReport || dispatchState.channelDeliveryReport;
   const commandChannelDeliveryAttempt = dispatchState.channelDeliveryAttempt;
   const commandChannelScheduleRun = dispatchState.channelScheduleRun;
@@ -3313,6 +3351,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
                           Turns GM lanes and scheduled channel jobs into a bounded shift queue: what can run internally now, what needs staff review, and what is blocked by Provider proof.
                         </p>
+                        <button
+                          className="mt-3 border border-sky-200 bg-sky-200 px-3 py-2 text-xs font-black text-stone-950 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          disabled={dispatchState.status === 'loading'}
+                          onClick={runShiftAutopilot}
+                          type="button"
+                        >
+                          Run Shift Autopilot
+                        </button>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
                         <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -3367,6 +3413,60 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <p className="mt-1 text-[11px] leading-4 text-white/45">{commandShiftAutopilot.operatingPolicy.join(' / ')}</p>
                       </div>
                     </div>
+                    {commandShiftAutopilotRun ? (
+                      <div className="mt-3 border border-sky-200/20 bg-stone-950/40 p-3">
+                        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                          <div>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">last run ledger</div>
+                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftAutopilotRun.runId}</h5>
+                            <p className="mt-1 text-xs leading-5 text-white/55">{commandShiftAutopilotRun.payloadShape} / {commandShiftAutopilotRun.completedAt}</p>
+                          </div>
+                          <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftAutopilotRun.summary.acceptedInternalActions}</div>
+                              <p className="mt-1 text-white/55">accepted</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftAutopilotRun.summary.preparedManualActions}</div>
+                              <p className="mt-1 text-white/55">manual</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftAutopilotRun.summary.providerHeldActions}</div>
+                              <p className="mt-1 text-white/55">provider held</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftAutopilotRun.summary.evidenceHeldActions}</div>
+                              <p className="mt-1 text-white/55">evidence held</p>
+                            </div>
+                            <div className="border border-white/10 bg-white/[0.05] p-2">
+                              <div className="font-mono text-white">{commandShiftAutopilotRun.summary.createdStoreManagerTasks}</div>
+                              <p className="mt-1 text-white/55">owner tasks</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                          <div className="border border-white/10 bg-white/[0.04] p-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">internal actions</div>
+                            <p className="mt-1 text-[11px] leading-4 text-emerald-100/65">
+                              {commandShiftAutopilotRun.acceptedInternalActions.map(action => action.title).join(' / ') || 'none'}
+                            </p>
+                          </div>
+                          <div className="border border-white/10 bg-white/[0.04] p-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider held</div>
+                            <p className="mt-1 text-[11px] leading-4 text-amber-100/65">
+                              {commandShiftAutopilotRun.providerHeldActions.map(action => action.providerRequired.join(' + ') || action.title).join(' / ') || 'none'}
+                            </p>
+                          </div>
+                          <div className="border border-white/10 bg-white/[0.04] p-2">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">evidence ledger</div>
+                            <p className="mt-1 text-[11px] leading-4 text-white/45">
+                              {commandShiftAutopilotRun.evidenceLedger.slice(0, 3).map(item => `${item.title}: ${item.status}`).join(' / ') || 'none'}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilotRun.safetyBoundary}</p>
+                      </div>
+                    ) : null}
                     <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-white/40">{commandShiftAutopilot.safetyBoundary}</p>
                   </div>
                 ) : null}

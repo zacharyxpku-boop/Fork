@@ -11,7 +11,8 @@ export type RestaurantAgentLedgerKind =
   | 'channel-delivery-attempt'
   | 'channel-delivery-acknowledgement'
   | 'provider-setup-state'
-  | 'claw-skill-execution';
+  | 'claw-skill-execution'
+  | 'shift-autopilot-run';
 
 export type RestaurantAgentLedgerEntry<TPayload = unknown> = {
   kind: RestaurantAgentLedgerKind;
@@ -46,7 +47,8 @@ function readEntries(): RestaurantAgentLedgerEntry[] {
         || entry.kind === 'channel-delivery-attempt'
         || entry.kind === 'channel-delivery-acknowledgement'
         || entry.kind === 'provider-setup-state'
-        || entry.kind === 'claw-skill-execution');
+        || entry.kind === 'claw-skill-execution'
+        || entry.kind === 'shift-autopilot-run');
   } catch {
     return [];
   }
@@ -126,6 +128,12 @@ export function appendRestaurantAgentLedgerEntry<TPayload>(
           const existing = entry.payload as { recordId?: string };
           const next = payload as { recordId?: string };
           return existing.recordId !== next.recordId;
+        }
+
+        if (kind === 'shift-autopilot-run' && entry.kind === 'shift-autopilot-run') {
+          const existing = entry.payload as { runId?: string };
+          const next = payload as { runId?: string };
+          return existing.runId !== next.runId;
         }
 
         return true;
