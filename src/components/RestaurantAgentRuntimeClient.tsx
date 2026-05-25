@@ -7238,6 +7238,28 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                 ))}
               </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                {(dispatchState.providerAcceptanceWorkbench?.capabilityAcceptanceMatrix || [
+                  { id: 'auto-publish-proof', label: 'Auto publish and proof capture', sandboxStatus: 'needs-provider', productionClaim: 'blocked-until-accepted-receipts', firstSandboxAction: 'Submit one approved public-platform proof package.', requiredProviderKeys: ['runtime key', 'callback secret'], merchantGrantRequired: ['platform authorization'], dataContractRequired: ['posted link or screenshot id only'], receiptRequired: ['externalRunId', 'signed receipt'], currentEvidence: [], nextAction: 'Collect scoped merchant platform authorization before sandbox publish-proof.', stopLine: 'No accepted receipt means no auto-publish claim.' },
+                  { id: 'auto-lead-acquisition', label: 'Auto lead acquisition', sandboxStatus: 'needs-provider', productionClaim: 'blocked-until-accepted-receipts', firstSandboxAction: 'Return aggregate reservation/coupon/inquiry/visit-intent counts.', requiredProviderKeys: ['lead provider key'], merchantGrantRequired: ['lead export authorization'], dataContractRequired: ['aggregate lead counts'], receiptRequired: ['source channel', 'signed callback'], currentEvidence: [], nextAction: 'Get merchant approval for lead-summary export.', stopLine: 'Do not read private messages.' },
+                  { id: 'auto-coupon-redemption', label: 'Auto coupon redemption', sandboxStatus: 'needs-data-contract', productionClaim: 'blocked-until-accepted-receipts', firstSandboxAction: 'Submit one aggregate coupon/redemption import.', requiredProviderKeys: ['POS/coupon provider key'], merchantGrantRequired: ['coupon backend export authorization'], dataContractRequired: ['couponClaimCount', 'redemptionCount'], receiptRequired: ['aggregate batch id'], currentEvidence: [], nextAction: 'Collect coupon/POS field dictionary.', stopLine: 'Do not write redemptions or store coupon codes.' },
+                  { id: 'true-operating-analysis', label: 'True operating analysis', sandboxStatus: 'needs-data-contract', productionClaim: 'blocked-until-accepted-receipts', firstSandboxAction: 'Run one insight report from aggregate POS fields.', requiredProviderKeys: ['POS/export provider key'], merchantGrantRequired: ['POS/export authorization'], dataContractRequired: ['orders', 'grossSales'], receiptRequired: ['accepted aggregate import'], currentEvidence: [], nextAction: 'Connect aggregate operating data.', stopLine: 'No data contract means no real analysis claim.' },
+                  { id: 'staff-delivery', label: 'Staff delivery', sandboxStatus: 'needs-provider', productionClaim: 'blocked-until-accepted-receipts', firstSandboxAction: 'Send one staff-only task notification.', requiredProviderKeys: ['staff webhook'], merchantGrantRequired: ['staff recipient roles'], dataContractRequired: ['task id', 'owner'], receiptRequired: ['staff acknowledgement'], currentEvidence: [], nextAction: 'Configure staff channel provider.', stopLine: 'No customer outreach.' },
+                ]).slice(0, 5).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.sandboxStatus === 'ready-to-submit' ? 'text-[10px] text-emerald-100/70' : item.sandboxStatus === 'needs-receipt' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{item.sandboxStatus}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-orange-100/55">{item.firstSandboxAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">keys: {item.requiredProviderKeys.slice(0, 2).join(' / ') || 'none'}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">grant: {item.merchantGrantRequired.slice(0, 2).join(' / ') || 'none'}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">receipt: {item.receiptRequired.slice(0, 2).join(' / ') || 'none'}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.nextAction}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/50">{item.stopLine}</p>
+                  </div>
+                ))}
+              </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-orange-100/55">
                 provider handoff: {(dispatchState.providerAcceptanceWorkbench?.providerHandOffCopy || [
                   'Send only setup evidence, authorization scope, callback receipt fields and aggregate data contracts.',

@@ -42,6 +42,20 @@ export type RestaurantProviderAcceptanceWorkbench = {
     status: 'pass' | 'missing' | 'blocked';
     evidence: string;
   }>;
+  capabilityAcceptanceMatrix: Array<{
+    id: 'auto-publish-proof' | 'auto-lead-acquisition' | 'auto-coupon-redemption' | 'true-operating-analysis' | 'staff-delivery';
+    label: string;
+    sandboxStatus: 'ready-to-submit' | 'needs-provider' | 'needs-data-contract' | 'needs-receipt';
+    productionClaim: 'blocked-until-accepted-receipts';
+    firstSandboxAction: string;
+    requiredProviderKeys: string[];
+    merchantGrantRequired: string[];
+    dataContractRequired: string[];
+    receiptRequired: string[];
+    currentEvidence: string[];
+    nextAction: string;
+    stopLine: string;
+  }>;
   externalRequired: string[];
   providerHandOffCopy: string[];
   safetyBoundary: string;
@@ -65,6 +79,19 @@ function statusFrom(condition: boolean, hasEvidence: boolean): RestaurantProvide
 function firstHealthEvidence(health: RestaurantProviderReadinessHealth, id: string) {
   const item = health.items.find(entry => entry.id === id);
   return item ? [...item.configuredEvidence, ...item.missingEvidence].slice(0, 4) : [];
+}
+
+function matrixStatus(input: {
+  runtimeReady: boolean;
+  callbackReady: boolean;
+  merchantReady?: boolean;
+  dataReady?: boolean;
+  sandboxReceiptReady?: boolean;
+}): RestaurantProviderAcceptanceWorkbench['capabilityAcceptanceMatrix'][number]['sandboxStatus'] {
+  if (!input.runtimeReady || !input.callbackReady || !input.merchantReady) return 'needs-provider';
+  if (input.dataReady === false) return 'needs-data-contract';
+  if (!input.sandboxReceiptReady) return 'needs-receipt';
+  return 'ready-to-submit';
 }
 
 export function buildRestaurantProviderAcceptanceWorkbench(input: RestaurantTrialIntake & {
@@ -181,8 +208,87 @@ export function buildRestaurantProviderAcceptanceWorkbench(input: RestaurantTria
     : !dataReady && data.summary.providerGated > 0
       ? 'data-contract-required'
       : sandbox.summary.canRunSandbox || publishInbox.summary.waitingReceipts > 0
-        ? 'receipt-required'
-        : 'provider-setup-required';
+      ? 'receipt-required'
+      : 'provider-setup-required';
+  const capabilityAcceptanceMatrix: RestaurantProviderAcceptanceWorkbench['capabilityAcceptanceMatrix'] = [
+    {
+      id: 'auto-publish-proof',
+      label: 'Auto publish and proof capture',
+      sandboxStatus: matrixStatus({ runtimeReady, callbackReady, merchantReady, sandboxReceiptReady }),
+      productionClaim: 'blocked-until-accepted-receipts',
+      firstSandboxAction: 'Submit one approved public-platform proof package to a sandbox browser runner and require signed external-receipt callback.',
+      requiredProviderKeys: ['RESTAURANT_AGENT_OPENCLAW_API_KEY or RESTAURANT_AGENT_HERMES_API_KEY', 'RESTAURANT_AGENT_CALLBACK_SECRET'],
+      merchantGrantRequired: ['Dianping/Xiaohongshu/Douyin/WeChat scoped publish-proof authorization'],
+      dataContractRequired: ['posted link or screenshot id only; no private inbox data'],
+      receiptRequired: ['externalRunId', 'public proof URL or screenshot id', 'operator summary', 'x-restaurant-agent-signature'],
+      currentEvidence: unique([
+        ...firstHealthEvidence(health, 'callback-secret'),
+        ...firstHealthEvidence(health, 'merchant-platform-authorization'),
+        `publishInbox:${publishInbox.summary.acceptedReceipts} accepted/${publishInbox.summary.waitingReceipts} waiting`,
+      ], 8),
+      nextAction: merchantReady ? 'Run a single proof-capture sandbox package and wait for signed callback.' : 'Collect scoped merchant platform authorization before sandbox publish-proof.',
+      stopLine: 'No merchant grant and accepted receipt means no auto-publish claim.',
+    },
+    {
+      id: 'auto-lead-acquisition',
+      label: 'Auto lead acquisition and follow-up handoff',
+      sandboxStatus: matrixStatus({ runtimeReady, callbackReady, merchantReady, sandboxReceiptReady }),
+      productionClaim: 'blocked-until-accepted-receipts',
+      firstSandboxAction: 'Submit a lead-summary callback contract that returns aggregate reservation, coupon-claim, inquiry and visit-intent counts.',
+      requiredProviderKeys: ['RESTAURANT_AGENT_LEAD_PROVIDER_KEY or platform export provider', 'RESTAURANT_AGENT_CALLBACK_SECRET'],
+      merchantGrantRequired: ['lead summary/export authorization', 'staff follow-up owner map'],
+      dataContractRequired: ['aggregate lead counts by source/channel/time window'],
+      receiptRequired: ['source channel', 'time window', 'aggregate count', 'owner', 'signed callback'],
+      currentEvidence: unique([
+        `staffSection:${staffReady ? 'ready' : 'blocked'}`,
+        ...firstHealthEvidence(health, 'merchant-platform-authorization'),
+      ], 8),
+      nextAction: merchantReady ? 'Request only aggregate lead receipts and route staff follow-up tasks.' : 'Get merchant approval for lead-summary export; do not read private messages.',
+      stopLine: 'Private-message bodies, customer contact ids and customer outreach remain forbidden without explicit provider contract.',
+    },
+    {
+      id: 'auto-coupon-redemption',
+      label: 'Auto coupon redemption reconciliation',
+      sandboxStatus: matrixStatus({ runtimeReady, callbackReady, merchantReady, dataReady, sandboxReceiptReady }),
+      productionClaim: 'blocked-until-accepted-receipts',
+      firstSandboxAction: 'Submit one coupon/redemption aggregate import and require receipt validation before any closeout.',
+      requiredProviderKeys: ['POS/coupon export provider key if API mode is used', 'RESTAURANT_AGENT_CALLBACK_SECRET'],
+      merchantGrantRequired: ['coupon backend export authorization', 'redemption source owner'],
+      dataContractRequired: ['couponClaimCount', 'redemptionCount', 'businessDate', 'storeName', 'offerName'],
+      receiptRequired: ['aggregate redemption batch id', 'field dictionary version', 'operator', 'accepted receipt'],
+      currentEvidence: data.tracks.filter(track => track.id.includes('coupon') || track.id.includes('redemption')).map(track => `${track.name}:${track.status}`).slice(0, 8),
+      nextAction: dataReady ? 'Run sandbox reconciliation from accepted aggregate fields only.' : 'Collect coupon/POS field dictionary and no-PII sample before redemption claims.',
+      stopLine: 'Do not write redemptions, coupon codes, payment ids or raw POS rows.',
+    },
+    {
+      id: 'true-operating-analysis',
+      label: 'True operating analysis',
+      sandboxStatus: matrixStatus({ runtimeReady, callbackReady, merchantReady, dataReady, sandboxReceiptReady }),
+      productionClaim: 'blocked-until-accepted-receipts',
+      firstSandboxAction: 'Run one operating insight report from accepted aggregate POS/coupon/member fields and attach field dictionary evidence.',
+      requiredProviderKeys: ['POS/export provider key if API mode is used'],
+      merchantGrantRequired: ['POS/export authorization', 'finance owner approval'],
+      dataContractRequired: ['orders', 'grossSales', 'redemptions', 'inventoryUsed', 'cost/margin field dictionary'],
+      receiptRequired: ['accepted aggregate import', 'field dictionary', 'analysis timestamp', 'operator'],
+      currentEvidence: data.tracks.map(track => `${track.name}:${track.status}`).slice(0, 8),
+      nextAction: dataReady ? 'Limit insights to measured aggregate fields and mark unknowns as blocked.' : 'Connect aggregate operating data before using true-analysis wording.',
+      stopLine: 'No aggregate data contract means no real operating analysis claim.',
+    },
+    {
+      id: 'staff-delivery',
+      label: 'Staff delivery and recovery alerts',
+      sandboxStatus: runtimeReady && callbackReady && staffReady ? 'ready-to-submit' : 'needs-provider',
+      productionClaim: 'blocked-until-accepted-receipts',
+      firstSandboxAction: 'Send one staff-only task notification to an approved work channel and record acknowledgement or recovery blocker.',
+      requiredProviderKeys: ['RESTAURANT_AGENT_WECOM_WEBHOOK_URL or FEISHU/DINGTALK/SMS provider', 'RESTAURANT_AGENT_CALLBACK_SECRET'],
+      merchantGrantRequired: ['merchant-approved staff recipient roles'],
+      dataContractRequired: ['task id', 'owner', 'evidence required', 'no customer PII'],
+      receiptRequired: ['staff channel acknowledgement', 'attempt id', 'operator', 'next action'],
+      currentEvidence: staffSection?.fields.map(field => `${field.label}:${field.status}`).slice(0, 8) || [],
+      nextAction: staffReady ? 'Run staff-only sandbox notification with no customer data.' : 'Configure staff channel provider and approved recipient roles.',
+      stopLine: 'Staff delivery never authorizes customer marketing messages or private chat reads.',
+    },
+  ];
 
   return {
     ok: true,
@@ -210,8 +316,10 @@ export function buildRestaurantProviderAcceptanceWorkbench(input: RestaurantTria
       { label: 'Operating data contract ready', source: 'data-contract', status: dataReady ? 'pass' : 'missing', evidence: `${data.summary.manualImportReady} manual imports / ${data.summary.providerGated} provider gated` },
       { label: 'Publish receipt accepted', source: 'publish-inbox', status: publishInbox.summary.acceptedReceipts > 0 ? 'pass' : publishInbox.summary.waitingReceipts > 0 ? 'missing' : 'blocked', evidence: `${publishInbox.summary.acceptedReceipts} accepted / ${publishInbox.summary.waitingReceipts} waiting` },
     ],
+    capabilityAcceptanceMatrix,
     externalRequired: unique([
       ...stages.filter(stage => stage.status !== 'passed').map(stage => stage.nextAction),
+      ...capabilityAcceptanceMatrix.filter(item => item.sandboxStatus !== 'ready-to-submit').map(item => item.nextAction),
       ...wizard.externalRequired,
       ...health.externalRequired,
       ...sandbox.externalRequired,

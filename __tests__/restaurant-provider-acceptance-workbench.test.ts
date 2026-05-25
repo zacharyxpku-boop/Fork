@@ -96,6 +96,16 @@ describe('restaurant provider acceptance workbench', () => {
     ]);
     expect(workbench.summary.canClaimExternalAutomation).toBe(false);
     expect(workbench.acceptanceChecklist.map(item => item.source)).toContain('sandbox-contract');
+    expect(workbench.capabilityAcceptanceMatrix.map(item => item.id)).toEqual([
+      'auto-publish-proof',
+      'auto-lead-acquisition',
+      'auto-coupon-redemption',
+      'true-operating-analysis',
+      'staff-delivery',
+    ]);
+    expect(workbench.capabilityAcceptanceMatrix.find(item => item.id === 'auto-publish-proof')?.productionClaim).toBe('blocked-until-accepted-receipts');
+    expect(workbench.capabilityAcceptanceMatrix.find(item => item.id === 'auto-coupon-redemption')?.dataContractRequired).toContain('redemptionCount');
+    expect(workbench.externalRequired.join(' ')).toContain('merchant');
     expect(workbench.safetyBoundary).toContain('provider key values');
     expect(serialized).not.toContain('secret-value');
     expect(serialized).not.toContain('cookie-value');
