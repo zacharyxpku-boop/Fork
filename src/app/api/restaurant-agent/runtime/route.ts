@@ -43,6 +43,7 @@ import { forwardRestaurantAgentDispatch, forwardRestaurantAgentExecutionPackage,
 import { buildRestaurantAgentRuntime } from '@/lib/restaurant-agent-runtime';
 import { buildRestaurantRuntimeAdapterContract } from '@/lib/restaurant-runtime-adapter-contract';
 import { buildRestaurantRuntimeRunnerLoopPack } from '@/lib/restaurant-runtime-runner-loop-pack';
+import { buildRestaurantResidentAgentMissionControl } from '@/lib/restaurant-resident-agent-mission-control';
 import { buildRestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-tool-policy';
 import { buildRestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
 import { buildRestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
@@ -1001,6 +1002,30 @@ export async function POST(request: NextRequest) {
       }),
       runs,
       receipts,
+    });
+  }
+
+  if (body.action === 'resident-agent-mission-control') {
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const runnerEvents = listRestaurantBrowserRunnerEvents();
+    return NextResponse.json({
+      ok: true,
+      residentAgentMissionControl: await buildRestaurantResidentAgentMissionControl({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        runs,
+        receipts,
+        runnerEvents,
+        readiness: buildRestaurantExternalReadiness(),
+        browserSessions: listRestaurantBrowserSessions(),
+      }),
+      runs,
+      receipts,
+      runnerEvents,
     });
   }
 

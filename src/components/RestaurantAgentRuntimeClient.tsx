@@ -74,6 +74,7 @@ import type { RestaurantRuntimeProbe } from '@/lib/restaurant-agent-runtime-prob
 import type { RestaurantRuntimeSetupContract } from '@/lib/restaurant-agent-runtime-setup-contract';
 import type { RestaurantRuntimeAdapterContract } from '@/lib/restaurant-runtime-adapter-contract';
 import type { RestaurantRuntimeRunnerLoopPack } from '@/lib/restaurant-runtime-runner-loop-pack';
+import type { RestaurantResidentAgentMissionControl } from '@/lib/restaurant-resident-agent-mission-control';
 import type { RestaurantPosImportReport } from '@/lib/restaurant-pos-import-validator';
 import { buildRestaurantAgentRuntime, type RestaurantAgentConnector } from '@/lib/restaurant-agent-runtime';
 import type { RestaurantAgentToolPolicyReport } from '@/lib/restaurant-agent-tool-policy';
@@ -243,6 +244,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     runtimeSetupContract?: RestaurantRuntimeSetupContract;
     runtimeAdapterContract?: RestaurantRuntimeAdapterContract;
     runtimeRunnerLoopPack?: RestaurantRuntimeRunnerLoopPack;
+    residentAgentMissionControl?: RestaurantResidentAgentMissionControl;
     posImport?: RestaurantPosImportReport;
     capabilityTrainingPlan?: RestaurantCapabilityTrainingPlan;
     capabilityTrainingRecord?: RestaurantCapabilityTrainingRecord;
@@ -2335,6 +2337,35 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const refreshResidentAgentMissionControl = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Refreshing Resident Agent Mission Control...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'resident-agent-mission-control',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.residentAgentMissionControl?.mode === 'needs-human' ? 'blocked' : 'queued',
+        message: `Resident Agent ${payload?.residentAgentMissionControl?.mode || 'unknown'}: ${payload?.residentAgentMissionControl?.summary?.readyLanes ?? 0}/${payload?.residentAgentMissionControl?.summary?.lanes ?? 0} lanes ready, ${payload?.residentAgentMissionControl?.summary?.externalGates ?? 0} external gates.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        residentAgentMissionControl: payload?.residentAgentMissionControl || previous.residentAgentMissionControl,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Resident Agent Mission Control is temporarily unavailable.' }));
+    }
+  };
+
   const runShiftAutopilot = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Running Shift Autopilot internal lane...' }));
     try {
@@ -3532,6 +3563,51 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
             </div>
           </div>
           <div className="mt-4 border border-amber-200/25 bg-amber-200/[0.05] p-3">
+            {dispatchState.residentAgentMissionControl ? (
+              <div className="mb-4 border border-emerald-200/30 bg-emerald-200/[0.06] p-3">
+                <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/75">Resident Agent Mission Control</div>
+                    <h4 className="mt-1 text-base font-black text-white">{dispatchState.residentAgentMissionControl.mode} / {dispatchState.residentAgentMissionControl.primaryAction.label}</h4>
+                    <p className="mt-1 text-xs leading-5 text-white/60">{dispatchState.residentAgentMissionControl.answerForMerchant}</p>
+                  </div>
+                  <div className="grid min-w-[280px] grid-cols-3 gap-2 text-xs">
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{dispatchState.residentAgentMissionControl.summary.readyLanes}/{dispatchState.residentAgentMissionControl.summary.lanes}</div>
+                      <p className="mt-1 text-white/55">ready lanes</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{dispatchState.residentAgentMissionControl.summary.externalGates}</div>
+                      <p className="mt-1 text-white/55">external gates</p>
+                    </div>
+                    <div className="border border-white/10 bg-white/[0.05] p-2">
+                      <div className="font-mono text-white">{dispatchState.residentAgentMissionControl.summary.canRunExternalBrowser ? 'yes' : 'no'}</div>
+                      <p className="mt-1 text-white/55">browser run</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-3">
+                  {dispatchState.residentAgentMissionControl.lanes.map(item => (
+                    <div className="border border-white/10 bg-white/[0.05] p-2" key={item.id}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-mono text-white">{item.id}</span>
+                        <span>{item.status} / {item.owner}</span>
+                      </div>
+                      <p className="mt-1 text-white/60">{item.promise}</p>
+                      <p className="mt-1 text-white/45">{item.nextAction}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    primary: {dispatchState.residentAgentMissionControl.primaryAction.reason} / evidence: {dispatchState.residentAgentMissionControl.primaryAction.evidenceRequired}
+                  </div>
+                  <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
+                    {dispatchState.residentAgentMissionControl.safetyBoundary}
+                  </div>
+                </div>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">AI employee command router</div>
@@ -3622,6 +3698,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       type="button"
                     >
                       Merchant Activation Packet
+                    </button>
+                    <button
+                      className="w-full border border-emerald-200/60 bg-emerald-200/10 px-3 py-2 text-sm font-black text-emerald-100 transition hover:bg-emerald-200/20 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={refreshResidentAgentMissionControl}
+                      type="button"
+                    >
+                      Resident Agent Control
                     </button>
                   </div>
                 </details>
@@ -6336,6 +6420,14 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               type="button"
             >
               Refresh Center
+            </button>
+            <button
+              className="shrink-0 border border-emerald-200/50 bg-emerald-200/10 px-3 py-2 text-sm font-black text-emerald-100 transition hover:bg-emerald-200/20 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={dispatchState.status === 'loading'}
+              onClick={refreshResidentAgentMissionControl}
+              type="button"
+            >
+              Resident Agent Control
             </button>
           </div>
         </div>

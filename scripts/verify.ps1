@@ -88,6 +88,10 @@ Invoke-Step "Vitest restaurant browser gateway pack" {
   npm.cmd run test -- __tests__/restaurant-browser-gateway-pack.test.ts
 }
 
+Invoke-Step "Vitest restaurant resident agent mission control" {
+  npm.cmd run test -- __tests__/restaurant-resident-agent-mission-control.test.ts
+}
+
 Invoke-Step "Vitest restaurant runtime adapter contract" {
   npm.cmd run test -- __tests__/restaurant-runtime-adapter-contract.test.ts
 }
