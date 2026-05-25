@@ -82,6 +82,7 @@ function deliverableFor(dimension: RestaurantCompetitorAuditDimension): string {
   const deliverables: Record<string, string> = {
     'multi-tenant-runtime': 'Unify the next restaurant task surfaces around tenant event, run ledger, signed receipt and recovery state.',
     'shared-memory-watchers': 'Generate a watcher-driven next-action queue from accepted receipts, activation gates and business signals.',
+    'cloud-agent-ops': 'Expose a Cloud/Claw-style AI employee console with schedule-run acceptance, operator timeline, next wakeup, provider gate and recovery owner.',
     'browser-execution': 'Create a browser runbook package with ordered steps, allowed domains, expected receipt fields and failure stops.',
     'secret-proxy-tool-policy': 'Attach tool-policy decisions to execution packages, callbacks and ops-console rows.',
     'execution-receipts': 'Use evidence score and receipt status to drive operating analysis and manager follow-up.',
@@ -100,6 +101,7 @@ function acceptanceFor(dimension: RestaurantCompetitorAuditDimension): string[] 
   const specific: Record<string, string[]> = {
     'multi-tenant-runtime': ['Every queued restaurant task includes tenantId, eventId, owner and next action.'],
     'shared-memory-watchers': ['Accepted receipts or POS imports create deterministic watcher followups.'],
+    'cloud-agent-ops': ['Default Path shows the current schedule run verdict, blocked provider gates, next wakeup and operator timeline without claiming real 24/7 external execution.'],
     'browser-execution': ['Runbook includes preflight, action sequence, evidence capture and stop conditions.'],
     'secret-proxy-tool-policy': ['Forbidden actions remain forbidden even if runtime credentials exist.'],
     'execution-receipts': ['Rejected receipts cannot unlock published, acquired, redeemed or analyzed states.'],

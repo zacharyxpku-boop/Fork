@@ -153,6 +153,18 @@ const DIMENSION_DEFINITIONS: Array<Omit<RestaurantCompetitorAuditDimension, 'sta
     safetyBoundary: 'Keep only aggregate signals and business summaries; do not store private-message bodies or personal contact details.',
   },
   {
+    id: 'cloud-agent-ops',
+    name: 'Cloud agent operator console',
+    sourceIds: ['abacus-claw', 'lobu', 'hermes'],
+    capabilityIds: ['runtime-setup-contract', 'watcher-policy-orchestrator', 'browser-runner-event-ledger', 'execution-receipts-retry'],
+    connectorIds: ['runtime-setup-contract', 'browser-runner-event-ledger', 'watcher-policy-orchestrator', 'agent-ops-console'],
+    targetState: 'A merchant can see the 24/7 cloud-style agent status in one place: active schedule, last run, blocked provider gate, next wakeup, memory write, receipt and recovery owner.',
+    internalNext: 'Make the default trial path show schedule-run acceptance, operator timeline, next wakeup and no-parity-until-provider gates.',
+    externalRequired: 'Hosted runtime workers, queue scheduler, browser session heartbeat, deployed callback URL, provider health checks and uptime monitoring.',
+    restaurantImpact: 'This is the visible Cloud/Claw parity layer: the restaurant sees an AI employee that wakes up, checks work, records evidence and escalates blockers instead of a static dashboard.',
+    safetyBoundary: 'Cloud-style status cannot imply real 24/7 external execution until hosted workers, callback receipts and provider health checks are live.',
+  },
+  {
     id: 'browser-execution',
     name: 'Persistent browser execution and profile governance',
     sourceIds: ['openclaw', 'hermes'],

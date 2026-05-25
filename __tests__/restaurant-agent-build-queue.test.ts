@@ -8,7 +8,7 @@ describe('restaurant agent build queue', () => {
     const queue = buildRestaurantBuildQueue();
 
     expect(queue.payloadShape).toBe('restaurant-agent-build-queue-v1');
-    expect(queue.summary.total).toBe(6);
+    expect(queue.summary.total).toBe(7);
     expect(queue.summary.readyToBuild).toBeGreaterThan(0);
     expect(queue.nextInternalSprint).toHaveLength(3);
     expect(queue.items[0]).toEqual(expect.objectContaining({
@@ -16,6 +16,8 @@ describe('restaurant agent build queue', () => {
       lane: 'internal-build',
     }));
     expect(queue.items[0].acceptanceCriteria.join(' ')).toContain('/factory?variant=friend_trial');
+    expect(queue.items.some(item => item.dimensionId === 'cloud-agent-ops')).toBe(true);
+    expect(queue.items.find(item => item.dimensionId === 'cloud-agent-ops')?.internalDeliverable).toContain('AI employee console');
     expect(queue.audit.fakeExecutionIncluded).toBe(false);
   });
 

@@ -12,6 +12,7 @@ describe('restaurant agent competitor audit', () => {
     expect(report.dimensions.map(dimension => dimension.id)).toEqual([
       'multi-tenant-runtime',
       'shared-memory-watchers',
+      'cloud-agent-ops',
       'browser-execution',
       'secret-proxy-tool-policy',
       'execution-receipts',
@@ -19,8 +20,9 @@ describe('restaurant agent competitor audit', () => {
     ]);
     expect(report.audit.publicSourceBacked).toBe(true);
     expect(report.audit.fakeExecutionIncluded).toBe(false);
-    expect(report.summary.total).toBe(6);
+    expect(report.summary.total).toBe(7);
     expect(report.summary.internalConnectors).toBeGreaterThan(20);
+    expect(report.dimensions.find(dimension => dimension.id === 'cloud-agent-ops')?.targetState).toContain('next wakeup');
   });
 
   it('keeps platform and POS data closure external-required while preserving internal build order', () => {
