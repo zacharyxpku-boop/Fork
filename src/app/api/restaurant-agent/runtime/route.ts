@@ -20,6 +20,7 @@ import { buildRestaurantCapabilityTrainingPlanFromLedger, listRestaurantCapabili
 import { runRestaurantCallbackSimulator } from '@/lib/restaurant-agent-callback-simulator';
 import { verifyRestaurantAgentCallback } from '@/lib/restaurant-agent-callback';
 import { buildRestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
+import { buildRestaurantCompetitorRouteDecision } from '@/lib/restaurant-competitor-route-decision';
 import { buildRestaurantCompetitorTrainingBlueprint } from '@/lib/restaurant-competitor-training-blueprint';
 import { buildRestaurantAgentDispatch } from '@/lib/restaurant-agent-dispatch';
 import { buildRestaurantAgentExecutionPackage } from '@/lib/restaurant-agent-execution-package';
@@ -2664,6 +2665,21 @@ export async function POST(request: NextRequest) {
         runs: listRestaurantAgentRuns(),
         receipts: listRestaurantAgentReceipts(),
         runnerEvents: listRestaurantBrowserRunnerEvents(),
+      }),
+    });
+  }
+
+  if (body.action === 'competitor-route-decision') {
+    return NextResponse.json({
+      ok: true,
+      competitorRouteDecision: await buildRestaurantCompetitorRouteDecision({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
       }),
     });
   }

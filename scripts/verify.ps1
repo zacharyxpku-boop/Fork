@@ -96,6 +96,10 @@ Invoke-Step "Vitest restaurant competitor training blueprint" {
   npm.cmd run test -- __tests__/restaurant-competitor-training-blueprint.test.ts
 }
 
+Invoke-Step "Vitest restaurant competitor route decision" {
+  npm.cmd run test -- __tests__/restaurant-competitor-route-decision.test.ts
+}
+
 Invoke-Step "Vitest restaurant runtime adapter contract" {
   npm.cmd run test -- __tests__/restaurant-runtime-adapter-contract.test.ts
 }

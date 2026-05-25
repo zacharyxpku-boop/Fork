@@ -17,6 +17,7 @@ import type { RestaurantAiEmployeeInbox } from '@/lib/restaurant-ai-employee-inb
 import type { RestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
 import type { RestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
 import type { RestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
+import type { RestaurantCompetitorRouteDecision } from '@/lib/restaurant-competitor-route-decision';
 import type { RestaurantCompetitorTrainingBlueprint } from '@/lib/restaurant-competitor-training-blueprint';
 import type { RestaurantBusinessSignalReport } from '@/lib/restaurant-agent-business-signals';
 import type { RestaurantBrowserSessionManifest } from '@/lib/restaurant-agent-browser-session';
@@ -235,6 +236,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     grantChecklist?: RestaurantGrantChecklist;
     activationGates?: RestaurantActivationGateReport;
     competitorAudit?: RestaurantCompetitorAuditReport;
+    competitorRouteDecision?: RestaurantCompetitorRouteDecision;
     competitorTrainingBlueprint?: RestaurantCompetitorTrainingBlueprint;
     buildQueue?: RestaurantBuildQueueReport;
     executionPackage?: RestaurantExecutionPackage;
@@ -675,6 +677,35 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       }));
     } catch {
       setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Competitor Training Blueprint is temporarily unavailable.' }));
+    }
+  };
+
+  const buildCompetitorRouteDecision = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building competitor route decision...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'competitor-route-decision',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.competitorRouteDecision?.summary?.externalRequired ? 'blocked' : 'queued',
+        message: `Route Decision: ${payload?.competitorRouteDecision?.finalTarget || 'unknown'}, ${payload?.competitorRouteDecision?.summary?.internalCanShipNow ?? 0} internal abilities, ${payload?.competitorRouteDecision?.summary?.externalRequired ?? 0} external gates.`,
+        competitorRouteDecision: payload?.competitorRouteDecision || previous.competitorRouteDecision,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Competitor Route Decision is temporarily unavailable.' }));
     }
   };
 
@@ -4581,6 +4612,83 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <p className="mt-1 text-[11px] leading-4 text-white/35">gate: {zone.providerGate}</p>
                     </div>
                   ))}
+                </div>
+                <div className="mt-3 border border-fuchsia-200/20 bg-fuchsia-200/[0.04] p-3">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fuchsia-100/70">Competitor Route Decision</div>
+                      <h4 className="mt-1 text-sm font-black text-white">Platform spine + Claw experience + runtime/data contracts</h4>
+                      <p className="mt-2 max-w-4xl text-[11px] leading-4 text-white/50">
+                        Decide what to copy exactly, what to upgrade, what can ship internally, and which Provider keys or merchant data contracts are still required.
+                      </p>
+                    </div>
+                    <button
+                      className="border border-fuchsia-200/50 px-3 py-2 text-xs font-black text-fuchsia-100 transition hover:bg-fuchsia-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={buildCompetitorRouteDecision}
+                      type="button"
+                    >
+                      Build Route Decision
+                    </button>
+                  </div>
+                  {dispatchState.competitorRouteDecision ? (
+                    <>
+                      <div className="mt-3 grid gap-2 text-xs sm:grid-cols-5">
+                        <div className="border border-white/10 bg-white/[0.04] p-2">
+                          <div className="font-mono text-white">{dispatchState.competitorRouteDecision.summary.options}</div>
+                          <p className="mt-1 text-white/55">routes</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.04] p-2">
+                          <div className="font-mono text-white">{dispatchState.competitorRouteDecision.summary.internalCanShipNow}</div>
+                          <p className="mt-1 text-white/55">internal now</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.04] p-2">
+                          <div className="font-mono text-white">{dispatchState.competitorRouteDecision.summary.trainingItems}</div>
+                          <p className="mt-1 text-white/55">training</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.04] p-2">
+                          <div className="font-mono text-white">{dispatchState.competitorRouteDecision.summary.externalRequired}</div>
+                          <p className="mt-1 text-white/55">external gates</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.04] p-2">
+                          <div className="font-mono text-white">{dispatchState.competitorRouteDecision.summary.canClaimFullCompetitorParity ? 'yes' : 'no'}</div>
+                          <p className="mt-1 text-white/55">full parity</p>
+                        </div>
+                      </div>
+                      <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-xs leading-5 text-fuchsia-100/70">{dispatchState.competitorRouteDecision.answerForOwner}</p>
+                      <div className="mt-3 grid gap-2 lg:grid-cols-4">
+                        {dispatchState.competitorRouteDecision.options.map(option => (
+                          <div className="border border-white/10 bg-stone-950/50 p-3" key={option.id}>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-xs font-black text-white">{option.label}</span>
+                              <span className="text-[11px] text-fuchsia-100/70">{option.verdict}</span>
+                            </div>
+                            <p className="mt-2 text-[11px] leading-4 text-white/60">{option.why}</p>
+                            <p className="mt-2 text-[11px] leading-4 text-emerald-100/60">copy: {option.copyExactly.slice(0, 3).join(' / ')}</p>
+                            <p className="mt-1 text-[11px] leading-4 text-cyan-100/60">upgrade: {option.upgradeBeyondCompetitor.slice(0, 2).join(' / ')}</p>
+                            <p className="mt-1 text-[11px] leading-4 text-amber-100/60">external: {option.externalRequired.slice(0, 3).join(' / ') || 'none'}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                        <div className="border border-white/10 bg-white/[0.04] p-2">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">next build order</div>
+                          {dispatchState.competitorRouteDecision.nextBuildOrder.slice(0, 4).map(item => (
+                            <p className="mt-2 text-[11px] leading-4 text-white/55" key={item.id}>{item.owner}: {item.action}</p>
+                          ))}
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.04] p-2">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider keys</div>
+                          <p className="mt-2 text-[11px] leading-4 text-amber-100/65">{dispatchState.competitorRouteDecision.providerKeyChecklist.slice(0, 12).join(' / ') || 'none'}</p>
+                        </div>
+                        <div className="border border-white/10 bg-white/[0.04] p-2">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">merchant inputs</div>
+                          <p className="mt-2 text-[11px] leading-4 text-white/45">{dispatchState.competitorRouteDecision.merchantInputsNeeded.join(' / ')}</p>
+                          <p className="mt-2 text-[11px] leading-4 text-white/35">{dispatchState.competitorRouteDecision.safetyBoundary}</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
                 <div className="mt-3 border border-cyan-200/20 bg-cyan-200/[0.04] p-3">
                   <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">

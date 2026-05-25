@@ -154,6 +154,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Activation Pack');
     expect(html).toContain('now queue');
     expect(html).toContain('next wakeups');
+    expect(html).toContain('Competitor Route Decision');
+    expect(html).toContain('Build Route Decision');
+    expect(html).toContain('Platform spine + Claw experience + runtime/data contracts');
     expect(html).toContain('Competitor Parity Board');
     expect(html).toContain('Persistent Browser Agent');
     expect(html).toContain('Auto Publish');
