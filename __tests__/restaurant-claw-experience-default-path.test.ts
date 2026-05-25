@@ -113,6 +113,14 @@ describe('restaurant claw experience default path', () => {
     expect(payload.providerAcceptanceWorkbench.payloadShape).toBe('restaurant-provider-acceptance-workbench-v1');
     expect(payload.providerAcceptanceWorkbench.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerAcceptanceWorkbench.stages.map((item: { id: string }) => item.id)).toContain('callback');
+    expect(payload.residentAgentMissionControl.payloadShape).toBe('restaurant-resident-agent-mission-control-v1');
+    expect(payload.residentAgentMissionControl.summary.canClaimAutonomousOutcomes).toBe(false);
+    expect(payload.shiftAutopilot.payloadShape).toBe('restaurant-shift-autopilot-v1');
+    expect(payload.shiftAutopilotRun.payloadShape).toBe('restaurant-shift-autopilot-run-v1');
+    expect(payload.shiftOperatingLoopPack.payloadShape).toBe('restaurant-shift-operating-loop-pack-v1');
+    expect(payload.shiftOperatingLoopPack.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.aiEmployeeMemoryPack.payloadShape).toBe('restaurant-ai-employee-memory-pack-v1');
+    expect(payload.aiEmployeeMemoryPack.employee.safeToAutonomouslyRun).toBe(false);
     expect(payload.operatingInsightReport.summary.canClaimTrueOperatingAnalysis).toBe(false);
     expect(JSON.stringify(payload)).not.toMatch(/1[3-9]\d{9}/);
     expect(JSON.stringify(payload)).not.toContain('rawPrivateMessage');

@@ -223,6 +223,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Default Path now shows exactly which Claw/Cloud-style abilities are internal-ready and which need external Provider setup.');
     expect(html).toContain('automation claim');
     expect(html).toContain('external asks');
+    expect(html).toContain('resident AI employee shift board');
+    expect(html).toContain('Default Path now opens a Resident AI Employee shift board: mission control, shift operating loop, memory wakeups and provider gates.');
+    expect(html).toContain('memory wakeups');
     expect(html).toContain('restaurant capability coverage map');
     expect(html).toContain('Default Path covers the restaurant AI product surface: public profile, content, publish proof, lead intake, coupon redemption and operating analysis.');
     expect(html).toContain('provider required');

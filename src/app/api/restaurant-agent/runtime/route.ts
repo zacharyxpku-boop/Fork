@@ -902,6 +902,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (body.action === 'claw-experience-default-path') {
+    const now = new Date();
     const clawSkillWorkbench = buildRestaurantClawSkillWorkbench({
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
       offer: typeof body.offer === 'string' ? body.offer : undefined,
@@ -1213,6 +1214,127 @@ export async function POST(request: NextRequest) {
       operatingDataContract,
       publishExecutionInbox,
     });
+    const commandCenter = await buildRestaurantAgentCommandCenter({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      runs,
+      receipts,
+      readiness,
+      browserSessions: listRestaurantBrowserSessions(),
+      now,
+    });
+    const shiftAutopilot = buildRestaurantShiftAutopilot({
+      restaurant: commandCenter.restaurant,
+      offer: commandCenter.offer,
+      gmCommandDeck: commandCenter.gmCommandDeck,
+      channelHub: commandCenter.channelHub,
+      now,
+    });
+    const shiftAutopilotRun = runRestaurantShiftAutopilot({ autopilot: shiftAutopilot, now });
+    const shiftRuns = listRestaurantShiftAutopilotRuns();
+    const shiftAwareStoreManagerTaskQueue = buildRestaurantStoreManagerTaskQueue(now);
+    const shiftAwareStoreManagerTaskWatcher = buildRestaurantStoreManagerTaskWatcher(shiftAwareStoreManagerTaskQueue, now);
+    const shiftTaskProviderHandoff = buildRestaurantTaskProviderHandoff({
+      queue: shiftAwareStoreManagerTaskQueue,
+      target: 'openclaw',
+      now,
+    });
+    const firstForwardableRunPack = buildRestaurantFirstForwardableRunPack({
+      queue: shiftAwareStoreManagerTaskQueue,
+      target: 'openclaw',
+      runtimeProbe,
+      providerReadinessHealth,
+      providerReceiptInbox,
+      now,
+    });
+    const shiftProviderHandoff = buildRestaurantShiftProviderHandoff({
+      shiftRuns,
+      providerReadinessHealth,
+      now,
+    });
+    const shiftSandboxAcceptance = buildRestaurantShiftSandboxAcceptance({
+      shiftProviderHandoff,
+      providerReadinessHealth,
+      providerSandboxContract,
+      now,
+    });
+    const shiftFirstForwardableRun = buildRestaurantShiftFirstForwardableRun({
+      shiftRuns,
+      shiftProviderHandoff,
+      shiftSandboxAcceptance,
+      firstForwardableRunPack,
+      taskProviderHandoff: shiftTaskProviderHandoff,
+      providerSandboxContract,
+      now,
+    });
+    const shiftCloseoutTrainingPack = buildRestaurantShiftCloseoutTrainingPack({
+      providerReceiptInbox,
+      recovery,
+      postRunReviewPack,
+      capabilityTrainingPlan,
+      now,
+    });
+    const trainingRecords = listRestaurantCapabilityTrainingRecords();
+    const shiftCapabilityActivationPack = buildRestaurantShiftCapabilityActivationPack({
+      capabilityTrainingPlan,
+      trainingRecords,
+      providerReadinessHealth,
+      now,
+    });
+    const shiftOperatingLoopPack = buildRestaurantShiftOperatingLoopPack({
+      commandCenter,
+      shiftRuns,
+      shiftProviderHandoff,
+      shiftSandboxAcceptance,
+      shiftFirstForwardableRun,
+      taskProviderHandoff: shiftTaskProviderHandoff,
+      providerSandboxContract,
+      providerReceiptInbox,
+      providerReadinessHealth,
+      recovery,
+      shiftCloseoutTrainingPack,
+      shiftCapabilityActivationPack,
+      capabilityTrainingPlan,
+      trainingRecords,
+      now,
+    });
+    const residentAgentMissionControl = await buildRestaurantResidentAgentMissionControl({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      runs,
+      receipts,
+      runnerEvents,
+      readiness,
+      browserSessions: listRestaurantBrowserSessions(),
+      now,
+    });
+    const aiEmployeeMemoryPack = buildRestaurantAiEmployeeMemoryPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      commandCenter,
+      capabilityTrainingPlan,
+      providerSetupState,
+      storeManagerTaskQueue: shiftAwareStoreManagerTaskQueue,
+      storeManagerTaskWatcher: shiftAwareStoreManagerTaskWatcher,
+      channelDeliveryReport,
+      clawSkillExecutionLedger: buildRestaurantClawSkillExecutionLedger(),
+      now,
+    });
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -1228,14 +1350,27 @@ export async function POST(request: NextRequest) {
       clawSkillExecutionRecord,
       clawSkillExecutionLedger: buildRestaurantClawSkillExecutionLedger(),
       storeManagerTaskRecords,
-      storeManagerTaskQueue,
-      storeManagerTaskWatcher,
+      storeManagerTaskQueue: shiftAwareStoreManagerTaskQueue,
+      storeManagerTaskWatcher: shiftAwareStoreManagerTaskWatcher,
       staffNotificationHandoff,
       staffNotificationDeliveryBridge,
-      taskProviderHandoff,
+      taskProviderHandoff: shiftTaskProviderHandoff,
       providerSetupPack,
       providerSandboxContract,
       providerAcceptanceWorkbench,
+      commandCenter,
+      gmCommandDeck: commandCenter.gmCommandDeck,
+      shiftAutopilot,
+      shiftAutopilotRun,
+      shiftOperatingLoopPack,
+      shiftFirstForwardableRun,
+      shiftProviderHandoff,
+      shiftSandboxAcceptance,
+      shiftCloseoutTrainingPack,
+      shiftCapabilityActivationPack,
+      firstForwardableRunPack,
+      residentAgentMissionControl,
+      aiEmployeeMemoryPack,
       externalUnlockRequestPack,
       providerSetupState,
       providerReadinessHealth,
@@ -1271,6 +1406,8 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
       runnerEvents,
+      shiftRuns,
+      trainingRecords,
     });
   }
 

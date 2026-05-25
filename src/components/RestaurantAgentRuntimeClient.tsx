@@ -486,6 +486,20 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
         providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+        commandCenter: payload?.commandCenter || previous.commandCenter,
+        gmCommandDeck: payload?.gmCommandDeck || payload?.commandCenter?.gmCommandDeck || previous.gmCommandDeck,
+        residentAgentMissionControl: payload?.residentAgentMissionControl || previous.residentAgentMissionControl,
+        shiftAutopilot: payload?.shiftAutopilot || previous.shiftAutopilot,
+        shiftAutopilotRun: payload?.shiftAutopilotRun || previous.shiftAutopilotRun,
+        shiftOperatingLoopPack: payload?.shiftOperatingLoopPack || previous.shiftOperatingLoopPack,
+        shiftFirstForwardableRun: payload?.shiftFirstForwardableRun || previous.shiftFirstForwardableRun,
+        shiftProviderHandoff: payload?.shiftProviderHandoff || previous.shiftProviderHandoff,
+        shiftSandboxAcceptance: payload?.shiftSandboxAcceptance || previous.shiftSandboxAcceptance,
+        shiftCloseoutTrainingPack: payload?.shiftCloseoutTrainingPack || previous.shiftCloseoutTrainingPack,
+        shiftCapabilityActivationPack: payload?.shiftCapabilityActivationPack || previous.shiftCapabilityActivationPack,
+        firstForwardableRunPack: payload?.firstForwardableRunPack || previous.firstForwardableRunPack,
+        aiEmployeeMemoryPack: payload?.aiEmployeeMemoryPack || previous.aiEmployeeMemoryPack,
+        capabilityTrainingRecords: payload?.trainingRecords || previous.capabilityTrainingRecords,
         postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
         channelHub: payload?.channelHub || previous.channelHub,
         channelDeliveryReport: payload?.channelDeliveryReport || previous.channelDeliveryReport,
@@ -6878,6 +6892,71 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <div className={`mt-1 text-xs font-black ${item.tone}`}>{item.value}</div>
                   </div>
                 ))}
+              </div>
+            </div>
+            <div className="mt-3 border border-emerald-200/15 bg-emerald-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/65">resident AI employee shift board</div>
+                  <p className="mt-1 text-xs font-black text-white">Default Path now opens a Resident AI Employee shift board: mission control, shift operating loop, memory wakeups and provider gates.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This is the Claw/Cloud-style operator experience in one view: morning brief, lunch pulse, dinner publish window, night closeout and memory follow-up, with external execution held until Provider proof is ready.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-5">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">resident mode</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.residentAgentMissionControl?.mode || 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">ready lanes</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.residentAgentMissionControl ? `${dispatchState.residentAgentMissionControl.summary.readyLanes}/${dispatchState.residentAgentMissionControl.summary.lanes}` : 'mission lanes'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">shift verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{commandShiftOperatingLoopPack?.verdict || 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">memory wakeups</div>
+                  <div className="mt-1 text-xs font-black text-violet-100/75">{commandAiEmployeeMemoryPack?.summary.nextWakeups ?? 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external claim</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{commandShiftOperatingLoopPack?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.residentAgentMissionControl?.lanes || [
+                  { id: 'command', status: 'waiting-evidence', owner: 'ops', promise: 'Turn merchant input into one governed restaurant operating mission.', nextAction: 'Start Default Path to create the first mission board.' },
+                  { id: 'browser', status: 'needs-provider', owner: 'runtime-admin', promise: 'Run browser tasks only through an allowlisted request contract.', nextAction: 'Provide runtime URL/key, callback secret, isolated profile and merchant authorization.' },
+                  { id: 'memory', status: 'waiting-evidence', owner: 'ai-employee', promise: 'Remember only accepted proof, owners and reusable operating context.', nextAction: 'Create accepted proof before writing memory.' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-mono text-xs text-white">{item.id}</span>
+                      <span className={item.status === 'ready' || item.status === 'complete' ? 'text-[10px] text-emerald-100/70' : item.status === 'needs-provider' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-sky-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.promise}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-emerald-100/55">next: {item.nextAction}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">shift run</div>
+                  <p className="mt-1 text-[11px] leading-4 text-white/60">
+                    {commandShiftAutopilotRun ? `${commandShiftAutopilotRun.summary.acceptedInternalActions} internal accepted / ${commandShiftAutopilotRun.summary.createdStoreManagerTasks} owner tasks / ${commandShiftAutopilotRun.summary.providerHeldActions} provider-held` : 'created after Start Default Path: one bounded shift run with owner tasks and provider holds'}
+                  </p>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">next operating action</div>
+                  <p className="mt-1 text-[11px] leading-4 text-white/60">{commandShiftOperatingLoopPack?.nextBestAction.label || 'Run Shift Autopilot, build Provider handoff, collect proof, then train the next loop.'}</p>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">memory policy</div>
+                  <p className="mt-1 text-[11px] leading-4 text-white/60">{commandAiEmployeeMemoryPack?.safetyBoundary || 'Memory is limited to accepted facts, owners, proof requirements and next wakeups. No secrets, private chats, PII or raw POS rows.'}</p>
+                </div>
               </div>
             </div>
             <div className="mt-3 border border-emerald-200/15 bg-emerald-200/[0.035] p-3">
