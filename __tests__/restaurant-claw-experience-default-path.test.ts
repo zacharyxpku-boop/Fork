@@ -155,6 +155,9 @@ describe('restaurant claw experience default path', () => {
       'staff-delivery',
     ]);
     expect(payload.providerSandboxSubmitWorkbench.submitPackages.every((item: { callback: { header: string } }) => item.callback.header === 'x-restaurant-agent-signature')).toBe(true);
+    expect(payload.providerReceiptLifecycle.payloadShape).toBe('restaurant-provider-receipt-lifecycle-v1');
+    expect(payload.providerReceiptLifecycle.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerReceiptLifecycle.memoryWriteRule.forbidden).toContain('private-message text');
     expect(payload.residentAgentMissionControl.payloadShape).toBe('restaurant-resident-agent-mission-control-v1');
     expect(payload.residentAgentMissionControl.summary.canClaimAutonomousOutcomes).toBe(false);
     expect(payload.shiftAutopilot.payloadShape).toBe('restaurant-shift-autopilot-v1');

@@ -58,6 +58,7 @@ import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-se
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import type { RestaurantProviderAdapterContractPack } from '@/lib/restaurant-provider-adapter-contract-pack';
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
+import type { RestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
 import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
 import type { RestaurantShiftAutopilot } from '@/lib/restaurant-shift-autopilot';
@@ -304,6 +305,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftSandboxAcceptance?: RestaurantShiftSandboxAcceptance;
     shiftSandboxForwardAttempt?: RestaurantShiftSandboxForwardAttempt;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
+    providerReceiptLifecycle?: RestaurantProviderReceiptLifecycle;
     providerAcceptanceWorkbench?: RestaurantProviderAcceptanceWorkbench;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerSandboxSubmitWorkbench?: RestaurantProviderSandboxSubmitWorkbench;
@@ -504,6 +506,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         storeDataImportCenter: payload?.storeDataImportCenter || previous.storeDataImportCenter,
         operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
         providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
         providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
         providerSandboxSubmitWorkbench: payload?.providerSandboxSubmitWorkbench || previous.providerSandboxSubmitWorkbench,
@@ -961,6 +964,41 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     }
   };
 
+  const inspectProviderReceiptLifecycle = async () => {
+    setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building provider receipt lifecycle...' }));
+    try {
+      const response = await fetch('/api/restaurant-agent/runtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'provider-receipt-lifecycle',
+          restaurant: runtimeIntake.restaurant,
+          offer: runtimeIntake.offer,
+          audience: runtimeIntake.audience,
+          channels: runtimeIntake.channels,
+          visitReason: runtimeIntake.visitReason,
+          constraints: runtimeIntake.constraints,
+          evidence: runtimeIntake.evidence,
+        }),
+      });
+      const payload = await response.json();
+      setDispatchState(previous => ({
+        ...previous,
+        status: payload?.providerReceiptLifecycle?.summary?.canWriteMemory ? 'queued' : 'blocked',
+        message: `Provider receipt lifecycle: ${payload?.providerReceiptLifecycle?.verdict || 'unknown'}; accepted ${payload?.providerReceiptLifecycle?.summary?.acceptedReceipts ?? 0}, waiting ${payload?.providerReceiptLifecycle?.summary?.waitingReceipts ?? 0}.`,
+        latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
+        receipts: payload?.receipts || previous.receipts,
+        runHealth: payload?.runHealth || previous.runHealth,
+        businessSignals: payload?.businessSignals || previous.businessSignals,
+        providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
+        providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
+        postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
+      }));
+    } catch {
+      setDispatchState(previous => ({ ...previous, status: 'failed', message: 'Provider receipt lifecycle is temporarily unavailable.' }));
+    }
+  };
+
   const inspectProviderSandboxContract = async () => {
     setDispatchState(previous => ({ ...previous, status: 'loading', message: 'Building provider sandbox acceptance contract...' }));
     try {
@@ -1060,6 +1098,8 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
         providerSandboxSubmitWorkbench: payload?.providerSandboxSubmitWorkbench || previous.providerSandboxSubmitWorkbench,
         providerSandboxSubmitAttempt: payload?.providerSandboxSubmitAttempt || previous.providerSandboxSubmitAttempt,
+        providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
+        postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
         providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         providerSetupState: payload?.providerSetupState || previous.providerSetupState,
@@ -3401,6 +3441,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     dispatchState.providerSetupPack;
   const commandExternalUnlockRequestPack = dispatchState.externalUnlockRequestPack;
   const commandProviderReceiptInbox = dispatchState.providerReceiptInbox;
+  const commandProviderReceiptLifecycle = dispatchState.providerReceiptLifecycle;
   const commandProviderSandboxContract = dispatchState.providerSandboxContract;
   const commandProviderSandboxSubmitWorkbench = dispatchState.providerSandboxSubmitWorkbench;
   const commandProviderSandboxSubmitAttempt = dispatchState.providerSandboxSubmitAttempt;
@@ -6646,6 +6687,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     >
                       Sandbox Contract
                     </button>
+                    <button
+                      className="ml-2 mt-2 border border-cyan-200/50 px-2 py-1 text-[11px] font-black text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={inspectProviderReceiptLifecycle}
+                      type="button"
+                    >
+                      Receipt Lifecycle
+                    </button>
+                  </div>
+                ) : null}
+                {commandProviderReceiptLifecycle ? (
+                  <div className="border border-fuchsia-200/25 bg-fuchsia-200/[0.06] p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fuchsia-100/70">provider receipt lifecycle</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/65">
+                      {commandProviderReceiptLifecycle.payloadShape} / {commandProviderReceiptLifecycle.verdict} / accepted {commandProviderReceiptLifecycle.summary.acceptedReceipts} / waiting {commandProviderReceiptLifecycle.summary.waitingReceipts}
+                    </p>
+                    {commandProviderReceiptLifecycle.stages.slice(0, 3).map(stage => (
+                      <p className="mt-1 text-[11px] leading-4 text-white/45" key={stage.id}>
+                        {stage.status}: {stage.label} / {stage.nextAction}
+                      </p>
+                    ))}
                   </div>
                 ) : null}
                 {commandProviderSandboxContract ? (
@@ -7465,6 +7527,62 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <p className="mt-1 text-[11px] leading-4 text-white/35">receipt: {dispatchState.providerSandboxSubmitAttempt.receiptExpectation.callbackHeader} / {dispatchState.providerSandboxSubmitAttempt.receiptExpectation.acceptedEvidence.slice(0, 3).join(' / ')}</p>
                   </div>
                 ) : null}
+                <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
+                  <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fuchsia-100/65">signed receipt lifecycle</div>
+                      <p className="mt-1 text-xs font-black text-white">Provider execution now has a callback-to-closeout state machine: signed receipt, validation, business signals, post-run review and memory write rule.</p>
+                    </div>
+                    <button
+                      className="border border-fuchsia-200/40 px-3 py-2 text-[11px] font-black text-fuchsia-100 transition hover:bg-fuchsia-200/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={dispatchState.status === 'loading'}
+                      onClick={inspectProviderReceiptLifecycle}
+                      type="button"
+                    >
+                      Build Receipt Lifecycle
+                    </button>
+                  </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-5">
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                      <div className="mt-1 text-xs font-black text-white">{dispatchState.providerReceiptLifecycle?.verdict || 'blocked-before-callback'}</div>
+                    </div>
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">accepted</div>
+                      <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.providerReceiptLifecycle?.summary.acceptedReceipts ?? 0}</div>
+                    </div>
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">waiting</div>
+                      <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.providerReceiptLifecycle?.summary.waitingReceipts ?? 0}</div>
+                    </div>
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">memory</div>
+                      <div className="mt-1 text-xs font-black text-white">{dispatchState.providerReceiptLifecycle?.summary.canWriteMemory ? 'allowed' : 'blocked'}</div>
+                    </div>
+                    <div className="border border-white/10 bg-stone-950/45 p-2">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">automation claim</div>
+                      <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerReceiptLifecycle?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                    {(dispatchState.providerReceiptLifecycle?.stages || [
+                      { id: 'submit', label: 'Sandbox submit recorded', status: 'waiting', owner: 'ops', evidence: ['no run recorded'], nextAction: 'Run a controlled provider sandbox submit attempt first.', stopLine: 'No recorded run means no provider execution claim.' },
+                      { id: 'callback', label: 'Signed callback received', status: 'blocked', owner: 'runtime-admin', evidence: ['waiting:0'], nextAction: 'Require x-restaurant-agent-signature and externalRunId before accepting provider completion.', stopLine: 'Unsigned callbacks are rejected.' },
+                      { id: 'validation', label: 'Receipt validation', status: 'waiting', owner: 'ops', evidence: ['no receipt validated'], nextAction: 'Collect public URL, screenshot id or signed externalRunId.', stopLine: 'Rejected receipts do not enter operating analysis.' },
+                    ]).slice(0, 6).map(stage => (
+                      <div className="border border-white/10 bg-stone-950/45 p-2" key={stage.id}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-black text-white">{stage.label}</span>
+                          <span className={stage.status === 'done' ? 'text-[10px] text-emerald-100/70' : stage.status === 'waiting' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{stage.status}</span>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-4 text-fuchsia-100/55">{stage.owner}</p>
+                        <p className="mt-1 text-[11px] leading-4 text-white/35">evidence: {stage.evidence.slice(0, 2).join(' / ')}</p>
+                        <p className="mt-1 text-[11px] leading-4 text-white/55">{stage.nextAction}</p>
+                        <p className="mt-1 text-[11px] leading-4 text-rose-100/50">{stage.stopLine}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
             <div className="mt-3 border border-amber-200/15 bg-amber-200/[0.035] p-3">

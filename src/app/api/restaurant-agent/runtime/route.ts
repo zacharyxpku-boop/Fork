@@ -78,6 +78,7 @@ import { buildRestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-u
 import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
+import { buildRestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
 import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import { blockedRestaurantProviderSandboxBridge, buildRestaurantProviderSandboxSubmitAttempt, buildRestaurantProviderSandboxSubmitWorkbench, selectRestaurantProviderSandboxSubmitPackage } from '@/lib/restaurant-provider-sandbox-submit-workbench';
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
@@ -201,6 +202,46 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
       readiness,
+    });
+  }
+
+  if (body.action === 'provider-receipt-lifecycle') {
+    const now = new Date();
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue(now);
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs, receipts, readiness, now });
+    const postRunReviewPack = buildRestaurantPostRunReviewPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      queue: storeManagerTaskQueue,
+      runs,
+      receipts,
+      readiness,
+      providerReceiptInbox,
+      now,
+    });
+    return NextResponse.json({
+      ok: true,
+      providerReceiptLifecycle: buildRestaurantProviderReceiptLifecycle({
+        runs,
+        receipts,
+        providerReceiptInbox,
+        postRunReviewPack,
+        now,
+      }),
+      providerReceiptInbox,
+      postRunReviewPack,
+      businessSignals: buildRestaurantBusinessSignals(runs, receipts, now),
+      runHealth: buildRestaurantRunHealth(runs, receipts, readiness, now),
+      runs,
+      receipts,
     });
   }
 
@@ -489,16 +530,40 @@ export async function POST(request: NextRequest) {
       run,
       now,
     });
+    const postAttemptReviewPack = buildRestaurantPostRunReviewPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      queue: storeManagerTaskQueue,
+      runs: updatedRuns,
+      receipts: updatedReceipts,
+      readiness: updatedReadiness,
+      providerReceiptInbox: updatedProviderReceiptInbox,
+      now,
+    });
+    const providerReceiptLifecycle = buildRestaurantProviderReceiptLifecycle({
+      runs: updatedRuns,
+      receipts: updatedReceipts,
+      providerReceiptInbox: updatedProviderReceiptInbox,
+      postRunReviewPack: postAttemptReviewPack,
+      now,
+    });
 
     return NextResponse.json({
       ok: bridge.ok,
       providerSandboxSubmitAttempt,
       providerSandboxSubmitWorkbench: updatedProviderSandboxSubmitWorkbench,
+      providerReceiptLifecycle,
       selectedSubmitPackage,
       providerAcceptanceWorkbench,
       providerSandboxContract,
       taskProviderHandoff,
       providerReceiptInbox: updatedProviderReceiptInbox,
+      postRunReviewPack: postAttemptReviewPack,
       providerSetupState,
       providerReadinessHealth,
       storeManagerTaskQueue,
@@ -1130,6 +1195,12 @@ export async function POST(request: NextRequest) {
       providerReadinessHealth,
       providerReceiptInbox,
     });
+    const providerReceiptLifecycle = buildRestaurantProviderReceiptLifecycle({
+      runs,
+      receipts,
+      providerReceiptInbox,
+      postRunReviewPack,
+    });
     const channelHub = buildRestaurantAgentChannelHub({
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
       offer: typeof body.offer === 'string' ? body.offer : undefined,
@@ -1156,6 +1227,7 @@ export async function POST(request: NextRequest) {
       posImport,
       storeManagerTaskQueue,
       providerReceiptInbox,
+      providerReceiptLifecycle,
       runtimeProbe,
       providerReadinessHealth,
       runs,
@@ -1416,6 +1488,13 @@ export async function POST(request: NextRequest) {
       runtimeProbe,
       providerReadinessHealth,
       providerReceiptInbox,
+    });
+    const providerReceiptLifecycle = buildRestaurantProviderReceiptLifecycle({
+      runs,
+      receipts,
+      providerReceiptInbox,
+      postRunReviewPack,
+      now,
     });
     const channelHub = buildRestaurantAgentChannelHub({
       restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
@@ -1761,6 +1840,7 @@ export async function POST(request: NextRequest) {
       storeDataImportCenter,
       operatingInsightReport,
       providerReceiptInbox,
+      providerReceiptLifecycle,
       postRunReviewPack,
       channelHub,
       channelScheduleRun,
@@ -3955,12 +4035,34 @@ export async function POST(request: NextRequest) {
       inquiryCount: typeof body.inquiryCount === 'number' ? body.inquiryCount : undefined,
       visitIntentCount: typeof body.visitIntentCount === 'number' ? body.visitIntentCount : undefined,
     });
+    const updatedRuns = listRestaurantAgentRuns();
+    const updatedReceipts = listRestaurantAgentReceipts();
+    const readiness = buildRestaurantExternalReadiness();
+    const providerReceiptInbox = buildRestaurantProviderReceiptInbox({ runs: updatedRuns, receipts: updatedReceipts, readiness });
+    const storeManagerTaskQueue = buildRestaurantStoreManagerTaskQueue();
+    const postRunReviewPack = buildRestaurantPostRunReviewPack({
+      queue: storeManagerTaskQueue,
+      runs: updatedRuns,
+      receipts: updatedReceipts,
+      readiness,
+      providerReceiptInbox,
+    });
+    const providerReceiptLifecycle = buildRestaurantProviderReceiptLifecycle({
+      runs: updatedRuns,
+      receipts: updatedReceipts,
+      providerReceiptInbox,
+      postRunReviewPack,
+    });
 
     return NextResponse.json({
       ok: receipt.status === 'accepted',
       receipt,
-      receipts: listRestaurantAgentReceipts(),
-      heartbeat: buildRestaurantAgentHeartbeat(listRestaurantAgentRuns().filter(run => run.eventId === receipt.eventId), [receipt]),
+      receipts: updatedReceipts,
+      providerReceiptLifecycle,
+      providerReceiptInbox,
+      postRunReviewPack,
+      businessSignals: buildRestaurantBusinessSignals(updatedRuns, updatedReceipts),
+      heartbeat: buildRestaurantAgentHeartbeat(updatedRuns.filter(run => run.eventId === receipt.eventId), [receipt]),
       audit: {
         signatureVerified: true,
         secretExposed: false,
