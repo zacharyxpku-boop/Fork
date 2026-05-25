@@ -6677,19 +6677,58 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">Claw Experience Default Path</div>
-                <h4 className="mt-1 text-sm font-black text-white">One operator path before expert tools</h4>
+                <h4 className="mt-1 text-base font-black text-white">Start here: one runnable path before expert tools</h4>
                 <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
-                  This is the customer-facing default path: route decision, merchant brief, runnable skill pack, controlled trial, training backlog and provider unlocks in one sequence.
+                  Click once to create the restaurant brief, runnable Claw-style skill pack, task queue, staff handoff, provider checklist and proof boundary in one customer-facing sequence.
                 </p>
               </div>
               <button
-                className="border border-cyan-200/60 bg-cyan-200/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:bg-cyan-200/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="border border-cyan-200 bg-cyan-200 px-4 py-3 text-left text-sm font-black text-stone-950 transition hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={dispatchState.status === 'loading'}
                 onClick={buildClawExperienceDefaultPath}
                 type="button"
               >
-                Build Default Path
+                Start Default Path
+                <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-700">Build Default Path</span>
               </button>
+            </div>
+            <div className="mt-3 grid gap-2 md:grid-cols-4">
+              {[
+                {
+                  label: 'Skill pack',
+                  value: dispatchState.clawSkillWorkbench ? `${dispatchState.clawSkillWorkbench.summary.runnableNow} runnable` : 'creates runnable skills',
+                  note: 'menu, content, private-domain and ops tasks',
+                },
+                {
+                  label: 'Task queue',
+                  value: commandTaskQueue ? `${commandTaskQueue.summary.open} open` : 'creates owner queue',
+                  note: 'owner, proof, next action and stop line',
+                },
+                {
+                  label: 'Staff handoff',
+                  value: commandStaffNotificationHandoff ? `${commandStaffNotificationHandoff.summary.copyReady} copy ready` : 'creates shift handoff',
+                  note: 'manager-ready message without private data',
+                },
+                {
+                  label: 'Provider gates',
+                  value: commandTaskProviderHandoff ? `${commandTaskProviderHandoff.summary.blocked} blocked` : 'lists external keys',
+                  note: 'runtime URL, grant, callback and data contract',
+                },
+              ].map(item => (
+                <div className="border border-cyan-200/15 bg-stone-950/45 p-3" key={item.label}>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/60">{item.label}</div>
+                  <div className="mt-1 text-sm font-black text-white">{item.value}</div>
+                  <p className="mt-1 text-[11px] leading-4 text-white/45">{item.note}</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3 grid gap-2 text-[11px] leading-4 md:grid-cols-2">
+              <div className="border border-emerald-200/15 bg-emerald-200/[0.03] p-2 text-emerald-100/65">
+                merchant inputs to collect: offer rules, dish proof, target diners, channel choice, forbidden claims and store owner approval.
+              </div>
+              <div className="border border-rose-200/15 bg-rose-200/[0.03] p-2 text-rose-100/65">
+                provider unlock sheet: External execution only unlocks after runtime URL, API key, merchant grant, callback and data contract are ready.
+              </div>
             </div>
             {dispatchState.clawExperienceDefaultPath ? (
               <>
@@ -6745,6 +6784,27 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">quick actions</div>
                     <p className="mt-2 text-[11px] leading-4 text-white/45">{dispatchState.clawExperienceDefaultPath.quickActions.map(item => item.label).join(' / ')}</p>
                     <p className="mt-2 text-[11px] leading-4 text-white/35">{dispatchState.clawExperienceDefaultPath.safetyBoundary}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  <div className="border border-emerald-200/20 bg-emerald-200/[0.04] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/65">merchant inputs to collect</div>
+                    <div className="mt-2 grid gap-2">
+                      {dispatchState.clawExperienceDefaultPath.routeDecision.merchantInputsNeeded.slice(0, 6).map(item => (
+                        <div className="border border-white/10 bg-stone-950/40 p-2 text-[11px] leading-4 text-white/60" key={item}>{item}</div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="border border-rose-200/20 bg-rose-200/[0.04] p-3">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-100/65">provider unlock sheet</div>
+                    <div className="mt-2 grid gap-2">
+                      {dispatchState.clawExperienceDefaultPath.routeDecision.providerKeyChecklist.slice(0, 6).map(item => (
+                        <div className="border border-white/10 bg-stone-950/40 p-2 text-[11px] leading-4 text-white/60" key={item}>{item}</div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[11px] leading-4 text-rose-100/55">
+                      External execution only unlocks after these keys, grants, callbacks and data contracts are provided.
+                    </p>
                   </div>
                 </div>
               </>

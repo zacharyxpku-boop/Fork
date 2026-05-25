@@ -176,8 +176,17 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Build Memory Pack');
     expect(html).toContain('Customer Operating Path');
     expect(html).toContain('Claw Experience Default Path');
-    expect(html).toContain('One operator path before expert tools');
+    expect(html).toContain('Start here: one runnable path before expert tools');
+    expect(html).toContain('Click once to create the restaurant brief');
+    expect(html).toContain('Start Default Path');
     expect(html).toContain('Build Default Path');
+    expect(html).toContain('Skill pack');
+    expect(html).toContain('Task queue');
+    expect(html).toContain('Staff handoff');
+    expect(html).toContain('Provider gates');
+    expect(html).toContain('merchant inputs to collect');
+    expect(html).toContain('provider unlock sheet');
+    expect(html).toContain('External execution only unlocks');
     expect(html).toContain('客户默认只走 6 步');
     expect(html).toContain('1 导入门店');
     expect(html).toContain('2 受控试跑');
