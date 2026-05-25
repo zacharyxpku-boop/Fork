@@ -246,6 +246,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('today command cockpit');
     expect(html).toContain('Default Path now collapses the restaurant AI surface into four lanes: get customers, publish proof, redeem/POS and review/train.');
     expect(html).toContain('accepted-proof-or-sanitized-aggregate-only');
+    expect(html).toContain('provider adapter contract pack');
+    expect(html).toContain('External parity is now split into six adapter contracts: runtime, platform proof, lead intake, staff delivery, POS redemption and model intelligence.');
+    expect(html).toContain('server-env-or-secret-manager-only');
     expect(html).toContain('restaurant AI cockpit zones');
     expect(html).toContain('Default Path now lands in an operator cockpit: today operations, AI consultant, automation launch and evidence review.');
     expect(html).toContain('daily runbook');

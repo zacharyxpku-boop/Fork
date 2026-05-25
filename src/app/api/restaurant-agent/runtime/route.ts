@@ -72,6 +72,7 @@ import { buildRestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-pro
 import { buildRestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import { buildRestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import { buildRestaurantProviderSetupStateSummary, recordRestaurantProviderSetupState } from '@/lib/restaurant-provider-setup-state-store';
+import { buildRestaurantProviderAdapterContractPack } from '@/lib/restaurant-provider-adapter-contract-pack';
 import { buildRestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import { buildRestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
@@ -1406,6 +1407,20 @@ export async function POST(request: NextRequest) {
       providerReadinessHealth,
       now,
     });
+    const providerAdapterContractPack = buildRestaurantProviderAdapterContractPack({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      externalUnlockRequestPack,
+      providerSetupWizard,
+      providerReadinessHealth,
+      todayCommandCockpit,
+      now,
+    });
     return NextResponse.json({
       ok: true,
       clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
@@ -1440,6 +1455,7 @@ export async function POST(request: NextRequest) {
       shiftCloseoutTrainingPack,
       shiftCapabilityActivationPack,
       todayCommandCockpit,
+      providerAdapterContractPack,
       firstForwardableRunPack,
       residentAgentMissionControl,
       aiEmployeeMemoryPack,

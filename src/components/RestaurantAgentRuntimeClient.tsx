@@ -56,6 +56,7 @@ import type { RestaurantReputationCloseoutPack } from '@/lib/restaurant-reputati
 import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
+import type { RestaurantProviderAdapterContractPack } from '@/lib/restaurant-provider-adapter-contract-pack';
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import type { RestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-unlock-ladder';
 import type { RestaurantGmCommandDeck } from '@/lib/restaurant-gm-command-deck';
@@ -287,6 +288,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     externalUnlockRequestPack?: RestaurantExternalUnlockRequestPack;
     providerSetupWizard?: RestaurantProviderSetupWizard;
     providerSetupState?: RestaurantProviderSetupStateSummary;
+    providerAdapterContractPack?: RestaurantProviderAdapterContractPack;
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerUnlockLadder?: RestaurantProviderUnlockLadder;
     gmCommandDeck?: RestaurantGmCommandDeck;
@@ -475,6 +477,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         recovery: payload?.recovery || previous.recovery,
         providerSetupState: payload?.providerSetupState || previous.providerSetupState,
         providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
+        providerAdapterContractPack: payload?.providerAdapterContractPack || previous.providerAdapterContractPack,
         providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
         providerUnlockLadder: payload?.providerUnlockLadder || previous.providerUnlockLadder,
         providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
@@ -7670,6 +7673,70 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/55">
                 proof ledger: {dispatchState.todayCommandCockpit?.proofLedgerContract.memoryWriteRule || 'accepted-proof-or-sanitized-aggregate-only'} / rejected: {(dispatchState.todayCommandCockpit?.proofLedgerContract.rejectedProof || ['sample link', 'unsigned callback', 'private message text', 'raw POS row']).slice(0, 4).join(' / ')}
+              </p>
+            </div>
+            <div className="mt-3 border border-lime-200/15 bg-lime-200/[0.035] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/65">provider adapter contract pack</div>
+                  <p className="mt-1 text-xs font-black text-white">External parity is now split into six adapter contracts: runtime, platform proof, lead intake, staff delivery, POS redemption and model intelligence.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  This is the concrete Provider/key list: server env, merchant grants, callback events, sandbox acceptance and the internal fallback if the adapter is missing.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.providerAdapterContractPack?.verdict || 'server-keys-first'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">adapters</div>
+                  <div className="mt-1 text-xs font-black text-lime-100/75">{dispatchState.providerAdapterContractPack?.summary.adapters ?? 6}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">ready</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.providerAdapterContractPack?.summary.readyToTest ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">keys</div>
+                  <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.providerAdapterContractPack?.summary.needsServerKey ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">merchant</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerAdapterContractPack?.summary.needsMerchantAuth ?? 0}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">parity</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerAdapterContractPack?.summary.canClaimCompetitorParity ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 border border-white/10 bg-white/[0.04] p-2">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">first provider to configure</div>
+                <p className="mt-1 text-xs font-black text-white">{dispatchState.providerAdapterContractPack?.firstProviderToConfigure.action || 'Configure Persistent browser / agent runtime: GET /health with server-side API key, then signed callback probe.'}</p>
+                <p className="mt-1 text-[11px] leading-4 text-lime-100/55">
+                  owner: {dispatchState.providerAdapterContractPack?.firstProviderToConfigure.owner || 'runtime-admin'} / evidence: {(dispatchState.providerAdapterContractPack?.firstProviderToConfigure.evidenceRequired || ['sanitized execution package accepted', 'externalRunId returned', 'signed receipt accepted']).slice(0, 3).join(' / ')}
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.providerAdapterContractPack?.adapters || [
+                  { id: 'runtime-browser-agent', label: 'Persistent browser / agent runtime', status: 'needs-server-key', owner: 'runtime-admin', providerChoices: ['OpenClaw runtime', 'Hermes resident browser', 'Lobu worker'], requiredEnvKeys: ['RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL', 'RESTAURANT_AGENT_CALLBACK_SECRET'], merchantGrant: ['operator approval'], callbackEvents: ['external-receipt'], healthCheck: 'GET /health with server-side API key', sandboxAcceptance: ['externalRunId returned'], unlocks: ['browser runbook execution'], fallbackNow: 'Generate browser runbook manually.', stopLine: 'No cookies, tokens or raw profile ids.' },
+                  { id: 'platform-publish-proof', label: 'Dianping / Xiaohongshu / Douyin / WeChat publish proof', status: 'needs-merchant-auth', owner: 'merchant', providerChoices: ['merchant OAuth', 'authorized browser session'], requiredEnvKeys: ['RESTAURANT_AGENT_CALLBACK_SECRET'], merchantGrant: ['platform authorization'], callbackEvents: ['external-receipt'], healthCheck: 'merchant grant missing', sandboxAcceptance: ['public URL or screenshot id'], unlocks: ['publish receipt inbox'], fallbackNow: 'Manual public proof import.', stopLine: 'No publish claim without proof.' },
+                  { id: 'pos-redemption', label: 'POS, coupon redemption and operating data', status: 'needs-data-contract', owner: 'data-ops', providerChoices: ['POS aggregate CSV', 'coupon export'], requiredEnvKeys: ['RESTAURANT_POS_DATA_MODE'], merchantGrant: ['field dictionary'], callbackEvents: ['pos-import-accepted'], healthCheck: 'POS mode/field dictionary missing', sandboxAcceptance: ['couponClaimCount', 'redemptionCount'], unlocks: ['true operating analysis'], fallbackNow: 'Manual sanitized aggregate CSV import.', stopLine: 'No raw POS rows.' },
+                ]).slice(0, 6).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.status === 'ready-to-test' ? 'text-[10px] text-emerald-100/70' : item.status === 'blocked' ? 'text-[10px] text-rose-100/70' : 'text-[10px] text-amber-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-lime-100/55">{item.owner} / {item.providerChoices.slice(0, 3).join(' / ')}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/50">env: {item.requiredEnvKeys.slice(0, 3).join(' / ')}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-rose-100/45">{item.stopLine}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-lime-100/55">
+                secret policy: {dispatchState.providerAdapterContractPack?.providerSecretPolicy.storage || 'server-env-or-secret-manager-only'} / never collect: {(dispatchState.providerAdapterContractPack?.providerSecretPolicy.neverCollectInClient || ['API keys', 'cookies', 'tokens', 'raw POS rows']).slice(0, 5).join(' / ')}
               </p>
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
