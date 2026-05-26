@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RestaurantProviderLiveRunGatePanel } from '@/components/RestaurantProviderLiveRunGatePanel';
 import { RestaurantProviderReceiptAcceptancePanel } from '@/components/RestaurantProviderReceiptAcceptancePanel';
 import { RestaurantProviderRunPacketPanel } from '@/components/RestaurantProviderRunPacketPanel';
+import { RestaurantRunnerMissionTimelinePanel } from '@/components/RestaurantRunnerMissionTimelinePanel';
 import { buildRestaurantAgentCapabilityPlan, type RestaurantCompetitorCapabilityStatus } from '@/lib/restaurant-agent-capabilities';
 import type { RestaurantActivationGateReport } from '@/lib/restaurant-agent-activation-gates';
 import type { RestaurantAgentChannelDeliveryAttempt, RestaurantAgentChannelDeliveryReport } from '@/lib/restaurant-agent-channel-delivery-store';
@@ -83,6 +84,7 @@ import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sa
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderLiveRunGate } from '@/lib/restaurant-provider-live-run-gate';
 import type { RestaurantProviderLiveRunLaunchAttempt } from '@/lib/restaurant-provider-live-run-launch-attempt';
+import type { RestaurantRunnerMissionTimeline } from '@/lib/restaurant-runner-mission-timeline';
 import type { RestaurantProviderReceiptAcceptanceConsole } from '@/lib/restaurant-provider-receipt-acceptance-console';
 import type { RestaurantProviderRunPacket } from '@/lib/restaurant-provider-run-packet';
 import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
@@ -329,6 +331,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerLiveRunGate?: RestaurantProviderLiveRunGate;
     providerLiveRunLaunchAttempt?: RestaurantProviderLiveRunLaunchAttempt;
+    runnerMissionTimeline?: RestaurantRunnerMissionTimeline;
     providerReceiptLifecycle?: RestaurantProviderReceiptLifecycle;
     providerReceiptAcceptanceConsole?: RestaurantProviderReceiptAcceptanceConsole;
     providerRunPacket?: RestaurantProviderRunPacket;
@@ -543,6 +546,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         providerLiveRunGate: payload?.providerLiveRunGate || previous.providerLiveRunGate,
         providerLiveRunLaunchAttempt: payload?.providerLiveRunLaunchAttempt || previous.providerLiveRunLaunchAttempt,
+        runnerMissionTimeline: payload?.runnerMissionTimeline || previous.runnerMissionTimeline,
         providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
         providerReceiptAcceptanceConsole: payload?.providerReceiptAcceptanceConsole || previous.providerReceiptAcceptanceConsole,
         providerRunPacket: payload?.providerRunPacket || previous.providerRunPacket,
@@ -8795,6 +8799,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <RestaurantProviderRunPacketPanel providerRunPacket={dispatchState.providerRunPacket} />
               <RestaurantProviderReceiptAcceptancePanel consoleData={dispatchState.providerReceiptAcceptanceConsole} />
               <RestaurantProviderLiveRunGatePanel liveRunGate={dispatchState.providerLiveRunGate} launchAttempt={dispatchState.providerLiveRunLaunchAttempt} />
+              <RestaurantRunnerMissionTimelinePanel timeline={dispatchState.runnerMissionTimeline} />
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">

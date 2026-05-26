@@ -95,6 +95,7 @@ import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provide
 import { buildRestaurantProviderSandboxReadinessBoard } from '@/lib/restaurant-provider-sandbox-readiness-board';
 import { buildRestaurantProviderSandboxRunConsole } from '@/lib/restaurant-provider-sandbox-run-console';
 import { blockedRestaurantProviderSandboxBridge, buildRestaurantProviderSandboxSubmitAttempt, buildRestaurantProviderSandboxSubmitWorkbench, selectRestaurantProviderSandboxSubmitPackage } from '@/lib/restaurant-provider-sandbox-submit-workbench';
+import { buildRestaurantRunnerMissionTimeline } from '@/lib/restaurant-runner-mission-timeline';
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-profile-intake';
 import { buildRestaurantPublicSourceHarvestPack } from '@/lib/restaurant-public-source-harvest-pack';
@@ -1457,6 +1458,7 @@ export async function POST(request: NextRequest) {
     const runs = listRestaurantAgentRuns();
     const receipts = listRestaurantAgentReceipts();
     const runnerEvents = listRestaurantBrowserRunnerEvents();
+    const runnerEventHealth = buildRestaurantBrowserRunnerEventHealth(runnerEvents, now);
     const readiness = buildRestaurantExternalReadiness();
     const recovery = buildRestaurantAgentRecoveryPlan(runs, receipts, readiness);
     const runtimeRunnerLoopPack = buildRestaurantRuntimeRunnerLoopPack({
@@ -1971,6 +1973,14 @@ export async function POST(request: NextRequest) {
       providerLiveRunGate,
       now,
     });
+    const runnerMissionTimeline = buildRestaurantRunnerMissionTimeline({
+      browserGatewayPack,
+      runnerEvents,
+      runnerEventHealth,
+      providerLiveRunGate,
+      providerLiveRunLaunchAttempt,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -2001,6 +2011,7 @@ export async function POST(request: NextRequest) {
       providerReceiptAcceptanceConsole,
       providerLiveRunGate,
       providerLiveRunLaunchAttempt,
+      runnerMissionTimeline,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,
@@ -2059,6 +2070,7 @@ export async function POST(request: NextRequest) {
       runs,
       receipts,
       runnerEvents,
+      runnerEventHealth,
       shiftRuns,
       trainingRecords,
     });

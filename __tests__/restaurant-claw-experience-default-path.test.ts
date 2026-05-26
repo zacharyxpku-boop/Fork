@@ -239,6 +239,9 @@ describe('restaurant claw experience default path', () => {
     expect(payload.providerLiveRunLaunchAttempt.payloadShape).toBe('restaurant-provider-live-run-launch-attempt-v1');
     expect(payload.providerLiveRunLaunchAttempt.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerLiveRunLaunchAttempt.closeoutExpectation.callbackAction).toBe('external-receipt');
+    expect(payload.runnerMissionTimeline.payloadShape).toBe('restaurant-runner-mission-timeline-v1');
+    expect(payload.runnerMissionTimeline.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.runnerMissionTimeline.timeline.map((item: { id: string }) => item.id)).toContain('launch-decision');
     expect(payload.providerReceiptLifecycle.payloadShape).toBe('restaurant-provider-receipt-lifecycle-v1');
     expect(payload.providerReceiptLifecycle.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerReceiptLifecycle.memoryWriteRule.forbidden).toContain('private-message text');
