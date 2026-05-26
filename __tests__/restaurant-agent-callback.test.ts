@@ -79,6 +79,16 @@ describe('restaurant agent signed runtime callback', () => {
     expect(payload.receipt.status).toBe('accepted');
     expect(payload.receipt.source).toBe('external-runtime');
     expect(payload.receipt.evidenceLevel).toBe('strong');
+    expect(payload.providerCallbackCloseoutConsole.payloadShape).toBe('restaurant-provider-callback-closeout-console-v1');
+    expect(payload.providerCallbackCloseoutConsole.verdict).toBe('accepted-train-next-run');
+    expect(payload.providerCallbackCloseoutConsole.summary).toEqual(expect.objectContaining({
+      signatureVerified: true,
+      receiptAccepted: true,
+      canWriteMemory: true,
+      canClaimExternalAutomation: false,
+    }));
+    expect(payload.providerCallbackCloseoutConsole.trainingGate.forbiddenWrites).toContain('private-message text');
+    expect(JSON.stringify(payload.providerCallbackCloseoutConsole)).not.toContain('callback-secret');
     expect(payload.audit).toEqual(expect.objectContaining({ signatureVerified: true, secretExposed: false }));
     expect(payload.heartbeat.acceptedReceipts).toBeGreaterThanOrEqual(1);
   });
@@ -106,5 +116,8 @@ describe('restaurant agent signed runtime callback', () => {
     expect(payload.ok).toBe(false);
     expect(payload.receipt.status).toBe('rejected');
     expect(payload.receipt.rejectedReason).toBe('external_receipt_event_not_found');
+    expect(payload.providerCallbackCloseoutConsole.verdict).toBe('rejected-recover');
+    expect(payload.providerCallbackCloseoutConsole.summary.canWriteMemory).toBe(false);
+    expect(payload.providerCallbackCloseoutConsole.recoveryQueue.length).toBeGreaterThan(0);
   });
 });

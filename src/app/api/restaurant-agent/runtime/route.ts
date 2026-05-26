@@ -84,6 +84,7 @@ import { buildRestaurantProviderUnlockLadder } from '@/lib/restaurant-provider-u
 import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantProviderKeyGapBoard } from '@/lib/restaurant-provider-key-gap-board';
+import { buildRestaurantProviderCallbackCloseoutConsole } from '@/lib/restaurant-provider-callback-closeout-console';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantProviderReceiptAcceptanceConsole } from '@/lib/restaurant-provider-receipt-acceptance-console';
 import { buildRestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
@@ -4238,6 +4239,14 @@ export async function POST(request: NextRequest) {
       providerReceiptInbox,
       postRunReviewPack,
     });
+    const businessSignals = buildRestaurantBusinessSignals(updatedRuns, updatedReceipts);
+    const providerCallbackCloseoutConsole = buildRestaurantProviderCallbackCloseoutConsole({
+      receipt,
+      providerReceiptLifecycle,
+      providerReceiptInbox,
+      businessSignals,
+      signatureVerified: true,
+    });
 
     return NextResponse.json({
       ok: receipt.status === 'accepted',
@@ -4245,8 +4254,9 @@ export async function POST(request: NextRequest) {
       receipts: updatedReceipts,
       providerReceiptLifecycle,
       providerReceiptInbox,
+      providerCallbackCloseoutConsole,
       postRunReviewPack,
-      businessSignals: buildRestaurantBusinessSignals(updatedRuns, updatedReceipts),
+      businessSignals,
       heartbeat: buildRestaurantAgentHeartbeat(updatedRuns.filter(run => run.eventId === receipt.eventId), [receipt]),
       audit: {
         signatureVerified: true,
