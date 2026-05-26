@@ -45,6 +45,7 @@ import type { RestaurantOperatingInsightReport } from '@/lib/restaurant-operatin
 import type { RestaurantPlatformConnectorMatrix } from '@/lib/restaurant-platform-connector-matrix';
 import type { RestaurantPlatformOperatingSpine } from '@/lib/restaurant-platform-operating-spine';
 import type { RestaurantMerchantActivationPacket } from '@/lib/restaurant-merchant-activation-packet';
+import type { RestaurantMerchantAuthorizationPacket } from '@/lib/restaurant-merchant-authorization-packet';
 import type { RestaurantPublishExecutionInbox } from '@/lib/restaurant-publish-execution-inbox';
 import type { RestaurantExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import type { RestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
@@ -292,6 +293,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     operatingInsightReport?: RestaurantOperatingInsightReport;
     platformOperatingSpine?: RestaurantPlatformOperatingSpine;
     merchantActivationPacket?: RestaurantMerchantActivationPacket;
+    merchantAuthorizationPacket?: RestaurantMerchantAuthorizationPacket;
     publishExecutionInbox?: RestaurantPublishExecutionInbox;
     operatingDataContract?: RestaurantOperatingDataContract;
     storeDataImportCenter?: RestaurantStoreDataImportCenter;
@@ -501,6 +503,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerKeyGapBoard: payload?.providerKeyGapBoard || previous.providerKeyGapBoard,
         providerAdapterContractPack: payload?.providerAdapterContractPack || previous.providerAdapterContractPack,
         providerAdapterConfigWorkbench: payload?.providerAdapterConfigWorkbench || previous.providerAdapterConfigWorkbench,
+        merchantAuthorizationPacket: payload?.merchantAuthorizationPacket || previous.merchantAuthorizationPacket,
         competitorAudit: payload?.competitorAudit || previous.competitorAudit,
         buildQueue: payload?.buildQueue || previous.buildQueue,
         providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
@@ -8646,6 +8649,67 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
                 <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-teal-100/55">
                   key request: {(dispatchState.providerAdapterConfigWorkbench?.providerOfTheKeyRequest || [{ owner: 'runtime-admin', giveThis: ['RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL', 'RESTAURANT_AGENT_OPENCLAW_API_KEY', 'RESTAURANT_AGENT_CALLBACK_SECRET'], unlocks: ['real provider sandbox submit'] }]).map(item => `${item.owner}: ${item.giveThis.slice(0, 3).join(' / ')}`).join(' | ')}
+                </p>
+              </div>
+              <div className="mt-3 border border-cyan-200/15 bg-cyan-200/[0.035] p-3">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/65">merchant authorization packet</div>
+                    <p className="mt-1 text-xs font-black text-white">Customer-forwardable scope packet for Dianping/Meituan, Xiaohongshu, Douyin, WeChat groups and POS redemption data before any real Provider run.</p>
+                    <p className="mt-1 text-[11px] leading-4 text-cyan-100/55">verdict: {dispatchState.merchantAuthorizationPacket?.verdict || 'merchant-auth-required'} / restaurant: {dispatchState.merchantAuthorizationPacket?.restaurant || runtimeIntake.restaurant}</p>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">real provider</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.merchantAuthorizationPacket?.summary.canEnableRealProviderSubmit ? 'ready' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">scopes</div>
+                    <div className="mt-1 text-xs font-black text-cyan-100/75">{dispatchState.merchantAuthorizationPacket?.summary.scopes ?? 5}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">ready</div>
+                    <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.merchantAuthorizationPacket?.summary.readyToSign ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">merchant</div>
+                    <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.merchantAuthorizationPacket?.summary.missingMerchantGrant ?? 4}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">data</div>
+                    <div className="mt-1 text-xs font-black text-violet-100/75">{dispatchState.merchantAuthorizationPacket?.summary.missingDataContract ?? 1}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">runtime</div>
+                    <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.merchantAuthorizationPacket?.summary.runtimeOrCallbackBlocked ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">claim</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.merchantAuthorizationPacket?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                  {(dispatchState.merchantAuthorizationPacket?.scopes || [
+                    { id: 'dianping-meituan', label: 'Dianping / Meituan local-life account', owner: 'merchant', status: 'missing-merchant-grant', allowedActions: ['prepare_publish_draft'], forbiddenActions: ['read_private_message'], requiredFields: ['merchant account owner', 'store public URL', 'allowed scope'], dataScope: ['public posted links', 'public screenshots'], expiryRule: 'Merchant must choose an expiry date before production execution.', revocationRule: 'Revocation downgrades to draft/manual mode.', acceptanceEvidence: ['posted link', 'screenshot id'], providerCallbackRequired: ['x-restaurant-agent-signature'], nextAction: 'Merchant must approve account scope, expiry and revocation before Provider run.', stopLine: 'No real publish without signed scope and receipt.' },
+                    { id: 'xiaohongshu', label: 'Xiaohongshu store content account', owner: 'merchant', status: 'missing-merchant-grant', allowedActions: ['prepare_publish_draft'], forbiddenActions: ['read_private_message'], requiredFields: ['account alias', 'review owner'], dataScope: ['approved drafts', 'public note link'], expiryRule: 'Merchant must choose an expiry date before production execution.', revocationRule: 'Revocation downgrades to draft/manual mode.', acceptanceEvidence: ['note link', 'screenshot id'], providerCallbackRequired: ['x-restaurant-agent-signature'], nextAction: 'Merchant must approve account scope, expiry and revocation before Provider run.', stopLine: 'No real publish without signed scope and receipt.' },
+                    { id: 'douyin', label: 'Douyin local content account', owner: 'merchant', status: 'missing-merchant-grant', allowedActions: ['prepare_publish_draft'], forbiddenActions: ['read_private_message'], requiredFields: ['account alias', 'group-buy scope'], dataScope: ['approved video caption', 'public video link'], expiryRule: 'Merchant must choose an expiry date before production execution.', revocationRule: 'Revocation downgrades to draft/manual mode.', acceptanceEvidence: ['video link', 'content id'], providerCallbackRequired: ['x-restaurant-agent-signature'], nextAction: 'Merchant must approve account scope, expiry and revocation before Provider run.', stopLine: 'No real publish without signed scope and receipt.' },
+                    { id: 'wechat-community', label: 'WeChat community handoff', owner: 'operator', status: 'missing-merchant-grant', allowedActions: ['prepare_publish_draft'], forbiddenActions: ['read_private_message'], requiredFields: ['community owner', 'handoff owner'], dataScope: ['approved group copy', 'aggregate inquiry counts'], expiryRule: 'Merchant must choose an expiry date before production execution.', revocationRule: 'Revocation downgrades to draft/manual mode.', acceptanceEvidence: ['manual screenshot id'], providerCallbackRequired: ['x-restaurant-agent-signature'], nextAction: 'Operator must approve manual community handoff scope.', stopLine: 'No private-message raw reading.' },
+                    { id: 'pos-redemption', label: 'POS / coupon redemption data contract', owner: 'data-ops', status: 'missing-data-contract', allowedActions: ['prepare_publish_draft'], forbiddenActions: ['raw POS rows'], requiredFields: ['data mode', 'field dictionary', 'redemption source'], dataScope: ['sanitized aggregate rows'], expiryRule: 'Merchant must choose an expiry date before production execution.', revocationRule: 'Revocation stops import.', acceptanceEvidence: ['field dictionary id', 'import batch id'], providerCallbackRequired: ['x-restaurant-agent-signature'], nextAction: 'Provide POS mode, field dictionary and sanitized aggregate sample.', stopLine: 'No POS pull or analysis claim without data contract.' },
+                  ]).map(scope => (
+                    <div className="border border-white/10 bg-stone-950/45 p-2" key={scope.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-black text-white">{scope.label}</span>
+                        <span className={scope.status === 'ready-to-sign' ? 'text-[10px] text-emerald-100/70' : scope.status === 'missing-data-contract' ? 'text-[10px] text-violet-100/70' : scope.status === 'runtime-callback-blocked' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-amber-100/70'}>{scope.status}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-cyan-100/55">owner: {scope.owner} / evidence: {scope.acceptanceEvidence.slice(0, 2).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">fields: {scope.requiredFields.slice(0, 3).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/55">{scope.nextAction}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-cyan-100/55">
+                  provider handoff: {(dispatchState.merchantAuthorizationPacket?.providerHandOff.giveProvider || ['scope id and allowed action list', 'public store URL or account alias', 'callback URL and required signature header name']).slice(0, 4).join(' / ')}
                 </p>
               </div>
             </div>

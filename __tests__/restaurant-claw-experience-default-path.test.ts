@@ -201,6 +201,17 @@ describe('restaurant claw experience default path', () => {
     expect(payload.providerAdapterConfigWorkbench.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerAdapterConfigWorkbench.targets.map((item: { target: string }) => item.target)).toEqual(['lobu', 'openclaw', 'hermes']);
     expect(payload.providerAdapterConfigWorkbench.recommended.target).toBe('openclaw');
+    expect(payload.merchantAuthorizationPacket.payloadShape).toBe('restaurant-merchant-authorization-packet-v1');
+    expect(payload.merchantAuthorizationPacket.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.merchantAuthorizationPacket.summary.scopes).toBe(5);
+    expect(payload.merchantAuthorizationPacket.scopes.map((item: { id: string }) => item.id)).toEqual([
+      'dianping-meituan',
+      'xiaohongshu',
+      'douyin',
+      'wechat-community',
+      'pos-redemption',
+    ]);
+    expect(payload.merchantAuthorizationPacket.providerHandOff.neverGiveProvider).toContain('private-message text');
     expect(payload.providerReceiptLifecycle.payloadShape).toBe('restaurant-provider-receipt-lifecycle-v1');
     expect(payload.providerReceiptLifecycle.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerReceiptLifecycle.memoryWriteRule.forbidden).toContain('private-message text');

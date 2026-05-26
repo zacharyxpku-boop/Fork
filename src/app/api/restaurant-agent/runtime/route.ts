@@ -33,6 +33,7 @@ import { buildRestaurantExecutionTimeline } from '@/lib/restaurant-execution-tim
 import { buildRestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
 import { buildRestaurantFirstRunControlTower } from '@/lib/restaurant-first-run-control-tower';
 import { buildRestaurantMerchantActivationPacket } from '@/lib/restaurant-merchant-activation-packet';
+import { buildRestaurantMerchantAuthorizationPacket } from '@/lib/restaurant-merchant-authorization-packet';
 import { buildRestaurantGrantChecklist } from '@/lib/restaurant-agent-grant-checklist';
 import { buildRestaurantMerchantGrantManifest } from '@/lib/restaurant-agent-grant-manifest';
 import { buildRestaurantAgentHeartbeat } from '@/lib/restaurant-agent-heartbeat';
@@ -1911,6 +1912,26 @@ export async function POST(request: NextRequest) {
       runtimeProbe,
       now,
     });
+    const grantManifest = buildRestaurantMerchantGrantManifest({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      operator: 'restaurant-ops',
+      now,
+    });
+    const grantChecklist = buildRestaurantGrantChecklist({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      operator: 'restaurant-ops',
+      now,
+    });
+    const merchantAuthorizationPacket = buildRestaurantMerchantAuthorizationPacket({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      grantManifest,
+      grantChecklist,
+      providerAdapterConfigWorkbench,
+      providerSandboxReadinessBoard,
+      providerSandboxRunConsole,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -1935,6 +1956,7 @@ export async function POST(request: NextRequest) {
       providerSandboxReadinessBoard,
       providerSandboxRunConsole,
       providerAdapterConfigWorkbench,
+      merchantAuthorizationPacket,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,
