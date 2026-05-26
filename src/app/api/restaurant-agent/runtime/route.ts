@@ -27,6 +27,7 @@ import { buildRestaurantAgentDispatch } from '@/lib/restaurant-agent-dispatch';
 import { buildRestaurantAgentExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import { buildRestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
 import { buildRestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
+import { buildRestaurantExternalAccessGuide } from '@/lib/restaurant-external-access-guide';
 import { buildRestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import { buildRestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
 import { buildRestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
@@ -1865,6 +1866,19 @@ export async function POST(request: NextRequest) {
       providerKeyGapBoard,
       now,
     });
+    const externalAccessGuide = buildRestaurantExternalAccessGuide({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      providerSetupWizard,
+      providerUnlockLadder,
+      providerKeyGapBoard,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -1872,6 +1886,7 @@ export async function POST(request: NextRequest) {
       clawExperienceDefaultPath,
       defaultPathForwardableBrief,
       clawCloudOperatorHome,
+      externalAccessGuide,
       clawSkillWorkbench,
       clawSkillExecutionRecord,
       clawSkillExecutionLedger: buildRestaurantClawSkillExecutionLedger(),

@@ -238,6 +238,9 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Default Path now turns Provider keys, merchant grants, browser profile, callback, data contract and sandbox receipt into an acceptance checklist.');
     expect(html).toContain('provider handoff');
     expect(html).toContain('provider readiness ladder');
+    expect(html).toContain('external access guide');
+    expect(html).toContain('Provider setup is now a customer checklist');
+    expect(html).toContain('redacted:');
     expect(html).toContain('Default Path now shows exactly which Claw/Cloud-style abilities are internal-ready and which need external Provider setup.');
     expect(html).toContain('automation claim');
     expect(html).toContain('external asks');

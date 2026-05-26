@@ -48,6 +48,7 @@ import type { RestaurantMerchantActivationPacket } from '@/lib/restaurant-mercha
 import type { RestaurantPublishExecutionInbox } from '@/lib/restaurant-publish-execution-inbox';
 import type { RestaurantExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import type { RestaurantExternalExecutionWizard } from '@/lib/restaurant-external-execution-wizard';
+import type { RestaurantExternalAccessGuide } from '@/lib/restaurant-external-access-guide';
 import type { RestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import type { RestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
 import type { RestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
@@ -299,6 +300,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerKeyGapBoard?: RestaurantProviderKeyGapBoard;
     providerUnlockLadder?: RestaurantProviderUnlockLadder;
+    externalAccessGuide?: RestaurantExternalAccessGuide;
     gmCommandDeck?: RestaurantGmCommandDeck;
     shiftAutopilot?: RestaurantShiftAutopilot;
     shiftAutopilotRun?: RestaurantShiftAutopilotRunRecord;
@@ -496,6 +498,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         buildQueue: payload?.buildQueue || previous.buildQueue,
         providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
         providerUnlockLadder: payload?.providerUnlockLadder || previous.providerUnlockLadder,
+        externalAccessGuide: payload?.externalAccessGuide || previous.externalAccessGuide,
         providerLaunchBoard: payload?.providerLaunchBoard || previous.providerLaunchBoard,
         platformConnectorMatrix: payload?.platformConnectorMatrix || previous.platformConnectorMatrix,
         aiConsultantCopilot: payload?.aiConsultantCopilot || previous.aiConsultantCopilot,
@@ -7918,6 +7921,59 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-amber-100/55">
                 external asks: {(dispatchState.providerUnlockLadder?.nextExternalAsks || dispatchState.providerLaunchBoard?.externalRequired || ['runtime URL/key', 'merchant platform authorization', 'signed callback secret', 'aggregate POS/coupon data contract']).slice(0, 5).join(' / ')}
               </p>
+              <div className="mt-3 border border-sky-200/15 bg-sky-200/[0.035] p-3">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/65">external access guide</div>
+                    <p className="mt-1 text-xs font-black text-white">Provider setup is now a customer checklist: owner, ask, unlock, evidence and stop line.</p>
+                  </div>
+                  <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                    Instead of dumping keys on the customer, this guide explains who provides each item and which competitor-grade ability it unlocks.
+                  </p>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-stone-950/45 p-2 md:col-span-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">answer</div>
+                    <p className="mt-1 text-[11px] leading-4 text-white/60">{dispatchState.externalAccessGuide?.answerForCustomer || 'created after Start Default Path: keep internal AI employee running, then unlock runtime, grants, callback, data and staff channel.'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">steps</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.externalAccessGuide?.summary.steps ?? 5}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">completion</div>
+                    <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.externalAccessGuide?.summary.setupCompletionPercent ?? dispatchState.providerSetupWizard?.summary.completionPercent ?? 0}%</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sandbox</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.externalAccessGuide?.summary.canStartSandbox ? 'ready-to-check' : 'blocked'}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external claim</div>
+                    <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.externalAccessGuide?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                  {(dispatchState.externalAccessGuide?.steps || [
+                    { id: 'runtime', title: 'Connect one isolated browser runtime', owner: 'runtime-admin', status: 'provider-gated', customerAsk: 'Configure runtime URL/key/profile server-side.', providerAsk: ['runtime URL/key'], unlocks: ['persistent browser agent'], acceptanceEvidence: ['runtime health ready'], nextAction: 'Configure runtime and callback secret.', stopLine: 'No live browser execution without accepted receipt.' },
+                    { id: 'merchant-grants', title: 'Sign merchant platform grants', owner: 'merchant', status: 'provider-gated', customerAsk: 'Approve allowed platform actions and proof type.', providerAsk: ['merchant authorization'], unlocks: ['publish proof', 'lead receipt'], acceptanceEvidence: ['platform grant'], nextAction: 'Collect scoped merchant authorization.', stopLine: 'Public context is not authorization.' },
+                    { id: 'operating-data', title: 'Approve POS, coupon and operating data contract', owner: 'data-ops', status: 'data-gated', customerAsk: 'Provide aggregate field dictionary and no-PII sample.', providerAsk: ['POS/coupon field dictionary'], unlocks: ['true operating analysis'], acceptanceEvidence: ['aggregate import'], nextAction: 'Import sanitized aggregate data.', stopLine: 'No raw POS rows or payment ids.' },
+                  ]).slice(0, 5).map(item => (
+                    <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-black text-white">{item.title}</span>
+                        <span className={item.status === 'ready-to-check' ? 'text-[10px] text-emerald-100/70' : item.status === 'missing-evidence' ? 'text-[10px] text-sky-100/70' : item.status === 'data-gated' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-sky-100/55">{item.owner}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/55">{item.customerAsk}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">unlocks: {item.unlocks.slice(0, 2).join(' / ')}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-rose-100/55">
+                  redacted: {(dispatchState.externalAccessGuide?.redactedFields || ['api keys', 'cookies', 'browser profile ids', 'private message text', 'customer PII', 'raw POS rows']).slice(0, 6).join(' / ')}
+                </p>
+              </div>
             </div>
             <div className="mt-3 border border-emerald-200/15 bg-emerald-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
