@@ -85,6 +85,7 @@ import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-la
 import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantProviderKeyGapBoard } from '@/lib/restaurant-provider-key-gap-board';
 import { buildRestaurantProviderCallbackCloseoutConsole } from '@/lib/restaurant-provider-callback-closeout-console';
+import { buildRestaurantProviderForwardableSetupDossier } from '@/lib/restaurant-provider-forwardable-setup-dossier';
 import { buildRestaurantProviderLiveRunGate } from '@/lib/restaurant-provider-live-run-gate';
 import { buildRestaurantProviderLiveRunLaunchAttempt } from '@/lib/restaurant-provider-live-run-launch-attempt';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
@@ -1981,6 +1982,15 @@ export async function POST(request: NextRequest) {
       providerLiveRunLaunchAttempt,
       now,
     });
+    const providerForwardableSetupDossier = buildRestaurantProviderForwardableSetupDossier({
+      keyGapBoard: providerKeyGapBoard,
+      externalUnlockRequestPack,
+      merchantAuthorizationPacket,
+      providerLiveRunGate,
+      providerLiveRunLaunchAttempt,
+      runnerMissionTimeline,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -2012,6 +2022,7 @@ export async function POST(request: NextRequest) {
       providerLiveRunGate,
       providerLiveRunLaunchAttempt,
       runnerMissionTimeline,
+      providerForwardableSetupDossier,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,

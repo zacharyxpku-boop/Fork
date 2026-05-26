@@ -242,6 +242,9 @@ describe('restaurant claw experience default path', () => {
     expect(payload.runnerMissionTimeline.payloadShape).toBe('restaurant-runner-mission-timeline-v1');
     expect(payload.runnerMissionTimeline.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.runnerMissionTimeline.timeline.map((item: { id: string }) => item.id)).toContain('launch-decision');
+    expect(payload.providerForwardableSetupDossier.payloadShape).toBe('restaurant-provider-forwardable-setup-dossier-v1');
+    expect(payload.providerForwardableSetupDossier.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerForwardableSetupDossier.packets.map((item: { id: string }) => item.id)).toContain('runtime-provider');
     expect(payload.providerReceiptLifecycle.payloadShape).toBe('restaurant-provider-receipt-lifecycle-v1');
     expect(payload.providerReceiptLifecycle.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerReceiptLifecycle.memoryWriteRule.forbidden).toContain('private-message text');

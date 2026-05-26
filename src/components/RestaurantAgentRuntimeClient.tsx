@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { RestaurantProviderLiveRunGatePanel } from '@/components/RestaurantProviderLiveRunGatePanel';
+import { RestaurantProviderForwardableSetupDossierPanel } from '@/components/RestaurantProviderForwardableSetupDossierPanel';
 import { RestaurantProviderReceiptAcceptancePanel } from '@/components/RestaurantProviderReceiptAcceptancePanel';
 import { RestaurantProviderRunPacketPanel } from '@/components/RestaurantProviderRunPacketPanel';
 import { RestaurantRunnerMissionTimelinePanel } from '@/components/RestaurantRunnerMissionTimelinePanel';
@@ -83,6 +84,7 @@ import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shif
 import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderLiveRunGate } from '@/lib/restaurant-provider-live-run-gate';
+import type { RestaurantProviderForwardableSetupDossier } from '@/lib/restaurant-provider-forwardable-setup-dossier';
 import type { RestaurantProviderLiveRunLaunchAttempt } from '@/lib/restaurant-provider-live-run-launch-attempt';
 import type { RestaurantRunnerMissionTimeline } from '@/lib/restaurant-runner-mission-timeline';
 import type { RestaurantProviderReceiptAcceptanceConsole } from '@/lib/restaurant-provider-receipt-acceptance-console';
@@ -330,6 +332,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftSandboxForwardAttempt?: RestaurantShiftSandboxForwardAttempt;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerLiveRunGate?: RestaurantProviderLiveRunGate;
+    providerForwardableSetupDossier?: RestaurantProviderForwardableSetupDossier;
     providerLiveRunLaunchAttempt?: RestaurantProviderLiveRunLaunchAttempt;
     runnerMissionTimeline?: RestaurantRunnerMissionTimeline;
     providerReceiptLifecycle?: RestaurantProviderReceiptLifecycle;
@@ -545,6 +548,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         providerLiveRunGate: payload?.providerLiveRunGate || previous.providerLiveRunGate,
+        providerForwardableSetupDossier: payload?.providerForwardableSetupDossier || previous.providerForwardableSetupDossier,
         providerLiveRunLaunchAttempt: payload?.providerLiveRunLaunchAttempt || previous.providerLiveRunLaunchAttempt,
         runnerMissionTimeline: payload?.runnerMissionTimeline || previous.runnerMissionTimeline,
         providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
@@ -8800,6 +8804,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <RestaurantProviderReceiptAcceptancePanel consoleData={dispatchState.providerReceiptAcceptanceConsole} />
               <RestaurantProviderLiveRunGatePanel liveRunGate={dispatchState.providerLiveRunGate} launchAttempt={dispatchState.providerLiveRunLaunchAttempt} />
               <RestaurantRunnerMissionTimelinePanel timeline={dispatchState.runnerMissionTimeline} />
+              <RestaurantProviderForwardableSetupDossierPanel dossier={dispatchState.providerForwardableSetupDossier} />
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
