@@ -72,6 +72,7 @@ import { buildRestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-revi
 import { buildRestaurantNextLoopChannelPlan } from '@/lib/restaurant-next-loop-channel-plan';
 import { buildRestaurantReputationCloseoutPack } from '@/lib/restaurant-reputation-closeout-pack';
 import { buildRestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
+import { buildRestaurantProviderAdapterConfigWorkbench } from '@/lib/restaurant-provider-adapter-config-workbench';
 import { buildRestaurantProviderSetupPack } from '@/lib/restaurant-provider-setup-pack';
 import { buildRestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import { buildRestaurantProviderSetupStateSummary, recordRestaurantProviderSetupState } from '@/lib/restaurant-provider-setup-state-store';
@@ -1896,6 +1897,20 @@ export async function POST(request: NextRequest) {
       providerReceiptLifecycle,
       now,
     });
+    const providerAdapterConfigWorkbench = buildRestaurantProviderAdapterConfigWorkbench({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      providerAdapterContractPack,
+      providerSandboxReadinessBoard,
+      providerSandboxRunConsole,
+      runtimeProbe,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -1919,6 +1934,7 @@ export async function POST(request: NextRequest) {
       providerSandboxSubmitWorkbench,
       providerSandboxReadinessBoard,
       providerSandboxRunConsole,
+      providerAdapterConfigWorkbench,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,

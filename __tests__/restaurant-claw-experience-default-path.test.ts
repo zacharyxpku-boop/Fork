@@ -197,6 +197,10 @@ describe('restaurant claw experience default path', () => {
       'closeout',
     ]);
     expect(payload.providerSandboxRunConsole.providerCallbackContract.header).toBe('x-restaurant-agent-signature');
+    expect(payload.providerAdapterConfigWorkbench.payloadShape).toBe('restaurant-provider-adapter-config-workbench-v1');
+    expect(payload.providerAdapterConfigWorkbench.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerAdapterConfigWorkbench.targets.map((item: { target: string }) => item.target)).toEqual(['lobu', 'openclaw', 'hermes']);
+    expect(payload.providerAdapterConfigWorkbench.recommended.target).toBe('openclaw');
     expect(payload.providerReceiptLifecycle.payloadShape).toBe('restaurant-provider-receipt-lifecycle-v1');
     expect(payload.providerReceiptLifecycle.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerReceiptLifecycle.memoryWriteRule.forbidden).toContain('private-message text');

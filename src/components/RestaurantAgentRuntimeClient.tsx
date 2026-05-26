@@ -60,6 +60,7 @@ import type { RestaurantProviderSetupPack } from '@/lib/restaurant-provider-setu
 import type { RestaurantProviderSetupWizard } from '@/lib/restaurant-provider-setup-wizard';
 import type { RestaurantProviderSetupStateSummary } from '@/lib/restaurant-provider-setup-state-store';
 import type { RestaurantProviderAdapterContractPack } from '@/lib/restaurant-provider-adapter-contract-pack';
+import type { RestaurantProviderAdapterConfigWorkbench } from '@/lib/restaurant-provider-adapter-config-workbench';
 import type { RestaurantProviderReadinessHealth } from '@/lib/restaurant-provider-readiness-health';
 import type { RestaurantProviderKeyGapBoard } from '@/lib/restaurant-provider-key-gap-board';
 import type { RestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
@@ -299,6 +300,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerSetupWizard?: RestaurantProviderSetupWizard;
     providerSetupState?: RestaurantProviderSetupStateSummary;
     providerAdapterContractPack?: RestaurantProviderAdapterContractPack;
+    providerAdapterConfigWorkbench?: RestaurantProviderAdapterConfigWorkbench;
     providerReadinessHealth?: RestaurantProviderReadinessHealth;
     providerKeyGapBoard?: RestaurantProviderKeyGapBoard;
     providerUnlockLadder?: RestaurantProviderUnlockLadder;
@@ -498,6 +500,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerReadinessHealth: payload?.providerReadinessHealth || previous.providerReadinessHealth,
         providerKeyGapBoard: payload?.providerKeyGapBoard || previous.providerKeyGapBoard,
         providerAdapterContractPack: payload?.providerAdapterContractPack || previous.providerAdapterContractPack,
+        providerAdapterConfigWorkbench: payload?.providerAdapterConfigWorkbench || previous.providerAdapterConfigWorkbench,
         competitorAudit: payload?.competitorAudit || previous.competitorAudit,
         buildQueue: payload?.buildQueue || previous.buildQueue,
         providerSetupWizard: payload?.providerSetupWizard || previous.providerSetupWizard,
@@ -8585,6 +8588,66 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-lime-100/55">
                 secret policy: {dispatchState.providerAdapterContractPack?.providerSecretPolicy.storage || 'server-env-or-secret-manager-only'} / never collect: {(dispatchState.providerAdapterContractPack?.providerSecretPolicy.neverCollectInClient || ['API keys', 'cookies', 'tokens', 'raw POS rows']).slice(0, 5).join(' / ')}
               </p>
+              <div className="mt-3 border border-teal-200/15 bg-teal-200/[0.035] p-3">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-100/65">provider adapter config workbench</div>
+                    <p className="mt-1 text-xs font-black text-white">Choose simulator or real-provider mode for Lobu, OpenClaw and Hermes; list exactly which Provider keys, grants and callback proof are still missing.</p>
+                    <p className="mt-1 text-[11px] leading-4 text-teal-100/55">recommended: {dispatchState.providerAdapterConfigWorkbench?.recommended.target || 'openclaw'} / {dispatchState.providerAdapterConfigWorkbench?.recommended.mode || 'sandbox-simulator'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">real submit</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerAdapterConfigWorkbench?.summary.canSubmitRealProviderNow ? 'ready' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerAdapterConfigWorkbench?.verdict || 'simulator-first'}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">targets</div>
+                    <div className="mt-1 text-xs font-black text-teal-100/75">{dispatchState.providerAdapterConfigWorkbench?.summary.targets ?? 3}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">real ready</div>
+                    <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.providerAdapterConfigWorkbench?.summary.realProviderReady ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">simulator</div>
+                    <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.providerAdapterConfigWorkbench?.summary.simulatorReady ?? 3}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">missing env</div>
+                    <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.providerAdapterConfigWorkbench?.summary.missingEnvKeys ?? 4}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external claim</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerAdapterConfigWorkbench?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  {(dispatchState.providerAdapterConfigWorkbench?.targets || [
+                    { target: 'lobu', label: 'Lobu-compatible worker', mode: 'sandbox-simulator', status: 'missing-runtime', submitAllowed: false, simulatorAllowed: true, endpointEnv: 'RESTAURANT_AGENT_LOBU_RUNTIME_URL', apiKeyEnv: 'RESTAURANT_AGENT_LOBU_API_KEY', submitPath: '/events', healthPath: '/health', configuredEvidence: ['adapter:needs-runtime-config'], missingEnvKeys: ['RESTAURANT_AGENT_LOBU_RUNTIME_URL', 'RESTAURANT_AGENT_LOBU_API_KEY'], missingBusinessEvidence: ['merchant authorization'], callbackRequired: ['external-receipt'], acceptanceEvidence: ['externalRunId'], firstTest: 'Run simulator timeline now; collect runtime keys before real submit.', stopLine: 'No real provider submit without runtime key, merchant grant and callback.' },
+                    { target: 'openclaw', label: 'OpenClaw browser agent', mode: 'sandbox-simulator', status: 'missing-runtime', submitAllowed: false, simulatorAllowed: true, endpointEnv: 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL', apiKeyEnv: 'RESTAURANT_AGENT_OPENCLAW_API_KEY', submitPath: '/tasks', healthPath: '/health', configuredEvidence: ['adapter:needs-runtime-config'], missingEnvKeys: ['RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL', 'RESTAURANT_AGENT_OPENCLAW_API_KEY'], missingBusinessEvidence: ['merchant authorization'], callbackRequired: ['external-receipt'], acceptanceEvidence: ['externalRunId'], firstTest: 'Run simulator timeline now; collect runtime keys before real submit.', stopLine: 'No real provider submit without runtime key, merchant grant and callback.' },
+                    { target: 'hermes', label: 'Hermes resident runtime', mode: 'sandbox-simulator', status: 'missing-runtime', submitAllowed: false, simulatorAllowed: true, endpointEnv: 'RESTAURANT_AGENT_HERMES_RUNTIME_URL', apiKeyEnv: 'RESTAURANT_AGENT_HERMES_API_KEY', submitPath: '/runs', healthPath: '/health', configuredEvidence: ['adapter:needs-runtime-config'], missingEnvKeys: ['RESTAURANT_AGENT_HERMES_RUNTIME_URL', 'RESTAURANT_AGENT_HERMES_API_KEY'], missingBusinessEvidence: ['merchant authorization'], callbackRequired: ['external-receipt'], acceptanceEvidence: ['externalRunId'], firstTest: 'Run simulator timeline now; collect runtime keys before real submit.', stopLine: 'No real provider submit without runtime key, merchant grant and callback.' },
+                  ]).map(target => (
+                    <div className="border border-white/10 bg-stone-950/45 p-2" key={target.target}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-black text-white">{target.label}</span>
+                        <span className={target.submitAllowed ? 'text-[10px] text-emerald-100/70' : target.simulatorAllowed ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{target.mode}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-teal-100/55">{target.status} / {target.endpointEnv}{target.submitPath}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">missing: {target.missingEnvKeys.slice(0, 3).join(' / ') || target.missingBusinessEvidence.slice(0, 2).join(' / ') || 'none'}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/55">{target.firstTest}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-rose-100/45">{target.stopLine}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-teal-100/55">
+                  key request: {(dispatchState.providerAdapterConfigWorkbench?.providerOfTheKeyRequest || [{ owner: 'runtime-admin', giveThis: ['RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL', 'RESTAURANT_AGENT_OPENCLAW_API_KEY', 'RESTAURANT_AGENT_CALLBACK_SECRET'], unlocks: ['real provider sandbox submit'] }]).map(item => `${item.owner}: ${item.giveThis.slice(0, 3).join(' / ')}`).join(' | ')}
+                </p>
+              </div>
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
