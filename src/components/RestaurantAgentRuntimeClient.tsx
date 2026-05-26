@@ -53,6 +53,7 @@ import type { RestaurantExternalAccessGuide } from '@/lib/restaurant-external-ac
 import type { RestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import type { RestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
 import type { RestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
+import type { RestaurantFirstProviderSandboxRunConsole } from '@/lib/restaurant-first-provider-sandbox-run-console';
 import type { RestaurantFirstRunControlTower } from '@/lib/restaurant-first-run-control-tower';
 import type { RestaurantPostRunReviewPack } from '@/lib/restaurant-post-run-review-pack';
 import type { RestaurantNextLoopChannelPlan } from '@/lib/restaurant-next-loop-channel-plan';
@@ -328,6 +329,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerSandboxSubmitAttempt?: RestaurantProviderSandboxSubmitAttempt;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
     firstForwardableRunPack?: RestaurantFirstForwardableRunPack;
+    firstProviderSandboxRunConsole?: RestaurantFirstProviderSandboxRunConsole;
     firstRunControlTower?: RestaurantFirstRunControlTower;
     postRunReviewPack?: RestaurantPostRunReviewPack;
     nextLoopChannelPlan?: RestaurantNextLoopChannelPlan;
@@ -546,6 +548,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         shiftCloseoutTrainingPack: payload?.shiftCloseoutTrainingPack || previous.shiftCloseoutTrainingPack,
         shiftCapabilityActivationPack: payload?.shiftCapabilityActivationPack || previous.shiftCapabilityActivationPack,
         firstForwardableRunPack: payload?.firstForwardableRunPack || previous.firstForwardableRunPack,
+        firstProviderSandboxRunConsole: payload?.firstProviderSandboxRunConsole || previous.firstProviderSandboxRunConsole,
         aiEmployeeMemoryPack: payload?.aiEmployeeMemoryPack || previous.aiEmployeeMemoryPack,
         capabilityTrainingRecords: payload?.trainingRecords || previous.capabilityTrainingRecords,
         postRunReviewPack: payload?.postRunReviewPack || previous.postRunReviewPack,
@@ -8710,6 +8713,68 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
                 <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-cyan-100/55">
                   provider handoff: {(dispatchState.merchantAuthorizationPacket?.providerHandOff.giveProvider || ['scope id and allowed action list', 'public store URL or account alias', 'callback URL and required signature header name']).slice(0, 4).join(' / ')}
+                </p>
+              </div>
+              <div className="mt-3 border border-indigo-200/15 bg-indigo-200/[0.035] p-3">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-100/65">first provider sandbox run</div>
+                    <p className="mt-1 text-xs font-black text-white">Pick one merchant scope, one sanitized package and one Provider target; keep it open until signed receipt decides whether the next run can be trained.</p>
+                    <p className="mt-1 text-[11px] leading-4 text-indigo-100/55">selected: {dispatchState.firstProviderSandboxRunConsole?.selectedRun.scopeLabel || 'Dianping / Meituan local-life account'} / {dispatchState.firstProviderSandboxRunConsole?.selectedRun.targetProvider || 'openclaw'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">first run</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.firstProviderSandboxRunConsole?.summary.canStartFirstSandboxRun ? 'ready' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">verdict</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.firstProviderSandboxRunConsole?.verdict || 'sign-merchant-scope-first'}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">ready</div>
+                    <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.firstProviderSandboxRunConsole?.summary.ready ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">blocked</div>
+                    <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.firstProviderSandboxRunConsole?.summary.blocked ?? 4}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">waiting</div>
+                    <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.firstProviderSandboxRunConsole?.summary.waiting ?? 1}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">train</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.firstProviderSandboxRunConsole?.summary.canTrainNextRun ? 'allowed' : 'blocked'}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">claim</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.firstProviderSandboxRunConsole?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-6">
+                  {(dispatchState.firstProviderSandboxRunConsole?.steps || [
+                    { id: 'merchant-scope', label: 'Merchant signs one scope', status: 'blocked', owner: 'merchant', evidence: ['merchant scope', 'expiry'], nextAction: 'Merchant must approve one platform scope first.', stopLine: 'No platform action without signed scope.' },
+                    { id: 'provider-choice', label: 'Choose Provider target', status: 'blocked', owner: 'runtime-admin', evidence: ['openclaw', 'callback'], nextAction: 'Configure runtime URL/API key, browser profile and callback.', stopLine: 'No provider submit without runtime config.' },
+                    { id: 'submit-package', label: 'Select sanitized submit package', status: 'blocked', owner: 'ops', evidence: ['safePayload'], nextAction: 'Prepare sanitized package.', stopLine: 'No secrets or private data.' },
+                    { id: 'dispatch', label: 'Dispatch one sandbox run', status: 'blocked', owner: 'ops', evidence: ['POST /tasks'], nextAction: 'Submit only after prior gates are ready.', stopLine: 'Dispatch is not closeout.' },
+                    { id: 'signed-callback', label: 'Signed callback receipt', status: 'blocked', owner: 'runtime-admin', evidence: ['external-receipt'], nextAction: 'Wait for signed receipt.', stopLine: 'Unsigned receipts rejected.' },
+                    { id: 'closeout-training', label: 'Closeout and train next run', status: 'waiting', owner: 'store-manager', evidence: ['accepted proof only'], nextAction: 'Train only after accepted proof.', stopLine: 'No training from private or raw POS data.' },
+                  ]).map(step => (
+                    <div className="border border-white/10 bg-stone-950/45 p-2" key={step.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-black text-white">{step.label}</span>
+                        <span className={step.status === 'ready' ? 'text-[10px] text-emerald-100/70' : step.status === 'accepted' ? 'text-[10px] text-lime-100/70' : step.status === 'waiting' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{step.status}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-indigo-100/55">owner: {step.owner}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/45">{step.evidence.slice(0, 3).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/55">{step.nextAction}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-indigo-100/55">
+                  submit card: {dispatchState.firstProviderSandboxRunConsole?.providerSubmitCard.method || 'POST'} {dispatchState.firstProviderSandboxRunConsole?.providerSubmitCard.endpointEnv || 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL + /tasks'} / callback {dispatchState.firstProviderSandboxRunConsole?.selectedRun.callbackAction || 'external-receipt'} with {dispatchState.firstProviderSandboxRunConsole?.selectedRun.callbackHeader || 'x-restaurant-agent-signature'}
                 </p>
               </div>
             </div>

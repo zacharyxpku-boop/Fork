@@ -212,6 +212,17 @@ describe('restaurant claw experience default path', () => {
       'pos-redemption',
     ]);
     expect(payload.merchantAuthorizationPacket.providerHandOff.neverGiveProvider).toContain('private-message text');
+    expect(payload.firstProviderSandboxRunConsole.payloadShape).toBe('restaurant-first-provider-sandbox-run-console-v1');
+    expect(payload.firstProviderSandboxRunConsole.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.firstProviderSandboxRunConsole.selectedRun.callbackHeader).toBe('x-restaurant-agent-signature');
+    expect(payload.firstProviderSandboxRunConsole.steps.map((item: { id: string }) => item.id)).toEqual([
+      'merchant-scope',
+      'provider-choice',
+      'submit-package',
+      'dispatch',
+      'signed-callback',
+      'closeout-training',
+    ]);
     expect(payload.providerReceiptLifecycle.payloadShape).toBe('restaurant-provider-receipt-lifecycle-v1');
     expect(payload.providerReceiptLifecycle.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerReceiptLifecycle.memoryWriteRule.forbidden).toContain('private-message text');

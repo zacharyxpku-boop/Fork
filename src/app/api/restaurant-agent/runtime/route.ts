@@ -31,6 +31,7 @@ import { buildRestaurantExternalAccessGuide } from '@/lib/restaurant-external-ac
 import { buildRestaurantExternalUnlockRequestPack } from '@/lib/restaurant-external-unlock-request-pack';
 import { buildRestaurantExecutionTimeline } from '@/lib/restaurant-execution-timeline';
 import { buildRestaurantFirstForwardableRunPack } from '@/lib/restaurant-first-forwardable-run-pack';
+import { buildRestaurantFirstProviderSandboxRunConsole } from '@/lib/restaurant-first-provider-sandbox-run-console';
 import { buildRestaurantFirstRunControlTower } from '@/lib/restaurant-first-run-control-tower';
 import { buildRestaurantMerchantActivationPacket } from '@/lib/restaurant-merchant-activation-packet';
 import { buildRestaurantMerchantAuthorizationPacket } from '@/lib/restaurant-merchant-authorization-packet';
@@ -1932,6 +1933,14 @@ export async function POST(request: NextRequest) {
       providerSandboxRunConsole,
       now,
     });
+    const firstProviderSandboxRunConsole = buildRestaurantFirstProviderSandboxRunConsole({
+      merchantAuthorizationPacket,
+      providerAdapterConfigWorkbench,
+      providerSandboxReadinessBoard,
+      providerSandboxSubmitWorkbench,
+      providerSandboxRunConsole,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -1957,6 +1966,7 @@ export async function POST(request: NextRequest) {
       providerSandboxRunConsole,
       providerAdapterConfigWorkbench,
       merchantAuthorizationPacket,
+      firstProviderSandboxRunConsole,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,
