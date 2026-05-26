@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { RestaurantProviderRunPacketPanel } from '@/components/RestaurantProviderRunPacketPanel';
 import { buildRestaurantAgentCapabilityPlan, type RestaurantCompetitorCapabilityStatus } from '@/lib/restaurant-agent-capabilities';
 import type { RestaurantActivationGateReport } from '@/lib/restaurant-agent-activation-gates';
 import type { RestaurantAgentChannelDeliveryAttempt, RestaurantAgentChannelDeliveryReport } from '@/lib/restaurant-agent-channel-delivery-store';
@@ -78,6 +79,7 @@ import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-prov
 import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shift-sandbox-forward';
 import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
+import type { RestaurantProviderRunPacket } from '@/lib/restaurant-provider-run-packet';
 import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderSandboxReadinessBoard } from '@/lib/restaurant-provider-sandbox-readiness-board';
@@ -321,6 +323,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftSandboxForwardAttempt?: RestaurantShiftSandboxForwardAttempt;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerReceiptLifecycle?: RestaurantProviderReceiptLifecycle;
+    providerRunPacket?: RestaurantProviderRunPacket;
     providerAcceptanceWorkbench?: RestaurantProviderAcceptanceWorkbench;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerSandboxReadinessBoard?: RestaurantProviderSandboxReadinessBoard;
@@ -531,6 +534,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
+        providerRunPacket: payload?.providerRunPacket || previous.providerRunPacket,
         providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
         providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
         providerSandboxReadinessBoard: payload?.providerSandboxReadinessBoard || previous.providerSandboxReadinessBoard,
@@ -8777,6 +8781,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   submit card: {dispatchState.firstProviderSandboxRunConsole?.providerSubmitCard.method || 'POST'} {dispatchState.firstProviderSandboxRunConsole?.providerSubmitCard.endpointEnv || 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL + /tasks'} / callback {dispatchState.firstProviderSandboxRunConsole?.selectedRun.callbackAction || 'external-receipt'} with {dispatchState.firstProviderSandboxRunConsole?.selectedRun.callbackHeader || 'x-restaurant-agent-signature'}
                 </p>
               </div>
+              <RestaurantProviderRunPacketPanel providerRunPacket={dispatchState.providerRunPacket} />
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
