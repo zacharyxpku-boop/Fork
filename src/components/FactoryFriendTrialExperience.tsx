@@ -134,6 +134,24 @@ const OPENING_STEPS = [
   { title: '补外部钥匙', detail: '需要自动发布、核销或真实经营分析时，再接 Provider Key、Runner、授权和数据合同。' },
 ];
 
+const AI_EMPLOYEE_TRIAL_STEPS = [
+  {
+    label: 'Step 1',
+    title: 'Intake the store task',
+    body: 'Restaurant, offer, diner segment, channels, visit reason and stop lines are captured before any content or automation claim.',
+  },
+  {
+    label: 'Step 2',
+    title: 'AI employee accepts the shift',
+    body: 'Wenai Store Operator creates the operating brief, owner queue, publish proof slots and provider gaps from one controlled path.',
+  },
+  {
+    label: 'Step 3',
+    title: 'Forward manager actions',
+    body: 'The store manager receives today actions, evidence required, follow-up copy and the exact Provider keys needed for external execution.',
+  },
+];
+
 const RESTAURANT_SCENARIOS = [
   { title: '菜单定价与结构分析', detail: '输入菜单、销量、毛利或缺失字段，输出主推菜、下架风险、价格待确认项。' },
   { title: '外卖活动方案设计', detail: '把套餐边界、平台活动和库存限制转成可审查的活动说明与发布素材。' },
@@ -290,6 +308,27 @@ export function FactoryFriendTrialExperience({
                           <span className="mt-1 block text-[11px] leading-4 text-stone-400">{item.body}</span>
                         </a>
                       ))}
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-sky-200/20 bg-sky-200/[0.07] p-3">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-100/70">3-step AI employee trial</div>
+                          <p className="mt-1 text-sm font-black text-white">One path: intake, AI employee shift, manager handoff.</p>
+                        </div>
+                        <a className="w-fit rounded-full border border-sky-100/30 px-3 py-1.5 text-[11px] font-black text-sky-100 transition hover:bg-sky-100/10" href="#restaurant-agent-runtime">
+                          Start Default Path
+                        </a>
+                      </div>
+                      <div className="mt-3 grid gap-2 md:grid-cols-3">
+                        {AI_EMPLOYEE_TRIAL_STEPS.map(item => (
+                          <div className="border border-white/10 bg-black/20 p-3" key={item.title}>
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/60">{item.label}</div>
+                            <div className="mt-1 text-sm font-black text-white">{item.title}</div>
+                            <p className="mt-1 text-[11px] leading-4 text-stone-400">{item.body}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="mt-7 grid gap-3 md:grid-cols-5">
