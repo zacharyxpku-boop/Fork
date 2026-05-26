@@ -68,6 +68,10 @@ describe('restaurant claw experience default path', () => {
     expect(payload.defaultPathForwardableBrief.summary.canClaimTrueOperatingAnalysis).toBe(false);
     expect(payload.defaultPathForwardableBrief.todayOperatingOrder.map((item: { id: string }) => item.id)).toContain('provider-unlock');
     expect(payload.defaultPathForwardableBrief.redactedFields).toContain('raw POS rows');
+    expect(payload.clawCloudOperatorHome.payloadShape).toBe('restaurant-claw-cloud-operator-home-v1');
+    expect(payload.clawCloudOperatorHome.summary.canUseAsAiEmployeeToday).toBe(true);
+    expect(payload.clawCloudOperatorHome.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.clawCloudOperatorHome.lanes.map((item: { id: string }) => item.id)).toContain('ask-ai-employee');
     expect(payload.clawExperienceDefaultPath.routeDecision.providerKeyChecklist).toContain('RESTAURANT_AGENT_CALLBACK_SECRET');
     expect(payload.clawSkillWorkbench.payloadShape).toBe('restaurant-claw-skill-workbench-v1');
     expect(payload.clawSkillExecutionRecord.payloadShape).toBe('restaurant-claw-skill-execution-record-v1');

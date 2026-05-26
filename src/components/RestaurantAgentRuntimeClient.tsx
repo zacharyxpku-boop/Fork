@@ -17,6 +17,7 @@ import type { RestaurantAiEmployeeInbox } from '@/lib/restaurant-ai-employee-inb
 import type { RestaurantAiOsAuditReport } from '@/lib/restaurant-ai-os-audit-report';
 import type { RestaurantActivationCockpit } from '@/lib/restaurant-activation-cockpit';
 import type { RestaurantClawExperienceDefaultPath } from '@/lib/restaurant-claw-experience-default-path';
+import type { RestaurantClawCloudOperatorHome } from '@/lib/restaurant-claw-cloud-operator-home';
 import type { RestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
 import type { RestaurantCompetitorRouteDecision } from '@/lib/restaurant-competitor-route-decision';
 import type { RestaurantCompetitorTrainingBlueprint } from '@/lib/restaurant-competitor-training-blueprint';
@@ -274,6 +275,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawSkillExecutionLedger?: RestaurantClawSkillExecutionLedger;
     clawTrainingBatch?: RestaurantClawTrainingBatch;
     clawExperienceDefaultPath?: RestaurantClawExperienceDefaultPath;
+    clawCloudOperatorHome?: RestaurantClawCloudOperatorHome;
     defaultPathForwardableBrief?: RestaurantDefaultPathForwardableBrief;
     controlledTrialRun?: RestaurantControlledTrialRun;
     customerDemandGateway?: RestaurantCustomerDemandGateway;
@@ -466,6 +468,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         status: payload?.clawExperienceDefaultPath?.summary?.providerGated ? 'blocked' : 'queued',
         message: `Default Path: ${payload?.clawExperienceDefaultPath?.summary?.readyNow ?? 0} ready, ${payload?.clawExperienceDefaultPath?.summary?.trainingNeeded ?? 0} training, ${payload?.clawExperienceDefaultPath?.summary?.providerGated ?? 0} provider/boundary gates.`,
         clawExperienceDefaultPath: payload?.clawExperienceDefaultPath || previous.clawExperienceDefaultPath,
+        clawCloudOperatorHome: payload?.clawCloudOperatorHome || previous.clawCloudOperatorHome,
         defaultPathForwardableBrief: payload?.defaultPathForwardableBrief || previous.defaultPathForwardableBrief,
         clawSkillWorkbench: payload?.clawSkillWorkbench || previous.clawSkillWorkbench,
         clawSkillExecutionRecord: payload?.clawSkillExecutionRecord || previous.clawSkillExecutionRecord,
@@ -7132,6 +7135,68 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="border border-rose-200/15 bg-rose-200/[0.03] p-2 text-rose-100/65">
                 provider unlock sheet: External execution only unlocks after runtime URL, API key, merchant grant, callback and data contract are ready.
+              </div>
+            </div>
+            <div className="mt-3 border border-sky-200/20 bg-sky-200/[0.04] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/65">claw cloud operator home</div>
+                  <p className="mt-1 text-xs font-black text-white">AI employee first, expert tools underneath.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  The customer sees one Store Operator mode: ask the AI employee, run the shift, prepare publish proof, follow demand and unlock Provider lanes.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-6">
+                <div className="border border-white/10 bg-stone-950/45 p-2 md:col-span-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">status</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.clawCloudOperatorHome?.hero.status || 'created on start'}</div>
+                  <p className="mt-1 text-[11px] leading-4 text-white/45">{dispatchState.clawCloudOperatorHome?.hero.promise || 'Start Default Path to create the AI employee home over the current restaurant task.'}</p>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">ready internal</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.clawCloudOperatorHome?.summary.readyInternal ?? 'after run'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">needs review</div>
+                  <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.clawCloudOperatorHome?.summary.needsReview ?? 'after run'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider gated</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.clawCloudOperatorHome?.summary.providerGated ?? 'after run'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external claim</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.clawCloudOperatorHome?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                {(dispatchState.clawCloudOperatorHome?.lanes || [
+                  { id: 'ask-ai-employee', label: 'Ask AI employee', status: 'ready-internal', owner: 'ai-employee', customerPromise: 'Start from one AI employee answer.', actionNow: 'Build the first operating brief.', visibleProof: 'memory cards and task queue', externalNeeded: [], stopLine: 'No external action without authorization.' },
+                  { id: 'run-shift', label: 'Run today shift', status: 'ready-internal', owner: 'store-manager', customerPromise: 'Run opening, service watch and closeout.', actionNow: 'Assign the first manager task.', visibleProof: 'owner queue', externalNeeded: [], stopLine: 'No hidden POS mutation.' },
+                  { id: 'provider-unlock', label: 'Unlock external execution', status: 'provider-gated', owner: 'runtime-admin', customerPromise: 'Provider lanes unlock after proof.', actionNow: 'Collect runtime URL/key, callback and grants.', visibleProof: 'signed receipt', externalNeeded: ['runtime URL/key'], stopLine: 'No accepted receipt means no automation claim.' },
+                ]).slice(0, 5).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.label}</span>
+                      <span className={item.status === 'ready-internal' ? 'text-[10px] text-emerald-100/70' : item.status === 'needs-review' ? 'text-[10px] text-amber-100/70' : item.status === 'data-gated' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-sky-100/55">{item.owner}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.actionNow}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">proof: {item.visibleProof}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                <p className="border border-white/10 bg-stone-950/45 p-2 text-[11px] leading-4 text-sky-100/60">
+                  AI brief: {dispatchState.clawCloudOperatorHome?.aiEmployeeBrief.slice(0, 3).join(' / ') || 'created after Start Default Path'}
+                </p>
+                <p className="border border-white/10 bg-stone-950/45 p-2 text-[11px] leading-4 text-white/55">
+                  owner queue: {dispatchState.clawCloudOperatorHome?.ownerQueue.slice(0, 3).join(' / ') || 'store manager first task, proof slot and next action'}
+                </p>
+                <p className="border border-white/10 bg-stone-950/45 p-2 text-[11px] leading-4 text-rose-100/60">
+                  provider queue: {dispatchState.clawCloudOperatorHome?.providerQueue.slice(0, 3).join(' / ') || 'runtime URL/key / callback secret / merchant grants'}
+                </p>
               </div>
             </div>
             <div className="mt-3 border border-lime-200/20 bg-lime-200/[0.04] p-3">

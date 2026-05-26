@@ -192,6 +192,10 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Provider gates');
     expect(html).toContain('merchant inputs to collect');
     expect(html).toContain('provider unlock sheet');
+    expect(html).toContain('claw cloud operator home');
+    expect(html).toContain('AI employee first, expert tools underneath.');
+    expect(html).toContain('Ask AI employee');
+    expect(html).toContain('provider queue');
     expect(html).toContain('forwardable operating brief');
     expect(html).toContain('One-page handoff for store manager, ops and Provider setup.');
     expect(html).toContain('manager share text');
