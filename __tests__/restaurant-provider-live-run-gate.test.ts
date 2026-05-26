@@ -36,6 +36,11 @@ describe('restaurant provider live run gate', () => {
     ]);
     expect(gate.firstLiveAction.acceptedResult).toContain('signed external-receipt');
     expect(gate.externalRequired.length).toBeGreaterThan(0);
+    expect(payload.providerLiveRunLaunchAttempt.payloadShape).toBe('restaurant-provider-live-run-launch-attempt-v1');
+    expect(payload.providerLiveRunLaunchAttempt.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerLiveRunLaunchAttempt.selected.packageId).toBe(gate.selectedRun.packageId);
+    expect(payload.providerLiveRunLaunchAttempt.closeoutExpectation.callbackHeader).toBe('x-restaurant-agent-signature');
+    expect(payload.providerLiveRunLaunchAttempt.operatorDecision.stopLine).toBeTruthy();
     expect(serialized).not.toContain('secret-value');
     expect(serialized).not.toContain('cookie-value');
     expect(serialized).not.toContain('rawBrowserProfileId:');

@@ -1,6 +1,7 @@
 'use client';
 
 import type { RestaurantProviderLiveRunGate } from '@/lib/restaurant-provider-live-run-gate';
+import type { RestaurantProviderLiveRunLaunchAttempt } from '@/lib/restaurant-provider-live-run-launch-attempt';
 
 const fallbackChecks = [
   { id: 'runtime-health', status: 'blocked', owner: 'runtime-admin', evidence: ['runtime URL/API key'], nextAction: 'Configure Provider health.' },
@@ -11,7 +12,7 @@ const fallbackChecks = [
   { id: 'claim-boundary', status: 'blocked', owner: 'ops', evidence: ['canClaimExternalAutomation:false'], nextAction: 'Do not claim production automation.' },
 ];
 
-export function RestaurantProviderLiveRunGatePanel({ liveRunGate }: { liveRunGate?: RestaurantProviderLiveRunGate }) {
+export function RestaurantProviderLiveRunGatePanel({ liveRunGate, launchAttempt }: { liveRunGate?: RestaurantProviderLiveRunGate; launchAttempt?: RestaurantProviderLiveRunLaunchAttempt }) {
   const checks = liveRunGate?.launchChecklist || fallbackChecks;
 
   return (
@@ -69,6 +70,18 @@ export function RestaurantProviderLiveRunGatePanel({ liveRunGate }: { liveRunGat
       <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-cyan-100/55">
         first action: {liveRunGate?.firstLiveAction.mode || 'simulator'} / {liveRunGate?.firstLiveAction.method || 'POST'} {liveRunGate?.firstLiveAction.endpoint || 'provider runtime or browser gateway'} / callback {liveRunGate?.selectedRun.callbackAction || 'external-receipt'} with {liveRunGate?.selectedRun.callbackHeader || 'x-restaurant-agent-signature'}
       </p>
+      <div className="mt-2 border border-white/10 bg-stone-950/45 p-2">
+        <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">launch attempt</div>
+            <p className="mt-1 text-[11px] leading-4 text-white/60">{launchAttempt?.operatorDecision.primaryAction || 'Resolve the first blocking launch gate before attempting a live run.'}</p>
+          </div>
+          <div className="text-left lg:text-right">
+            <div className="text-xs font-black text-white">{launchAttempt?.verdict || 'blocked-before-launch'}</div>
+            <div className="mt-1 text-[10px] text-cyan-100/55">{launchAttempt?.operatorDecision.blockedBy || 'no active launch'}</div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -86,6 +86,7 @@ import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-prov
 import { buildRestaurantProviderKeyGapBoard } from '@/lib/restaurant-provider-key-gap-board';
 import { buildRestaurantProviderCallbackCloseoutConsole } from '@/lib/restaurant-provider-callback-closeout-console';
 import { buildRestaurantProviderLiveRunGate } from '@/lib/restaurant-provider-live-run-gate';
+import { buildRestaurantProviderLiveRunLaunchAttempt } from '@/lib/restaurant-provider-live-run-launch-attempt';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantProviderReceiptAcceptanceConsole } from '@/lib/restaurant-provider-receipt-acceptance-console';
 import { buildRestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
@@ -1966,6 +1967,10 @@ export async function POST(request: NextRequest) {
       providerReceiptAcceptanceConsole,
       now,
     });
+    const providerLiveRunLaunchAttempt = buildRestaurantProviderLiveRunLaunchAttempt({
+      providerLiveRunGate,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -1995,6 +2000,7 @@ export async function POST(request: NextRequest) {
       providerRunPacket,
       providerReceiptAcceptanceConsole,
       providerLiveRunGate,
+      providerLiveRunLaunchAttempt,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,

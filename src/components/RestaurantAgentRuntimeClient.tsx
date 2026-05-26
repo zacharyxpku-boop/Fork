@@ -82,6 +82,7 @@ import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shif
 import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderLiveRunGate } from '@/lib/restaurant-provider-live-run-gate';
+import type { RestaurantProviderLiveRunLaunchAttempt } from '@/lib/restaurant-provider-live-run-launch-attempt';
 import type { RestaurantProviderReceiptAcceptanceConsole } from '@/lib/restaurant-provider-receipt-acceptance-console';
 import type { RestaurantProviderRunPacket } from '@/lib/restaurant-provider-run-packet';
 import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
@@ -327,6 +328,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftSandboxForwardAttempt?: RestaurantShiftSandboxForwardAttempt;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerLiveRunGate?: RestaurantProviderLiveRunGate;
+    providerLiveRunLaunchAttempt?: RestaurantProviderLiveRunLaunchAttempt;
     providerReceiptLifecycle?: RestaurantProviderReceiptLifecycle;
     providerReceiptAcceptanceConsole?: RestaurantProviderReceiptAcceptanceConsole;
     providerRunPacket?: RestaurantProviderRunPacket;
@@ -540,6 +542,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         providerLiveRunGate: payload?.providerLiveRunGate || previous.providerLiveRunGate,
+        providerLiveRunLaunchAttempt: payload?.providerLiveRunLaunchAttempt || previous.providerLiveRunLaunchAttempt,
         providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
         providerReceiptAcceptanceConsole: payload?.providerReceiptAcceptanceConsole || previous.providerReceiptAcceptanceConsole,
         providerRunPacket: payload?.providerRunPacket || previous.providerRunPacket,
@@ -8791,7 +8794,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <RestaurantProviderRunPacketPanel providerRunPacket={dispatchState.providerRunPacket} />
               <RestaurantProviderReceiptAcceptancePanel consoleData={dispatchState.providerReceiptAcceptanceConsole} />
-              <RestaurantProviderLiveRunGatePanel liveRunGate={dispatchState.providerLiveRunGate} />
+              <RestaurantProviderLiveRunGatePanel liveRunGate={dispatchState.providerLiveRunGate} launchAttempt={dispatchState.providerLiveRunLaunchAttempt} />
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
