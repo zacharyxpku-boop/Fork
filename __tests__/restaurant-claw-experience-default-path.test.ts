@@ -228,6 +228,10 @@ describe('restaurant claw experience default path', () => {
     expect(payload.providerRunPacket.request.auth).toBe('server-side-bearer-only');
     expect(payload.providerRunPacket.callbackReceiptExample.requiredHeader).toBe('x-restaurant-agent-signature');
     expect(payload.providerRunPacket.acceptanceChecklist.map((item: { id: string }) => item.id)).toContain('claim-boundary');
+    expect(payload.providerReceiptAcceptanceConsole.payloadShape).toBe('restaurant-provider-receipt-acceptance-console-v1');
+    expect(payload.providerReceiptAcceptanceConsole.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerReceiptAcceptanceConsole.validationChecks.map((item: { id: string }) => item.id)).toContain('memory-write');
+    expect(payload.providerReceiptAcceptanceConsole.callbackContract.requiredHeader).toBe('x-restaurant-agent-signature');
     expect(payload.providerReceiptLifecycle.payloadShape).toBe('restaurant-provider-receipt-lifecycle-v1');
     expect(payload.providerReceiptLifecycle.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerReceiptLifecycle.memoryWriteRule.forbidden).toContain('private-message text');

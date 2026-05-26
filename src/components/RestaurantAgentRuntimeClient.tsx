@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { RestaurantProviderReceiptAcceptancePanel } from '@/components/RestaurantProviderReceiptAcceptancePanel';
 import { RestaurantProviderRunPacketPanel } from '@/components/RestaurantProviderRunPacketPanel';
 import { buildRestaurantAgentCapabilityPlan, type RestaurantCompetitorCapabilityStatus } from '@/lib/restaurant-agent-capabilities';
 import type { RestaurantActivationGateReport } from '@/lib/restaurant-agent-activation-gates';
@@ -79,6 +80,7 @@ import type { RestaurantShiftProviderHandoff } from '@/lib/restaurant-shift-prov
 import type { RestaurantShiftSandboxForwardAttempt } from '@/lib/restaurant-shift-sandbox-forward';
 import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sandbox-acceptance';
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
+import type { RestaurantProviderReceiptAcceptanceConsole } from '@/lib/restaurant-provider-receipt-acceptance-console';
 import type { RestaurantProviderRunPacket } from '@/lib/restaurant-provider-run-packet';
 import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
@@ -323,6 +325,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     shiftSandboxForwardAttempt?: RestaurantShiftSandboxForwardAttempt;
     providerReceiptInbox?: RestaurantProviderReceiptInbox;
     providerReceiptLifecycle?: RestaurantProviderReceiptLifecycle;
+    providerReceiptAcceptanceConsole?: RestaurantProviderReceiptAcceptanceConsole;
     providerRunPacket?: RestaurantProviderRunPacket;
     providerAcceptanceWorkbench?: RestaurantProviderAcceptanceWorkbench;
     providerSandboxContract?: RestaurantProviderSandboxContract;
@@ -534,6 +537,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         operatingInsightReport: payload?.operatingInsightReport || previous.operatingInsightReport,
         providerReceiptInbox: payload?.providerReceiptInbox || previous.providerReceiptInbox,
         providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
+        providerReceiptAcceptanceConsole: payload?.providerReceiptAcceptanceConsole || previous.providerReceiptAcceptanceConsole,
         providerRunPacket: payload?.providerRunPacket || previous.providerRunPacket,
         providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
         providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
@@ -8782,6 +8786,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </p>
               </div>
               <RestaurantProviderRunPacketPanel providerRunPacket={dispatchState.providerRunPacket} />
+              <RestaurantProviderReceiptAcceptancePanel consoleData={dispatchState.providerReceiptAcceptanceConsole} />
             </div>
             <div className="mt-3 border border-fuchsia-200/15 bg-fuchsia-200/[0.035] p-3">
               <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">

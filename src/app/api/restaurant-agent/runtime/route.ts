@@ -85,6 +85,7 @@ import { buildRestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-la
 import { buildRestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
 import { buildRestaurantProviderKeyGapBoard } from '@/lib/restaurant-provider-key-gap-board';
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
+import { buildRestaurantProviderReceiptAcceptanceConsole } from '@/lib/restaurant-provider-receipt-acceptance-console';
 import { buildRestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
 import { buildRestaurantProviderRunPacket } from '@/lib/restaurant-provider-run-packet';
 import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
@@ -1949,6 +1950,12 @@ export async function POST(request: NextRequest) {
       providerSandboxSubmitWorkbench,
       now,
     });
+    const providerReceiptAcceptanceConsole = buildRestaurantProviderReceiptAcceptanceConsole({
+      providerRunPacket,
+      providerReceiptInbox,
+      providerReceiptLifecycle,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -1976,6 +1983,7 @@ export async function POST(request: NextRequest) {
       merchantAuthorizationPacket,
       firstProviderSandboxRunConsole,
       providerRunPacket,
+      providerReceiptAcceptanceConsole,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,
