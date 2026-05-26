@@ -78,6 +78,7 @@ import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-r
 import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
 import type { RestaurantProviderSandboxReadinessBoard } from '@/lib/restaurant-provider-sandbox-readiness-board';
+import type { RestaurantProviderSandboxRunConsole } from '@/lib/restaurant-provider-sandbox-run-console';
 import type { RestaurantProviderSandboxSubmitAttempt, RestaurantProviderSandboxSubmitWorkbench } from '@/lib/restaurant-provider-sandbox-submit-workbench';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import type { RestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
@@ -318,6 +319,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerAcceptanceWorkbench?: RestaurantProviderAcceptanceWorkbench;
     providerSandboxContract?: RestaurantProviderSandboxContract;
     providerSandboxReadinessBoard?: RestaurantProviderSandboxReadinessBoard;
+    providerSandboxRunConsole?: RestaurantProviderSandboxRunConsole;
     providerSandboxSubmitWorkbench?: RestaurantProviderSandboxSubmitWorkbench;
     providerSandboxSubmitAttempt?: RestaurantProviderSandboxSubmitAttempt;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -524,6 +526,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
         providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
         providerSandboxReadinessBoard: payload?.providerSandboxReadinessBoard || previous.providerSandboxReadinessBoard,
+        providerSandboxRunConsole: payload?.providerSandboxRunConsole || previous.providerSandboxRunConsole,
         providerSandboxSubmitWorkbench: payload?.providerSandboxSubmitWorkbench || previous.providerSandboxSubmitWorkbench,
         commandCenter: payload?.commandCenter || previous.commandCenter,
         gmCommandDeck: payload?.gmCommandDeck || payload?.commandCenter?.gmCommandDeck || previous.gmCommandDeck,
@@ -7751,6 +7754,65 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     first runnable: blocked until provider keys, merchant grant, callback and data-contract evidence are accepted.
                   </p>
                 )}
+              </div>
+              <div className="mt-3 border border-lime-200/15 bg-lime-200/[0.035] p-3">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/65">sandbox run console</div>
+                    <p className="mt-1 text-xs font-black text-white">After submit, watch runner events, signed callback, accepted receipt, closeout and memory eligibility in one timeline.</p>
+                    <p className="mt-1 text-[11px] leading-4 text-lime-100/55">verdict: {dispatchState.providerSandboxRunConsole?.verdict || 'blocked-before-submit'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">closeout</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerSandboxRunConsole?.summary.canCloseoutRun ? 'ready' : 'waiting'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">done</div>
+                    <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.providerSandboxRunConsole?.summary.done ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">ready</div>
+                    <div className="mt-1 text-xs font-black text-lime-100/75">{dispatchState.providerSandboxRunConsole?.summary.ready ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">waiting</div>
+                    <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.providerSandboxRunConsole?.summary.waiting ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">blocked</div>
+                    <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerSandboxRunConsole?.summary.blocked ?? 4}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">runner events</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerSandboxRunConsole?.summary.runnerEvents ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">memory</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerSandboxRunConsole?.summary.canWriteMemory ? 'allowed' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                  {(dispatchState.providerSandboxRunConsole?.timeline || [
+                    { id: 'readiness', label: 'Sandbox readiness decision', status: 'blocked', owner: 'ops', evidence: ['missing provider setup'], nextAction: 'Complete provider setup before sandbox submit.', stopLine: 'No submit without accepted setup evidence.' },
+                    { id: 'submit-package', label: 'Sanitized submit package selected', status: 'blocked', owner: 'ops', evidence: ['package:none'], nextAction: 'Build safe provider package.', stopLine: 'No secrets or private data in payload.' },
+                    { id: 'signed-callback', label: 'Signed external receipt callback', status: 'waiting', owner: 'runtime-admin', evidence: ['waitingReceipts:0'], nextAction: 'Require signed callback before closeout.', stopLine: 'Unsigned callbacks never close the run.' },
+                  ]).slice(0, 6).map(step => (
+                    <div className="border border-white/10 bg-stone-950/45 p-2" key={step.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-black text-white">{step.label}</span>
+                        <span className={step.status === 'done' || step.status === 'ready' ? 'text-[10px] text-emerald-100/70' : step.status === 'waiting' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{step.status}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-lime-100/55">owner: {step.owner}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">evidence: {step.evidence.slice(0, 3).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/55">{step.nextAction}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-lime-100/55">
+                  callback: {dispatchState.providerSandboxRunConsole?.providerCallbackContract.header || 'x-restaurant-agent-signature'} / evidence {(dispatchState.providerSandboxRunConsole?.providerCallbackContract.acceptedEvidence || ['eventId', 'externalRunId', 'operator summary']).slice(0, 4).join(' / ')}
+                </p>
               </div>
               <div className="mt-3 border border-cyan-200/15 bg-cyan-200/[0.035] p-3">
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
