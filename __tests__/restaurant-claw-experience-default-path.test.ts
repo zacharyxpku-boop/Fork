@@ -175,6 +175,17 @@ describe('restaurant claw experience default path', () => {
       'staff-delivery',
     ]);
     expect(payload.providerSandboxSubmitWorkbench.submitPackages.every((item: { callback: { header: string } }) => item.callback.header === 'x-restaurant-agent-signature')).toBe(true);
+    expect(payload.providerSandboxReadinessBoard.payloadShape).toBe('restaurant-provider-sandbox-readiness-board-v1');
+    expect(payload.providerSandboxReadinessBoard.summary.canClaimExternalAutomation).toBe(false);
+    expect(payload.providerSandboxReadinessBoard.summary.capabilities).toBe(5);
+    expect(payload.providerSandboxReadinessBoard.rows.map((item: { capabilityId: string }) => item.capabilityId)).toEqual([
+      'auto-publish-proof',
+      'auto-lead-acquisition',
+      'auto-coupon-redemption',
+      'true-operating-analysis',
+      'staff-delivery',
+    ]);
+    expect(payload.providerSandboxReadinessBoard.providerScript.join(' ')).toContain('submitAllowed=true');
     expect(payload.providerReceiptLifecycle.payloadShape).toBe('restaurant-provider-receipt-lifecycle-v1');
     expect(payload.providerReceiptLifecycle.summary.canClaimExternalAutomation).toBe(false);
     expect(payload.providerReceiptLifecycle.memoryWriteRule.forbidden).toContain('private-message text');

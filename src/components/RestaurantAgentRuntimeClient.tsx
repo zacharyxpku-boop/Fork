@@ -77,6 +77,7 @@ import type { RestaurantShiftSandboxAcceptance } from '@/lib/restaurant-shift-sa
 import type { RestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import type { RestaurantProviderAcceptanceWorkbench } from '@/lib/restaurant-provider-acceptance-workbench';
 import type { RestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
+import type { RestaurantProviderSandboxReadinessBoard } from '@/lib/restaurant-provider-sandbox-readiness-board';
 import type { RestaurantProviderSandboxSubmitAttempt, RestaurantProviderSandboxSubmitWorkbench } from '@/lib/restaurant-provider-sandbox-submit-workbench';
 import type { RestaurantProviderLaunchBoard } from '@/lib/restaurant-provider-launch-board';
 import type { RestaurantProviderLaunchTrainingPack } from '@/lib/restaurant-provider-launch-training-pack';
@@ -316,6 +317,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     providerReceiptLifecycle?: RestaurantProviderReceiptLifecycle;
     providerAcceptanceWorkbench?: RestaurantProviderAcceptanceWorkbench;
     providerSandboxContract?: RestaurantProviderSandboxContract;
+    providerSandboxReadinessBoard?: RestaurantProviderSandboxReadinessBoard;
     providerSandboxSubmitWorkbench?: RestaurantProviderSandboxSubmitWorkbench;
     providerSandboxSubmitAttempt?: RestaurantProviderSandboxSubmitAttempt;
     providerLaunchBoard?: RestaurantProviderLaunchBoard;
@@ -521,6 +523,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         providerReceiptLifecycle: payload?.providerReceiptLifecycle || previous.providerReceiptLifecycle,
         providerAcceptanceWorkbench: payload?.providerAcceptanceWorkbench || previous.providerAcceptanceWorkbench,
         providerSandboxContract: payload?.providerSandboxContract || previous.providerSandboxContract,
+        providerSandboxReadinessBoard: payload?.providerSandboxReadinessBoard || previous.providerSandboxReadinessBoard,
         providerSandboxSubmitWorkbench: payload?.providerSandboxSubmitWorkbench || previous.providerSandboxSubmitWorkbench,
         commandCenter: payload?.commandCenter || previous.commandCenter,
         gmCommandDeck: payload?.gmCommandDeck || payload?.commandCenter?.gmCommandDeck || previous.gmCommandDeck,
@@ -7680,6 +7683,75 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   'Do not send secrets or customer data.',
                 ]).slice(0, 4).join(' / ')}
               </p>
+              <div className="mt-3 border border-emerald-200/15 bg-emerald-200/[0.035] p-3">
+                <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/65">provider sandbox readiness board</div>
+                    <p className="mt-1 text-xs font-black text-white">One-click sandbox decision: submit allowed, missing evidence, callback and owner for every competitor-grade lane.</p>
+                    <p className="mt-1 text-[11px] leading-4 text-emerald-100/55">verdict: {dispatchState.providerSandboxReadinessBoard?.verdict || 'blocked-provider-setup'}</p>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">sandbox now</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerSandboxReadinessBoard?.summary.canSubmitSandboxNow ? 'can submit' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-6">
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">capabilities</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerSandboxReadinessBoard?.summary.capabilities ?? 5}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">can submit</div>
+                    <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.providerSandboxReadinessBoard?.summary.readyToSubmit ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider</div>
+                    <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.providerSandboxReadinessBoard?.summary.blockedProvider ?? 3}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">data</div>
+                    <div className="mt-1 text-xs font-black text-violet-100/75">{dispatchState.providerSandboxReadinessBoard?.summary.blockedData ?? 2}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">waiting</div>
+                    <div className="mt-1 text-xs font-black text-sky-100/75">{dispatchState.providerSandboxReadinessBoard?.summary.waitingReceipt ?? 0}</div>
+                  </div>
+                  <div className="border border-white/10 bg-stone-950/45 p-2">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external claim</div>
+                    <div className="mt-1 text-xs font-black text-white">{dispatchState.providerSandboxReadinessBoard?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 lg:grid-cols-5">
+                  {(dispatchState.providerSandboxReadinessBoard?.rows || [
+                    { capabilityId: 'auto-publish-proof', label: 'Auto publish and proof capture', status: 'blocked-provider', owner: 'ops', submitAllowed: false, selectedPackageId: 'pending', endpointEnv: 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL + /tasks', callbackRequired: ['external-receipt', 'x-restaurant-agent-signature'], evidenceRequired: ['externalRunId', 'public proof URL'], missing: ['runtime URL/key', 'merchant platform authorization', 'callback secret'], nextAction: 'Configure runtime, merchant grant and callback before submit.', stopLine: 'No accepted receipt means no auto-publish claim.' },
+                    { capabilityId: 'auto-lead-acquisition', label: 'Auto lead acquisition', status: 'blocked-provider', owner: 'merchant', submitAllowed: false, selectedPackageId: 'pending', endpointEnv: 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL + /tasks', callbackRequired: ['external-receipt'], evidenceRequired: ['aggregate lead count'], missing: ['lead export authorization'], nextAction: 'Approve aggregate lead export without private-message bodies.', stopLine: 'No private-message reads.' },
+                    { capabilityId: 'auto-coupon-redemption', label: 'Auto coupon redemption', status: 'blocked-data-contract', owner: 'data-ops', submitAllowed: false, selectedPackageId: 'pending', endpointEnv: 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL + /tasks', callbackRequired: ['external-receipt'], evidenceRequired: ['aggregate redemption batch id'], missing: ['couponClaimCount', 'redemptionCount', 'field dictionary'], nextAction: 'Collect coupon/POS field dictionary and no-PII aggregate sample.', stopLine: 'No coupon codes or raw POS rows.' },
+                    { capabilityId: 'true-operating-analysis', label: 'True operating analysis', status: 'blocked-data-contract', owner: 'data-ops', submitAllowed: false, selectedPackageId: 'pending', endpointEnv: 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL + /tasks', callbackRequired: ['external-receipt'], evidenceRequired: ['accepted aggregate import'], missing: ['orders', 'grossSales', 'margin fields'], nextAction: 'Connect aggregate POS, coupon, member and finance fields.', stopLine: 'No data contract means no real analysis claim.' },
+                    { capabilityId: 'staff-delivery', label: 'Staff delivery', status: 'blocked-provider', owner: 'ops', submitAllowed: false, selectedPackageId: 'pending', endpointEnv: 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL + /tasks', callbackRequired: ['external-receipt'], evidenceRequired: ['staff acknowledgement'], missing: ['staff webhook', 'recipient roles'], nextAction: 'Configure staff channel provider and approved recipient roles.', stopLine: 'No customer outreach.' },
+                  ]).slice(0, 5).map(row => (
+                    <div className="border border-white/10 bg-stone-950/45 p-2" key={row.capabilityId}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-black text-white">{row.label}</span>
+                        <span className={row.submitAllowed || row.status === 'accepted' ? 'text-[10px] text-emerald-100/70' : row.status === 'waiting-receipt' ? 'text-[10px] text-sky-100/70' : 'text-[10px] text-rose-100/70'}>{row.submitAllowed ? 'can submit' : row.status}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-4 text-emerald-100/55">owner: {row.owner} / package: {row.selectedPackageId || 'blocked'}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">endpoint: {row.endpointEnv}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">callback: {row.callbackRequired.slice(0, 2).join(' / ')}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/35">missing: {row.missing.slice(0, 3).join(' / ') || 'none'}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/55">{row.nextAction}</p>
+                    </div>
+                  ))}
+                </div>
+                {dispatchState.providerSandboxReadinessBoard?.firstRunnable ? (
+                  <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/65">
+                    first runnable: {dispatchState.providerSandboxReadinessBoard.firstRunnable.packageId} / {dispatchState.providerSandboxReadinessBoard.firstRunnable.action}
+                  </p>
+                ) : (
+                  <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-rose-100/55">
+                    first runnable: blocked until provider keys, merchant grant, callback and data-contract evidence are accepted.
+                  </p>
+                )}
+              </div>
               <div className="mt-3 border border-cyan-200/15 bg-cyan-200/[0.035] p-3">
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
                   <div>

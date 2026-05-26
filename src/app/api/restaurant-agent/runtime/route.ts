@@ -84,6 +84,7 @@ import { buildRestaurantProviderKeyGapBoard } from '@/lib/restaurant-provider-ke
 import { buildRestaurantProviderReceiptInbox } from '@/lib/restaurant-provider-receipt-inbox';
 import { buildRestaurantProviderReceiptLifecycle } from '@/lib/restaurant-provider-receipt-lifecycle';
 import { buildRestaurantProviderSandboxContract } from '@/lib/restaurant-provider-sandbox-contract';
+import { buildRestaurantProviderSandboxReadinessBoard } from '@/lib/restaurant-provider-sandbox-readiness-board';
 import { blockedRestaurantProviderSandboxBridge, buildRestaurantProviderSandboxSubmitAttempt, buildRestaurantProviderSandboxSubmitWorkbench, selectRestaurantProviderSandboxSubmitPackage } from '@/lib/restaurant-provider-sandbox-submit-workbench';
 import { buildRestaurantPublicIntelligenceBrief } from '@/lib/restaurant-public-intelligence-brief';
 import { buildRestaurantPublicProfileIntake } from '@/lib/restaurant-public-profile-intake';
@@ -1879,6 +1880,14 @@ export async function POST(request: NextRequest) {
       providerKeyGapBoard,
       now,
     });
+    const providerSandboxReadinessBoard = buildRestaurantProviderSandboxReadinessBoard({
+      providerSandboxSubmitWorkbench,
+      providerAcceptanceWorkbench,
+      providerSandboxContract,
+      externalAccessGuide,
+      providerKeyGapBoard,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
@@ -1900,6 +1909,7 @@ export async function POST(request: NextRequest) {
       providerSandboxContract,
       providerAcceptanceWorkbench,
       providerSandboxSubmitWorkbench,
+      providerSandboxReadinessBoard,
       commandCenter,
       gmCommandDeck: commandCenter.gmCommandDeck,
       shiftAutopilot,
