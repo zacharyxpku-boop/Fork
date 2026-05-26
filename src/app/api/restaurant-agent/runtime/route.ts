@@ -22,6 +22,7 @@ import { verifyRestaurantAgentCallback } from '@/lib/restaurant-agent-callback';
 import { buildRestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
 import { buildRestaurantCompetitorRouteDecision } from '@/lib/restaurant-competitor-route-decision';
 import { buildRestaurantCompetitorTrainingBlueprint } from '@/lib/restaurant-competitor-training-blueprint';
+import { buildRestaurantDefaultPathForwardableBrief } from '@/lib/restaurant-default-path-forwardable-brief';
 import { buildRestaurantAgentDispatch } from '@/lib/restaurant-agent-dispatch';
 import { buildRestaurantAgentExecutionPackage } from '@/lib/restaurant-agent-execution-package';
 import { buildRestaurantExternalReadiness } from '@/lib/restaurant-agent-external-readiness';
@@ -1820,19 +1821,42 @@ export async function POST(request: NextRequest) {
       todayCommandCockpit,
       now,
     });
+    const clawExperienceDefaultPath = await buildRestaurantClawExperienceDefaultPath({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      now,
+    });
+    const defaultPathForwardableBrief = buildRestaurantDefaultPathForwardableBrief({
+      restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+      offer: typeof body.offer === 'string' ? body.offer : undefined,
+      audience: typeof body.audience === 'string' ? body.audience : undefined,
+      channels: typeof body.channels === 'string' ? body.channels : undefined,
+      visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+      constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+      evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      defaultPath: clawExperienceDefaultPath,
+      storeManagerTaskQueue: shiftAwareStoreManagerTaskQueue,
+      providerSetupPack,
+      externalUnlockRequestPack,
+      todayCommandCockpit,
+      publishExecutionInbox,
+      shiftOperatingLoopPack,
+      operatingInsightReport,
+      providerReceiptLifecycle,
+      providerKeyGapBoard,
+      now,
+    });
     const competitorAudit = buildRestaurantCompetitorAuditReport();
     const buildQueue = buildRestaurantBuildQueue();
     return NextResponse.json({
       ok: true,
-      clawExperienceDefaultPath: await buildRestaurantClawExperienceDefaultPath({
-        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
-        offer: typeof body.offer === 'string' ? body.offer : undefined,
-        audience: typeof body.audience === 'string' ? body.audience : undefined,
-        channels: typeof body.channels === 'string' ? body.channels : undefined,
-        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
-        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
-        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
-      }),
+      clawExperienceDefaultPath,
+      defaultPathForwardableBrief,
       clawSkillWorkbench,
       clawSkillExecutionRecord,
       clawSkillExecutionLedger: buildRestaurantClawSkillExecutionLedger(),

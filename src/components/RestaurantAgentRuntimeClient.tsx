@@ -20,6 +20,7 @@ import type { RestaurantClawExperienceDefaultPath } from '@/lib/restaurant-claw-
 import type { RestaurantCompetitorAuditReport } from '@/lib/restaurant-agent-competitor-audit';
 import type { RestaurantCompetitorRouteDecision } from '@/lib/restaurant-competitor-route-decision';
 import type { RestaurantCompetitorTrainingBlueprint } from '@/lib/restaurant-competitor-training-blueprint';
+import type { RestaurantDefaultPathForwardableBrief } from '@/lib/restaurant-default-path-forwardable-brief';
 import type { RestaurantBusinessSignalReport } from '@/lib/restaurant-agent-business-signals';
 import type { RestaurantBrowserSessionManifest } from '@/lib/restaurant-agent-browser-session';
 import type { RestaurantBrowserSessionHealth } from '@/lib/restaurant-agent-browser-session-store';
@@ -273,6 +274,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
     clawSkillExecutionLedger?: RestaurantClawSkillExecutionLedger;
     clawTrainingBatch?: RestaurantClawTrainingBatch;
     clawExperienceDefaultPath?: RestaurantClawExperienceDefaultPath;
+    defaultPathForwardableBrief?: RestaurantDefaultPathForwardableBrief;
     controlledTrialRun?: RestaurantControlledTrialRun;
     customerDemandGateway?: RestaurantCustomerDemandGateway;
     leadCaptureInbox?: RestaurantLeadCaptureInbox;
@@ -464,6 +466,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         status: payload?.clawExperienceDefaultPath?.summary?.providerGated ? 'blocked' : 'queued',
         message: `Default Path: ${payload?.clawExperienceDefaultPath?.summary?.readyNow ?? 0} ready, ${payload?.clawExperienceDefaultPath?.summary?.trainingNeeded ?? 0} training, ${payload?.clawExperienceDefaultPath?.summary?.providerGated ?? 0} provider/boundary gates.`,
         clawExperienceDefaultPath: payload?.clawExperienceDefaultPath || previous.clawExperienceDefaultPath,
+        defaultPathForwardableBrief: payload?.defaultPathForwardableBrief || previous.defaultPathForwardableBrief,
         clawSkillWorkbench: payload?.clawSkillWorkbench || previous.clawSkillWorkbench,
         clawSkillExecutionRecord: payload?.clawSkillExecutionRecord || previous.clawSkillExecutionRecord,
         clawSkillExecutionLedger: payload?.clawSkillExecutionLedger || previous.clawSkillExecutionLedger,
@@ -7129,6 +7132,67 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="border border-rose-200/15 bg-rose-200/[0.03] p-2 text-rose-100/65">
                 provider unlock sheet: External execution only unlocks after runtime URL, API key, merchant grant, callback and data contract are ready.
+              </div>
+            </div>
+            <div className="mt-3 border border-lime-200/20 bg-lime-200/[0.04] p-3">
+              <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/65">forwardable operating brief</div>
+                  <p className="mt-1 text-xs font-black text-white">One-page handoff for store manager, ops and Provider setup.</p>
+                </div>
+                <p className="max-w-3xl text-[11px] leading-4 text-white/45">
+                  Start Default Path now returns a customer-forwardable brief: today order, owner actions, proof state, Provider asks, data gates and stop lines in one package.
+                </p>
+              </div>
+              <div className="mt-3 grid gap-2 md:grid-cols-5">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">forwardable</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.defaultPathForwardableBrief?.summary.canForwardToStoreManager ? 'ready' : 'created on start'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">internal ready</div>
+                  <div className="mt-1 text-xs font-black text-emerald-100/75">{dispatchState.defaultPathForwardableBrief?.summary.internalReady ?? 'after run'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">merchant review</div>
+                  <div className="mt-1 text-xs font-black text-amber-100/75">{dispatchState.defaultPathForwardableBrief?.summary.merchantReview ?? 'after run'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">provider blocked</div>
+                  <div className="mt-1 text-xs font-black text-rose-100/75">{dispatchState.defaultPathForwardableBrief?.summary.providerBlocked ?? 'after run'}</div>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">true analysis</div>
+                  <div className="mt-1 text-xs font-black text-white">{dispatchState.defaultPathForwardableBrief?.summary.canClaimTrueOperatingAnalysis ? 'ready' : 'blocked'}</div>
+                </div>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-3">
+                {(dispatchState.defaultPathForwardableBrief?.todayOperatingOrder || [
+                  { id: 'confirm-offer', owner: 'merchant', status: 'needs-merchant-review', title: 'Confirm store offer and stop lines', action: 'Start Default Path to generate a forwardable store-manager brief.', proofRequired: 'merchant-approved offer brief' },
+                  { id: 'run-internal-pack', owner: 'ops', status: 'ready-now', title: 'Run internal work pack', action: 'Create content plan, proof slots, owner queue and handoff.', proofRequired: 'default path payload' },
+                  { id: 'provider-unlock', owner: 'runtime-admin', status: 'needs-provider', title: 'Unlock Provider execution lanes', action: 'Collect runtime URL/key, callback secret, browser profile and merchant grants.', proofRequired: 'provider health and signed receipt' },
+                ]).slice(0, 3).map(item => (
+                  <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-black text-white">{item.title}</span>
+                      <span className={item.status === 'ready-now' ? 'text-[10px] text-emerald-100/70' : item.status === 'needs-merchant-review' ? 'text-[10px] text-amber-100/70' : 'text-[10px] text-rose-100/70'}>{item.status}</span>
+                    </div>
+                    <p className="mt-1 text-[11px] leading-4 text-lime-100/55">{item.owner}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/55">{item.action}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-white/35">proof: {item.proofRequired}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">manager share text</div>
+                  <p className="mt-1 whitespace-pre-line text-[11px] leading-4 text-white/60">{dispatchState.defaultPathForwardableBrief?.shareText || 'created after Start Default Path: the store manager sees the first task, proof requirement and Provider boundary without reading expert panels.'}</p>
+                </div>
+                <div className="border border-white/10 bg-stone-950/45 p-2">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">external required</div>
+                  <p className="mt-1 text-[11px] leading-4 text-rose-100/60">{dispatchState.defaultPathForwardableBrief?.externalRequired.slice(0, 5).join(' / ') || 'runtime URL/key / callback secret / merchant grant / browser profile / aggregate POS data contract'}</p>
+                  <p className="mt-2 text-[11px] leading-4 text-white/35">{dispatchState.defaultPathForwardableBrief?.stopLines[0] || 'No accepted Provider proof means no external automation claim.'}</p>
+                </div>
               </div>
             </div>
             <div className="mt-3 border border-amber-200/15 bg-amber-200/[0.035] p-3">

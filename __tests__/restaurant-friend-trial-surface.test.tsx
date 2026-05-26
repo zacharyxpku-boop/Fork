@@ -192,6 +192,10 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('Provider gates');
     expect(html).toContain('merchant inputs to collect');
     expect(html).toContain('provider unlock sheet');
+    expect(html).toContain('forwardable operating brief');
+    expect(html).toContain('One-page handoff for store manager, ops and Provider setup.');
+    expect(html).toContain('manager share text');
+    expect(html).toContain('No accepted Provider proof means no external automation claim.');
     expect(html).toContain('External execution only unlocks');
     expect(html).toContain('default path unlock package');
     expect(html).toContain('Default Path now creates Provider Setup Pack and External Unlock Request Pack.');
