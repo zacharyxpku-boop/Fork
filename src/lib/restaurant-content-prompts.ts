@@ -1,0 +1,84 @@
+export interface RestaurantContentIntake {
+  restaurant: string;
+  offer: string;
+  audience?: string;
+  visitReason?: string;
+  constraints?: string;
+  serviceWindow?: string;
+  dailyLimit?: string;
+  freebie?: string;
+}
+
+export type RestaurantContentKind = 'xhs-note' | 'review-reply-positive' | 'review-reply-negative' | 'group-message';
+
+export interface RestaurantContentPrompt {
+  kind: RestaurantContentKind;
+  label: string;
+  system: string;
+  user: string;
+  outputSchema: string;
+}
+
+const SHARED_RULES = `硬性约束（违反任何一条都算失败）：
+1. 只许使用输入资料里明确给出的事实。没给的信息（食材来源、历史、口碑、获奖）一律不编。
+2. 价格、限量份数、时段只用输入里的数字，不得改动或夸大。
+3. 禁用广告法风险词：最、第一、顶级、绝无仅有、国家级、全网、独家、百分之百，以及任何疗效或保证性承诺。
+4. 不承诺爆单、不保证排队、不编造顾客评价。
+5. 语气像真人，不要营销腔，不用"匠心""臻选""赋能"这类词。
+6. 输出必须是合法 JSON，不带 markdown 代码块包裹。`;
+
+function intakeBlock(intake: RestaurantContentIntake): string {
+  const lines = [
+    `门店：${intake.restaurant}`,
+    `主推：${intake.offer}`,
+    intake.audience ? `目标客群：${intake.audience}` : '',
+    intake.visitReason ? `到店理由：${intake.visitReason}` : '',
+    intake.serviceWindow ? `服务时段：${intake.serviceWindow}` : '',
+    intake.dailyLimit ? `今日限量：${intake.dailyLimit}` : '',
+    intake.freebie ? `赠品：${intake.freebie}` : '',
+    intake.constraints ? `边界约束（必须遵守）：${intake.constraints}` : '',
+  ].filter(Boolean);
+  return lines.join('\n');
+}
+
+export function buildXhsNotePrompt(intake: RestaurantContentIntake): RestaurantContentPrompt {
+  return {
+    kind: 'xhs-note',
+    label: '小红书探店笔记',
+    system: `你是一个常住附近、真实到店吃过的普通顾客，在小红书写探店笔记。你写东西口语、具体、有画面感，会提到自己什么时候去的、点了什么、值不值。你不是商家，不打广告腔。\n\n${SHARED_RULES}`,
+    user: `根据下面的门店资料写一篇小红书探店笔记。\n\n${intakeBlock(intake)}\n\n要求：\n- 标题不超过 20 字，有具体细节钩子，不用感叹号堆砌\n- 正文 150-250 字，第一人称，至少提到一个具体的就餐场景（什么时候去、和谁、点了什么）\n- 如果资料里给了到店理由，自然带出来，像顺嘴提到，不像广告；没给就不提\n- 结尾给一句行动暗示\n- 3 到 5 个话题标签，含一个地理位置标签\n\n输出 JSON：{"title": "...", "body": "...", "hashtags": ["...", "..."]}`,
+    outputSchema: '{"title": string, "body": string, "hashtags": string[]}',
+  };
+}
+
+export function buildReviewReplyPrompt(intake: RestaurantContentIntake, sentiment: 'positive' | 'negative'): RestaurantContentPrompt {
+  const negative = sentiment === 'negative';
+  return {
+    kind: negative ? 'review-reply-negative' : 'review-reply-positive',
+    label: negative ? '点评差评挽回回复' : '点评好评感谢回复',
+    system: `你是「${intake.restaurant}」的店主，在大众点评亲自回复顾客评价。你的回复像真人老板：具体、诚恳、不用客服模板腔，不复制粘贴感。\n\n${SHARED_RULES}`,
+    user: negative
+      ? `根据门店资料，写一条对差评的店主回复模板（差评内容会在使用时填入，这里写出可复用的结构化回复，用【顾客提到的问题】占位）。\n\n${intakeBlock(intake)}\n\n要求：\n- 不超过 120 字\n- 第一句共情并直接认下问题，不辩解不甩锅\n- 中间给一个具体的补救动作（改进了什么/下次到店找谁）\n- 结尾邀请再来，自然提到主推套餐或到店理由，但不能显得在差评下打广告\n\n输出 JSON：{"reply": "...", "usage_note": "一句话说明什么时候用这条"}`
+      : `根据门店资料，写一条对好评的店主回复模板（用【顾客名】占位）。\n\n${intakeBlock(intake)}\n\n要求：\n- 不超过 100 字\n- 针对性强：要呼应顾客可能夸到的具体菜品（用主推套餐里的菜）\n- 自然提一句下次可以试的时段或活动\n- 不要"亲"，不要表情包堆砌\n\n输出 JSON：{"reply": "...", "usage_note": "一句话说明什么时候用这条"}`,
+    outputSchema: '{"reply": string, "usage_note": string}',
+  };
+}
+
+export function buildGroupMessagePrompt(intake: RestaurantContentIntake): RestaurantContentPrompt {
+  return {
+    kind: 'group-message',
+    label: '微信社群今日话术',
+    system: `你是「${intake.restaurant}」的店长，在自己门店的顾客微信群里发今天的消息。群里都是老顾客，你说话像熟人，短句，不刷屏，不发长篇。\n\n${SHARED_RULES}`,
+    user: `根据门店资料写一条今天发群里的消息。\n\n${intakeBlock(intake)}\n\n要求：\n- 不超过 80 字\n- 开头直接说今天有什么（套餐/限量/赠品），不要"亲爱的家人们"\n- 带一个明确的行动指令（如：要来的回复 1，给你留位）\n- 如果有限量数字一定要用上，制造真实的紧迫感而不是话术紧迫感\n\n输出 JSON：{"message": "...", "best_send_time": "建议发送时间和原因，一句话"}`,
+    outputSchema: '{"message": string, "best_send_time": string}',
+  };
+}
+
+export function buildAllContentPrompts(intake: RestaurantContentIntake): RestaurantContentPrompt[] {
+  return [
+    buildXhsNotePrompt(intake),
+    buildReviewReplyPrompt(intake, 'positive'),
+    buildReviewReplyPrompt(intake, 'negative'),
+    buildGroupMessagePrompt(intake),
+  ];
+}
