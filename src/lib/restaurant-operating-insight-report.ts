@@ -184,6 +184,6 @@ export function buildRestaurantOperatingInsightReport(input: {
       ...contract.providerSetupRequests.map(item => `${item.provider}: ${item.evidenceRequired}`),
       ...insights.filter(item => item.status === 'blocked').map(item => item.nextAction),
     ])).slice(0, 10),
-    safetyBoundary: 'Operating Insight Report uses accepted receipts and sanitized aggregate POS imports only. It does not store raw POS rows, order line details, payment IDs, customer names, phones, WeChat IDs, addresses, private messages, cookies, tokens, or API keys, and it does not claim true operating analysis while finance/POS/provider tracks remain gated.',
+    safetyBoundary: '经营洞察报告只用已验收回执和脱敏 POS 汇总导入。不存原始 POS 行、订单明细、支付单号、顾客姓名、手机号、微信号、地址、私信、cookies、tokens 或 API key；财务/POS/外部链路没解锁前，不宣称真实经营分析。',
   };
 }

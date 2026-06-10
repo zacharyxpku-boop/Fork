@@ -75,16 +75,16 @@ export function buildRestaurantProviderLiveRunLaunchAttempt(input: {
   const canForwardNow = verdict === 'forward-real-provider-now' || verdict === 'forward-supervised-browser-now';
 
   const primaryAction = verdict === 'forward-real-provider-now'
-    ? 'Submit exactly one sanitized provider package, then wait for signed external-receipt.'
+    ? '提交恰好一个脱敏外部通道包，然后等待签名外部回执。'
     : verdict === 'forward-supervised-browser-now'
-      ? 'Submit the browser gateway request and runbook id; stop on login, captcha, private data or unapproved page.'
+      ? '提交浏览器网关请求和操作手册 id，遇到登录、验证码、私密数据或未审批页面立即停止。'
       : verdict === 'run-simulator-only'
-        ? 'Run the simulator path and collect the missing external Provider keys, merchant grant and callback setup.'
+        ? '跑模拟器路径，并补齐缺失的外部通道密钥、店长授权和回调配置。'
         : verdict === 'already-waiting-receipt'
-          ? 'Do not resubmit; wait for the signed provider receipt or close the blocker.'
+          ? '不要重复提交，等待签名外部通道回执或解除阻塞项。'
           : verdict === 'already-closeout-ready'
-            ? 'Move the accepted receipt into post-run review and next-run training.'
-            : blocked?.nextAction || 'Resolve the first blocking launch gate before attempting a live run.';
+            ? '将已接受回执转入试跑后复盘和下轮训练。'
+            : blocked?.nextAction || '满足第一个阻塞启动条件后再尝试真实试跑。';
 
   return {
     ok: true,
@@ -113,8 +113,8 @@ export function buildRestaurantProviderLiveRunLaunchAttempt(input: {
         ? gate.firstLiveAction.acceptedResult
         : blocked?.evidence.length ? blocked.evidence : gate.externalRequired.slice(0, 5),
       stopLine: canForwardNow
-        ? 'No success claim until signed receipt is accepted.'
-        : blocked?.stopLine || 'No live launch without satisfying Provider gates.',
+        ? '签名回执被接受前不宣称成功。'
+        : blocked?.stopLine || '未满足外部通道条件前不得启动真实试跑。',
     },
     bridgeAttempt: input.bridgeAttempt ? {
       ok: input.bridgeAttempt.ok,
@@ -129,11 +129,11 @@ export function buildRestaurantProviderLiveRunLaunchAttempt(input: {
       callbackAction: gate.selectedRun.callbackAction,
       callbackHeader: gate.selectedRun.callbackHeader,
       acceptedResult: gate.firstLiveAction.acceptedResult,
-      memoryRule: 'Only accepted signed receipt and sanitized aggregate counts can train the next run.',
+      memoryRule: '只有已接受的签名回执和脱敏汇总计数才能训练下一轮。',
     },
     externalRequired: canForwardNow
-      ? ['signed external-receipt callback', 'public proof URL or screenshot id', 'accepted provider closeout']
+      ? ['签名外部回执回调', '公开凭证 URL 或截图 id', '已接受的外部通道结算']
       : gate.externalRequired,
-    safetyBoundary: 'Provider Live Run Launch Attempt is a launch decision record. It does not invent execution, auto-publish, contact customers, redeem coupons, read private messages, expose secrets, pull raw POS rows or claim production automation. A run remains open until a signed external receipt is accepted.',
+    safetyBoundary: '外部通道真实试跑启动记录是一份启动决策记录。不凭空创建执行、不自动发布、不触达客户、不核销券码、不读取私信、不暴露密钥、不拉取原始 POS 明细、不宣称生产自动化。试跑在签名外部回执被接受前保持开放。',
   };
 }

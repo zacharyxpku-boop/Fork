@@ -32,7 +32,7 @@ describe('restaurant provider sandbox run console', () => {
     ]);
     expect(consolePayload.providerCallbackContract.header).toBe('x-restaurant-agent-signature');
     expect(consolePayload.providerCallbackContract.forbiddenFields).toContain('raw POS rows');
-    expect(consolePayload.closeoutChecklist.map((item: { label: string }) => item.label)).toContain('Signed receipt accepted');
+    expect(consolePayload.closeoutChecklist.map((item: { label: string }) => item.label)).toContain('签名回执已接受');
     expect(typeof consolePayload.summary.canWriteMemory).toBe('boolean');
     expect(consolePayload.verdict).toMatch(/blocked-before-submit|waiting-signed-callback|recovery-required|accepted-closeout-ready/);
     expect(serialized).not.toContain('secret-value');

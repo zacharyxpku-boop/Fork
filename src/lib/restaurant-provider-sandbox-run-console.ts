@@ -117,7 +117,7 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
   const timeline: RestaurantProviderSandboxRunConsoleStep[] = [
     {
       id: 'readiness',
-      label: 'Sandbox readiness decision',
+      label: '沙箱就绪判断',
       status: submitAllowed || selectedRow?.status === 'accepted' ? 'done' : 'blocked',
       owner: selectedRow?.owner || 'ops',
       evidence: [
@@ -126,13 +126,13 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
         `missing:${selectedRow?.missing.slice(0, 3).join('|') || 'none'}`,
       ],
       nextAction: submitAllowed
-        ? 'Use the selected sanitized package and start a controlled sandbox submit.'
-        : selectedRow?.nextAction || 'Complete provider setup before sandbox submit.',
-      stopLine: 'No submit when provider keys, merchant grant, callback or data-contract evidence is missing.',
+        ? '使用已选脱敏包，启动受控沙箱提交。'
+        : selectedRow?.nextAction || '完成外部通道配置后再提交沙箱。',
+      stopLine: '外部通道密钥、店长授权、回执或数据合约凭证缺失时，不得提交。',
     },
     {
       id: 'submit-package',
-      label: 'Sanitized submit package selected',
+      label: '脱敏提交包已选定',
       status: selectedPackage?.status === 'ready-to-submit' ? 'ready' : selectedPackage?.status === 'accepted' ? 'done' : 'blocked',
       owner: selectedPackage?.recoveryOwner || 'ops',
       evidence: [
@@ -142,12 +142,12 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
       ],
       nextAction: selectedPackage?.status === 'ready-to-submit'
         ? selectedPackage.nextAction
-        : selectedPackage?.nextAction || 'Build a safe provider package before dispatch.',
-      stopLine: selectedPackage?.stopLine || 'No raw credentials, private messages, coupon codes or POS rows in submit payload.',
+        : selectedPackage?.nextAction || '调度前先构建安全的外部通道包。',
+      stopLine: selectedPackage?.stopLine || '提交包中不得含原始凭证、私信内容、券码或 POS 明细。',
     },
     {
       id: 'dispatch',
-      label: 'Provider dispatch attempt',
+      label: '外部通道调度尝试',
       status: submitAttempt
         ? submitAttempt.verdict === 'forwarded-waiting-receipt' ? 'done' : 'blocked'
         : runner.summary.externalRuns > 0 ? 'done' : submitAllowed ? 'waiting' : 'blocked',
@@ -155,12 +155,12 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
       evidence: submitAttempt
         ? [`verdict:${submitAttempt.verdict}`, `bridge:${submitAttempt.summary.bridgeStatus}`, `runRecorded:${submitAttempt.summary.runRecorded}`]
         : [`externalRuns:${runner.summary.externalRuns}`, `localRuns:${runner.summary.localRuns}`],
-      nextAction: submitAttempt?.recoveryNextAction || runner.stages.find(stage => stage.id === 'adapter-ready')?.nextAction || 'Submit the selected package to the provider sandbox.',
-      stopLine: 'Dispatch alone is not proof; the run stays open until a signed/public receipt is accepted.',
+      nextAction: submitAttempt?.recoveryNextAction || runner.stages.find(stage => stage.id === 'adapter-ready')?.nextAction || '将已选包提交到外部通道沙箱。',
+      stopLine: '调度本身不是凭证，试跑通道保持开放直到签名/公开回执被接受。',
     },
     {
       id: 'runner-events',
-      label: 'Runner events and heartbeat',
+      label: '试跑通道事件与心跳',
       status: runner.summary.recoveryActions > 0 || runner.summary.staleRunnerRuns > 0
         ? 'blocked'
         : runner.summary.runnerEvents > 0 ? 'done' : 'waiting',
@@ -172,11 +172,11 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
         `stale:${runner.summary.staleRunnerRuns}`,
       ],
       nextAction: runner.runnerEventHealth.operatorQueue[0]?.nextAction || runner.nextBestAction,
-      stopLine: 'Runner events must be sanitized summaries; reject cookies, tokens, captchas, private inbox content and customer identifiers.',
+      stopLine: '试跑通道事件必须是脱敏摘要，拒绝 cookie、token、验证码、私信内容和用户标识。',
     },
     {
       id: 'signed-callback',
-      label: 'Signed external receipt callback',
+      label: '签名外部回执回调',
       status: acceptedReceipts > 0 ? 'done' : waitingReceipts > 0 ? 'waiting' : 'blocked',
       owner: 'runtime-admin',
       evidence: [
@@ -184,12 +184,12 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
         `acceptedReceipts:${acceptedReceipts}`,
         `actionRequired:${lifecycle.summary.actionRequired}`,
       ],
-      nextAction: lifecycle.stages.find(stage => stage.id === 'callback')?.nextAction || 'Require x-restaurant-agent-signature and externalRunId before closeout.',
-      stopLine: 'Unsigned callbacks and unverifiable screenshots never close the run.',
+      nextAction: lifecycle.stages.find(stage => stage.id === 'callback')?.nextAction || '结算前必须要求 x-restaurant-agent-signature 和 externalRunId。',
+      stopLine: '未签名回调和无法核验的截图永远不得关闭试跑。',
     },
     {
       id: 'closeout',
-      label: 'Closeout, memory and next loop',
+      label: '结算、记忆与下一轮',
       status: lifecycle.summary.canWriteMemory ? 'done' : acceptedReceipts > 0 ? 'ready' : 'waiting',
       owner: 'store-manager',
       evidence: [
@@ -197,8 +197,8 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
         `canUpdateOperatingInsight:${lifecycle.summary.canUpdateOperatingInsight}`,
         `businessSignals:${lifecycle.summary.businessSignalItems}`,
       ],
-      nextAction: lifecycle.stages.find(stage => stage.id === 'next-loop')?.nextAction || 'Wait for accepted proof before memory and next-loop planning.',
-      stopLine: 'Memory only stores accepted proof, aggregate counts, owner and next action; no growth claim without evidence.',
+      nextAction: lifecycle.stages.find(stage => stage.id === 'next-loop')?.nextAction || '等待已接受凭证后再写入记忆和规划下一轮。',
+      stopLine: '记忆只存储已接受凭证、汇总计数、负责人和下一步动作，无凭证不得宣称增长。',
     },
   ];
 
@@ -237,36 +237,36 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
       packageId: selectedRow?.selectedPackageId,
       status: selectedRow?.status || 'blocked-provider',
       owner: selectedRow?.owner || 'ops',
-      nextAction: selectedRow?.nextAction || 'Complete readiness before sandbox submit.',
+      nextAction: selectedRow?.nextAction || '完成就绪检查后再提交沙箱。',
     },
     timeline,
     closeoutChecklist: [
       {
-        label: 'Sanitized package exists',
+        label: '脱敏包已存在',
         status: selectedPackage?.safePayload ? 'done' : 'blocked',
         evidence: selectedPackage?.selectedPackageId || 'no package selected',
       },
       {
-        label: 'Provider run recorded',
+        label: '外部通道试跑已记录',
         status: runner.summary.externalRuns > 0 || submitAttempt?.summary.runRecorded ? 'done' : submitAllowed ? 'waiting' : 'blocked',
         evidence: submitAttempt?.selectedPackage?.selectedPackageId || `externalRuns:${runner.summary.externalRuns}`,
       },
       {
-        label: 'Signed receipt accepted',
+        label: '签名回执已接受',
         status: acceptedReceipts > 0 ? 'done' : waitingReceipts > 0 ? 'waiting' : 'blocked',
         evidence: lifecycle.latestReceipt?.receiptId || `waiting:${waitingReceipts}`,
       },
       {
-        label: 'Memory write allowed',
+        label: '允许写入记忆',
         status: lifecycle.summary.canWriteMemory ? 'done' : 'waiting',
-        evidence: lifecycle.memoryWriteRule.allowed ? lifecycle.memoryWriteRule.writes.join(' / ') : 'blocked until accepted proof',
+        evidence: lifecycle.memoryWriteRule.allowed ? lifecycle.memoryWriteRule.writes.join(' / ') : '等待已接受凭证后解锁',
       },
     ],
     operatorCommands: unique([
-      submitAllowed ? `Submit package ${selectedRow?.selectedPackageId || 'selected package'} to ${selectedPackage?.targetRuntime || input.providerSandboxSubmitWorkbench.targetRuntime}.` : selectedRow?.nextAction || '',
+      submitAllowed ? `提交包 ${selectedRow?.selectedPackageId || '已选包'} 到 ${selectedPackage?.targetRuntime || input.providerSandboxSubmitWorkbench.targetRuntime}。` : selectedRow?.nextAction || '',
       runner.nextBestAction,
       lifecycle.stages.find(stage => stage.status !== 'done')?.nextAction || '',
-      'Close only after signed receipt, public proof or sanitized aggregate receipt is accepted.',
+      '仅在签名回执、公开凭证或脱敏汇总回执被接受后关闭。',
     ], 6),
     providerCallbackContract: {
       endpoint: '/api/restaurant-agent/runtime',
@@ -297,6 +297,6 @@ export function buildRestaurantProviderSandboxRunConsole(input: {
       ...runner.externalRequired,
       ...lifecycle.externalRequired,
     ], 12),
-    safetyBoundary: 'Provider Sandbox Run Console is an observable control surface for sandbox dispatch, runner events, signed callback, receipt closeout and memory eligibility. It does not execute browser actions, publish content, contact customers, redeem coupons, read private messages, write POS records, expose secrets or claim production automation without accepted provider receipts and merchant-approved aggregate data contracts.',
+    safetyBoundary: '外部通道沙箱试跑控制台是可观测的控制面，用于沙箱调度、试跑通道事件、签名回调、回执结算和记忆写入判断。不执行浏览器操作、不发布内容、不触达客户、不核销券码、不读取私信、不写入 POS 记录、不暴露密钥，在外部通道回执被接受且店长批准汇总数据合约前，不宣称生产自动化。',
   };
 }

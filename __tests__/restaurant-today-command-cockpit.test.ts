@@ -35,7 +35,7 @@ describe('restaurant today command cockpit', () => {
     expect(cockpit.summary.canClaimAutoAcquisition).toBe(false);
     expect(cockpit.summary.canClaimAutoRedemption).toBe(false);
     expect(cockpit.summary.canClaimTrueOperatingAnalysis).toBe(false);
-    expect(cockpit.safetyBoundary).toContain('does not publish, contact customers');
+    expect(cockpit.safetyBoundary).toContain('不发布、不联系顾客');
     expect(serialized).not.toContain('13800000000');
     expect(serialized).not.toContain('token-value');
     expect(serialized).not.toContain('cookie-value');

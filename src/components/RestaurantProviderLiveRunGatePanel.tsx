@@ -74,11 +74,11 @@ export function RestaurantProviderLiveRunGatePanel({ liveRunGate, launchAttempt 
         <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">启动尝试</div>
-            <p className="mt-1 text-[11px] leading-4 text-white/60">{launchAttempt?.operatorDecision.primaryAction || 'Resolve the first blocking launch gate before attempting a live run.'}</p>
+            <p className="mt-1 text-[11px] leading-4 text-white/60">{launchAttempt?.operatorDecision.primaryAction || '尝试真实执行前，先解决第一个卡住的启动条件。'}</p>
           </div>
           <div className="text-left lg:text-right">
             <div className="text-xs font-black text-white">{launchAttempt?.verdict || 'blocked-before-launch'}</div>
-            <div className="mt-1 text-[10px] text-cyan-100/55">{launchAttempt?.operatorDecision.blockedBy || 'no active launch'}</div>
+            <div className="mt-1 text-[10px] text-cyan-100/55">{launchAttempt?.operatorDecision.blockedBy || '暂无进行中的启动'}</div>
           </div>
         </div>
       </div>

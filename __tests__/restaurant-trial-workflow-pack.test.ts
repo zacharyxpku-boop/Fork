@@ -47,13 +47,13 @@ describe('restaurant trial workflow pack', () => {
     ]);
     expect(pack.channelDrafts).toHaveLength(4);
     expect(pack.evidenceChecklist.join(' ')).toContain('menu screenshot confirmed');
-    expect(pack.trainingQueue.map(item => item.capability)).toContain('local channel copy');
+    expect(pack.trainingQueue.map(item => item.capability)).toContain('本地渠道文案');
     expect(pack.externalUnlocks.map(item => item.capability)).toEqual(expect.arrayContaining([
-      '自动发布',
-      '自动核销',
+      '发布执行',
+      '核销承接',
       '真实经营分析',
     ]));
-    expect(pack.safetyBoundary).toContain('automatic publishing');
+    expect(pack.safetyBoundary).toContain('平台发布');
     expect(JSON.stringify(pack)).not.toContain('api_key');
     expect(JSON.stringify(pack)).not.toContain('cookie=');
     expect(JSON.stringify(pack)).not.toContain('token=');

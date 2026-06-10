@@ -71,8 +71,8 @@ describe('restaurant lead capture inbox', () => {
     expect(inbox.summary.canClaimAutoCustomerContact).toBe(false);
     expect(inbox.leadItems.some(item => item.sourceId === 'private-domain-inquiry')).toBe(true);
     expect(inbox.providerUnlocks).toContain('no-PII private-domain data contract');
-    expect(inbox.safetyBoundary).toContain('private messages');
-    expect(inbox.safetyBoundary).toContain('PII');
+    expect(inbox.safetyBoundary).toContain('私信');
+    expect(inbox.safetyBoundary).toContain('隐私');
     expect(serialized).not.toContain('13800000000');
     expect(serialized).not.toContain('openid');
     expect(serialized).not.toContain('token-value');

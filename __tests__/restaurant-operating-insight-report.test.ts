@@ -38,7 +38,7 @@ describe('restaurant operating insight report', () => {
     expect(report.insights.find(item => item.id === 'coupon-redemption-rate')?.value).toContain('50%');
     expect(report.insights.find(item => item.id === 'order-sales-aggregate')?.value).toContain('24 orders');
     expect(report.summary.canClaimTrueOperatingAnalysis).toBe(false);
-    expect(report.safetyBoundary).toContain('does not store raw POS rows');
+    expect(report.safetyBoundary).toContain('不存原始 POS 行');
   });
 
   it('exposes operating insight report through the runtime API', async () => {
@@ -64,6 +64,6 @@ describe('restaurant operating insight report', () => {
     expect(response.status).toBe(200);
     expect(payload.operatingInsightReport.payloadShape).toBe('restaurant-operating-insight-report-v1');
     expect(payload.operatingInsightReport.insights.map((item: { id: string }) => item.id)).toContain('average-ticket');
-    expect(payload.operatingInsightReport.safetyBoundary).toContain('does not claim true operating analysis');
+    expect(payload.operatingInsightReport.safetyBoundary).toContain('不宣称真实经营分析');
   });
 });

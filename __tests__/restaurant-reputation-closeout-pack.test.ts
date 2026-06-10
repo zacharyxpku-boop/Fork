@@ -55,8 +55,8 @@ describe('restaurant reputation closeout pack', () => {
     expect(pack.summary.canClaimReviewAnalytics).toBe(false);
     expect(pack.recoveryQueue.length).toBeGreaterThanOrEqual(3);
     expect(pack.responseDrafts.some(item => item.status === 'provider-gated')).toBe(true);
-    expect(pack.safetyBoundary).toContain('private messages');
-    expect(pack.safetyBoundary).toContain('PII');
+    expect(pack.safetyBoundary).toContain('私信');
+    expect(pack.safetyBoundary).toContain('隐私');
     expect(serialized).not.toContain('cookie');
     expect(serialized).not.toContain('token-value');
     expect(serialized).not.toContain('13800000000');

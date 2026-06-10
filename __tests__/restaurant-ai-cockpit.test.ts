@@ -108,7 +108,7 @@ describe('restaurant AI cockpit', () => {
     expect(cockpit.summary.canClaimAutomation).toBe(false);
     expect(cockpit.zones.find(item => item.id === 'automation-launch')?.status).toBe('provider-gated');
     expect(cockpit.providerUnlocks).toContain('RESTAURANT_AGENT_CALLBACK_SECRET');
-    expect(cockpit.safetyBoundary).toContain('does not log in');
+    expect(cockpit.safetyBoundary).toContain('不登录账号');
   });
 
   it('exposes the cockpit through the runtime API and redacts sensitive command text', async () => {

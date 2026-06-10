@@ -152,17 +152,17 @@ export function buildRestaurantTodayCommandCockpit(input: RestaurantTrialIntake 
   const lanes = [
     lane({
       id: 'get-customers',
-      title: 'Get customers into the store',
+      title: '把顾客引到店里',
       status: statusFrom({
         blocked: leadFlow.verdict === 'blocked-sensitive',
         provider: !leadFlow.summary.canSubmitProviderPackage && leadFlow.summary.acceptedLeadReceipts === 0,
         proof: leadFlow.summary.acceptedLeadReceipts === 0,
       }),
       owner: 'community-ops',
-      businessQuestion: 'Can we turn reservations, coupon claims, inquiries and visit intent into owner-visible follow-up today?',
+      businessQuestion: '今天能把预约、领券、咨询和到店意向变成店长可见的跟进任务吗？',
       todayAction: leadFlow.summary.acceptedLeadReceipts > 0
-        ? 'Promote accepted aggregate lead receipts into store-manager follow-up tasks.'
-        : trafficBlock?.action || 'Create staff-reviewed reservation, coupon and inquiry follow-up tasks.',
+        ? '把已验收汇总线索回执推进为店长跟进任务。'
+        : trafficBlock?.action || '创建经员工审核的预约、领券和咨询跟进任务。',
       proofToCollect: leadFlow.receiptAcceptance.acceptedEvidence,
       providerGate: unique([
         ...leadFlow.externalRequired,
@@ -174,36 +174,36 @@ export function buildRestaurantTodayCommandCockpit(input: RestaurantTrialIntake 
     }),
     lane({
       id: 'publish-proof',
-      title: 'Publish only with proof slots',
+      title: '只用凭证槽发布',
       status: statusFrom({
         provider: publishInbox.summary.waitingProvider > 0 && publishInbox.summary.acceptedReceipts === 0,
         proof: publishInbox.summary.acceptedReceipts === 0,
         blocked: publishInbox.summary.blocked > 0,
       }),
       owner: 'ops',
-      businessQuestion: 'Can content go out with a public proof link, screenshot id or signed callback instead of a verbal claim?',
+      businessQuestion: '内容能用公开凭证链接、截图 id 或签名回调替代口头宣称吗？',
       todayAction: publishInbox.summary.acceptedReceipts > 0
-        ? 'Use accepted publish proof in the next content and follow-up loop.'
-        : proofBlock?.action || publishInbox.tasks[0]?.action || 'Prepare approved content and public proof slot.',
+        ? '在下一轮内容和跟进循环中使用已验收发布凭证。'
+        : proofBlock?.action || publishInbox.tasks[0]?.action || '准备已审批内容和公开凭证槽。',
       proofToCollect: unique(publishInbox.tasks.flatMap(item => item.evidenceRequired), 8),
       providerGate: publishInbox.providerUnlocks.slice(0, 8),
-      acceptance: 'Every published item must have channel, proof id, owner and next-loop use before closeout.',
+      acceptance: '收尾前每条发布项必须有渠道、凭证 id、负责人和下一轮用途。',
       stopLine: publishInbox.safetyBoundary,
       sourceEvidence: [`publishInbox:${publishInbox.verdict}`, `acceptedPublishReceipts:${publishInbox.summary.acceptedReceipts}`],
     }),
     lane({
       id: 'redeem-and-pos',
-      title: 'Redeem coupons and import POS aggregates',
+      title: '核销券码并导入 POS 汇总',
       status: statusFrom({
         provider: !input.operatingDataContract.summary.canClaimTrueOperatingAnalysis,
         proof: insightReport.summary.acceptedPosImports === 0,
         blocked: insightReport.summary.blocked > 0 && insightReport.summary.acceptedPosImports === 0,
       }),
       owner: 'finance',
-      businessQuestion: 'Can we explain coupon redemption, orders and sales from sanitized aggregate data?',
+      businessQuestion: '能从脱敏汇总数据说清楚券码核销、订单和销售吗？',
       todayAction: insightReport.summary.acceptedPosImports > 0
-        ? insightReport.storeManagerActions[0]?.action || 'Review aggregate redemption and POS signals.'
-        : dataBlock?.action || 'Import sanitized POS, coupon and redemption aggregate fields.',
+        ? insightReport.storeManagerActions[0]?.action || '复核汇总核销和 POS 信号。'
+        : dataBlock?.action || '导入脱敏 POS、券码和核销汇总字段。',
       proofToCollect: unique([
         'businessDate',
         'storeName',
@@ -215,30 +215,30 @@ export function buildRestaurantTodayCommandCockpit(input: RestaurantTrialIntake 
         ...input.operatingDataContract.tracks.flatMap(item => item.requiredFields).slice(0, 4),
       ], 10),
       providerGate: input.operatingDataContract.providerSetupRequests.map(item => `${item.provider}: ${item.evidenceRequired}`).slice(0, 8),
-      acceptance: 'Operating analysis is limited to accepted aggregate rows and field dictionary evidence.',
+      acceptance: '经营分析只限于已验收汇总行和字段字典凭证。',
       stopLine: insightReport.safetyBoundary,
       sourceEvidence: [`operatingInsight:${insightReport.verdict}`, `posImports:${insightReport.summary.acceptedPosImports}`],
     }),
     lane({
       id: 'review-and-train',
-      title: 'Review the shift and train the agent',
+      title: '复盘班次并训练智能体',
       status: statusFrom({
         provider: input.shiftOperatingLoopPack.summary.waitingProvider > 0,
         proof: input.shiftOperatingLoopPack.summary.waitingProof > 0,
         blocked: input.shiftOperatingLoopPack.summary.blocked > 0,
       }),
       owner: shiftOwnerToLaneOwner(input.shiftOperatingLoopPack.nextBestAction.owner),
-      businessQuestion: 'Can the next shift start from accepted proof, training records and a single next action?',
-      todayAction: input.shiftOperatingLoopPack.nextBestAction.label || closeoutBlock?.action || 'Close the loop with proof and training.',
+      businessQuestion: '下一班次能从已验收凭证、训练记录和单一下一步动作出发吗？',
+      todayAction: input.shiftOperatingLoopPack.nextBestAction.label || closeoutBlock?.action || '用凭证和训练关闭循环。',
       proofToCollect: unique([
         ...input.shiftOperatingLoopPack.providerReceiptInbox.externalRequired,
         ...input.shiftOperatingLoopPack.shiftCloseoutTrainingPack.externalRequired,
-        'accepted receipt',
-        'staff acknowledgement',
-        'sanitized aggregate import',
+        '已验收回执',
+        '员工确认',
+        '脱敏汇总导入',
       ], 8),
       providerGate: input.shiftOperatingLoopPack.externalRequired.slice(0, 8),
-      acceptance: 'The next shift can only reuse accepted proof, staff acknowledgement, sanitized aggregate imports or accepted training records.',
+      acceptance: '下一班次只能复用已验收凭证、员工确认、脱敏汇总导入或已验收训练记录。',
       stopLine: input.shiftOperatingLoopPack.safetyBoundary,
       sourceEvidence: [`shiftLoop:${input.shiftOperatingLoopPack.verdict}`, `activatedInternal:${input.shiftOperatingLoopPack.summary.activatedInternal}`],
     }),
@@ -281,24 +281,24 @@ export function buildRestaurantTodayCommandCockpit(input: RestaurantTrialIntake 
     nextBestAction: nextBestAction(lanes),
     lanes,
     oneScreenRunbook: [
-      `Start with ${offer}: confirm offer boundary, owner and proof slot before any external action.`,
-      'Run lead intake, publishing, redemption/POS and review as four lanes with visible proof and stop lines.',
-      'Use Provider gates as exact setup requests: runtime URL/key, callback secret, merchant grants, browser profile and no-PII data contracts.',
-      'Promote only accepted receipts or sanitized aggregate imports into memory, training and next-shift plans.',
+      `从 ${offer} 开始：任何外部动作前确认活动边界、负责人和凭证槽。`,
+      '以四条链路跑线索承接、发布、核销/POS 和复盘，每条链路保持可见凭证和停止线。',
+      '把外部通道条件当做精确的配置请求：试跑通道 URL/密钥、回调密钥、店长授权、浏览器配置文件和去隐私数据合同。',
+      '只把已验收回执或脱敏汇总导入推进到记忆、训练和下一班次计划。',
     ],
     staffHandoff: lanes.map(item => ({
       owner: item.owner,
       message: `${item.title}: ${item.todayAction}`,
-      due: item.id === 'review-and-train' ? 'closeout' : item.id === 'redeem-and-pos' ? 'before closeout' : 'today',
-      evidence: item.proofToCollect.slice(0, 3).join(' / ') || 'accepted proof',
+      due: item.id === 'review-and-train' ? '收尾' : item.id === 'redeem-and-pos' ? '收尾前' : '今天',
+      evidence: item.proofToCollect.slice(0, 3).join(' / ') || '已验收凭证',
     })),
     externalUnlocks: unique([
       ...input.providerReadinessHealth.externalRequired,
       ...lanes.flatMap(item => item.providerGate),
     ], 20),
     proofLedgerContract: {
-      acceptedProof: ['public URL', 'screenshot id', 'signed callback receipt', 'staff acknowledgement', 'sanitized aggregate import'],
-      rejectedProof: ['sample link', 'unsigned callback', 'private message text', 'customer identifiers', 'raw POS row', 'coupon code', 'payment id', 'secret value'],
+      acceptedProof: ['公开 URL', '截图 id', '签名回执', '员工确认', '脱敏汇总导入'],
+      rejectedProof: ['样本链接', '未签名回调', '私信文本', '顾客标识', '原始 POS 行', '券码', '支付 id', '密钥值'],
       memoryWriteRule: 'accepted-proof-or-sanitized-aggregate-only',
       forbiddenFields: ['phone', 'WeChat ID', 'member name', 'private message body', 'coupon code', 'payment id', 'cookie', 'token', 'raw POS row', 'browser profile secret'],
     },
@@ -330,6 +330,6 @@ export function buildRestaurantTodayCommandCockpit(input: RestaurantTrialIntake 
         summary: insightReport.summary,
       },
     },
-    safetyBoundary: 'Today Command Cockpit is a customer-facing operating surface. It coordinates internal tasks, proof slots, provider gates and staff handoff only; it does not publish, contact customers, confirm reservations, redeem coupons, write POS/orders, take payment, dispatch delivery, read private messages, store PII, expose secrets, pull raw POS rows or claim growth without accepted proof and merchant-authorized providers.',
+    safetyBoundary: '今日指挥台是面向店长的经营操作面。只协调内部任务、凭证槽、外部条件和员工交接；不发布、不联系顾客、不确认预约、不核销券码、不写入 POS/订单、不收款、不派送、不读取私信、不存储个人信息、不暴露密钥、不拉取原始 POS 行、无已验收凭证和店长授权外部通道不宣称增长。',
   };
 }

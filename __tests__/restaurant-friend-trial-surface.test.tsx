@@ -94,7 +94,7 @@ describe('restaurant friend trial surface', () => {
     expect(html).toContain('followup-tasks:');
     expect(html).toContain('内部产包、凭证槽和任务队列先跑通');
     expect(html).toContain('确认账号后再记录真实步骤');
-    expect(html).toContain('Merchant platform authorization before platform reads or publishing.');
+    expect(html).toContain('读取平台或发布之前，先拿到店长的平台授权。');
     expect(html).toContain('restaurant-agent-runtime');
     expect(html).toContain('20 模块 / 200 技能 / 60 工具，逐项标注能否现在执行');
     expect(html).toContain('内部能力清单');

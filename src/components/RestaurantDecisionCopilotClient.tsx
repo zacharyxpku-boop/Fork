@@ -42,7 +42,7 @@ export function RestaurantDecisionCopilotClient() {
     <section className="overflow-hidden rounded-lg border border-emerald-200 bg-white shadow-sm">
       <div className="grid gap-4 border-b border-emerald-100 bg-emerald-950 p-5 text-white lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Restaurant Decision Copilot</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">餐厅决策助手</p>
           <h2 className="mt-2 text-2xl font-black tracking-tight">今晚到底推什么，先算出来</h2>
         </div>
         <p className="text-sm leading-6 text-emerald-50/80">
@@ -75,7 +75,7 @@ export function RestaurantDecisionCopilotClient() {
 
         <div className="space-y-4">
           <div className="rounded-lg border border-stone-200 bg-stone-950 p-4 text-white">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Today decision</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">今日决策</p>
             <h3 className="mt-2 text-2xl font-black">{decision.headline}</h3>
             <p className="mt-3 text-sm leading-6 text-emerald-100">{decision.decision}</p>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -93,7 +93,7 @@ export function RestaurantDecisionCopilotClient() {
           <div className="rounded-lg border border-stone-200 bg-[#fbfaf7] p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Channel pack</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">渠道方案</p>
                 <h3 className="mt-1 text-lg font-black text-stone-950">今天可以直接交给运营的 4 个渠道版本</h3>
               </div>
               <span className="w-fit rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-stone-600">草稿需门店确认</span>
@@ -113,7 +113,7 @@ export function RestaurantDecisionCopilotClient() {
           </div>
 
           <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Action queue</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">今日行动队列</p>
             <h3 className="mt-1 text-lg font-black text-stone-950">不是“下一步动作”，是今天谁必须做什么</h3>
             <div className="mt-4 space-y-2">
               {decision.actionQueue.map(item => (
@@ -130,7 +130,7 @@ export function RestaurantDecisionCopilotClient() {
           </div>
 
           <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">Why competitors look stronger</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">竞品为何看起来更强</p>
             <h3 className="mt-1 text-lg font-black text-rose-950">不是做不到，是缺账号、数据和交易权限</h3>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {decision.blockedAutomation.map(item => (

@@ -45,7 +45,7 @@ describe('restaurant store data import center', () => {
     expect(center.validationQueue.map(item => item.id)).toContain('field-dictionary');
     expect(center.sampleRows[0].storeName).toBe('Import Bistro');
     expect(JSON.stringify(center)).not.toMatch(/1[3-9]\d{9}/);
-    expect(center.safetyBoundary).toContain('does not store raw POS rows');
+    expect(center.safetyBoundary).toContain('不存储原始 POS 数据行');
   });
 
   it('is returned with operating data contract and the default Claw path API', async () => {

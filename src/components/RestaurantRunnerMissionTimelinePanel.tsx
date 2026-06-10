@@ -64,7 +64,7 @@ export function RestaurantRunnerMissionTimelinePanel({ timeline }: { timeline?: 
         ))}
       </div>
       <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-amber-100/55">
-        queue: {(timeline?.operatorQueue || []).map(item => `${item.priority}:${item.reason}`).slice(0, 3).join(' / ') || 'no live runner queue yet'} / target {timeline?.mission.providerTarget || 'openclaw'}
+        队列: {(timeline?.operatorQueue || []).map(item => `${item.priority}:${item.reason}`).slice(0, 3).join(' / ') || '暂无真实执行队列'} / 目标通道 {timeline?.mission.providerTarget || 'openclaw'}
       </p>
     </div>
   );
