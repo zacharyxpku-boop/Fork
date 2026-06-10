@@ -4416,7 +4416,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                             </span>
                           </div>
                           <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-white/60">{lane.customerPromise}</p>
-                          <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-lime-100/65">now: {lane.actionNow}</p>
+                          <p className="mt-2 line-clamp-2 text-[11px] leading-4 text-lime-100/65">现在做: {lane.actionNow}</p>
                           <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/40">凭证: {lane.visibleProof}</p>
                           <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-amber-100/55">外部条件: {lane.providerAsk}</p>
                         </div>
@@ -10452,7 +10452,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
                 <div className="mt-2 grid gap-2 md:grid-cols-2">
                   <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
-                    internal now: {dispatchState.platformOperatingSpine.auditBoundary.canDoInternallyNow.join(' / ')}
+                    本地现在: {dispatchState.platformOperatingSpine.auditBoundary.canDoInternallyNow.join(' / ')}
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2 text-white/60">
                     external before claim: {dispatchState.platformOperatingSpine.auditBoundary.mustHaveExternalBeforeClaiming.join(' / ')}

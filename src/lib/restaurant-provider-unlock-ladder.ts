@@ -109,9 +109,9 @@ function item(input: {
     providerEvidence,
     stillNeeds: stillNeeds.length ? stillNeeds : providerEvidence.length ? [] : [input.fallbackAsk],
     nextAction: stage === 'provider-health-ready'
-      ? 'Pilot through governed execution package and signed receipt only.'
+      ? '只通过受控执行包和签名回执做试点。'
       : stage === 'setup-evidence-signed'
-        ? 'Convert signed setup evidence into real server env, scoped provider auth and health probe.'
+        ? '把已签收的配置凭证落成真实服务端配置、限定范围的外部授权和健康探测。'
         : input.fallbackAsk,
   };
 }
@@ -123,55 +123,55 @@ export function buildRestaurantProviderUnlockLadder(input: {
   const items = [
     item({
       id: 'persistent-browser',
-      label: 'Persistent browser agent',
+      label: '常驻浏览器代办',
       fragments: ['openclaw', 'hermes', 'lobu', 'browser', 'runtime'],
-      internalCanDo: 'Build governed task packages, recovery runbooks and proof requirements.',
-      fallbackAsk: 'Provide OpenClaw/Hermes/Lobu URL and API key through server-side env.',
+      internalCanDo: '生成受控任务包、恢复手册和凭证要求。',
+      fallbackAsk: '通过服务端配置提供 OpenClaw/Hermes/Lobu 的通道地址和账号密钥。',
       setupState: input.setupState,
       health: input.health,
     }),
     item({
       id: 'auto-publish-proof',
-      label: 'Auto publish and proof capture',
+      label: '代发布和凭证回收',
       fragments: ['merchant', 'platform', 'authorization', 'callback', 'proof', 'receipt'],
-      internalCanDo: 'Prepare channel copy, staff checklist and proof ledger without claiming publication.',
-      fallbackAsk: 'Provide scoped merchant platform authorization and signed proof callback.',
+      internalCanDo: '可先准备渠道文案、员工清单和凭证台账，不宣称已发布。',
+      fallbackAsk: '提供限定范围的店长平台授权和签名凭证回执。',
       setupState: input.setupState,
       health: input.health,
     }),
     item({
       id: 'auto-lead-capture',
-      label: 'Auto lead capture',
+      label: '代接线索',
       fragments: ['merchant', 'platform', 'authorization', 'staff', 'social'],
-      internalCanDo: 'Classify imported inquiries, reservations and visit intent into manager tasks.',
-      fallbackAsk: 'Provide platform inbox/lead export permission or approved manual import cadence.',
+      internalCanDo: '把导入的咨询、预约和到店意向归类成店长任务。',
+      fallbackAsk: '提供平台收件箱/线索导出权限，或确认人工导入节奏。',
       setupState: input.setupState,
       health: input.health,
     }),
     item({
       id: 'coupon-redemption',
-      label: 'Coupon redemption reconciliation',
+      label: '券码核销对账',
       fragments: ['pos', 'coupon', 'redemption', 'operating-data'],
-      internalCanDo: 'Accept no-PII aggregate imports and reconcile claimed vs redeemed counts.',
-      fallbackAsk: 'Provide POS/coupon field dictionary, export cadence and no-PII sample shape.',
+      internalCanDo: '接收去隐私汇总导入，对账领取数和核销数。',
+      fallbackAsk: '提供 POS/券码字段表、导出节奏和去隐私样例格式。',
       setupState: input.setupState,
       health: input.health,
     }),
     item({
       id: 'operating-analysis',
-      label: 'True operating analysis',
+      label: '真实经营分析',
       fragments: ['pos', 'operating', 'data', 'analysis'],
-      internalCanDo: 'Separate directional observations from measured store operation signals.',
-      fallbackAsk: 'Provide aggregate sales, redemption, table/order and campaign source fields.',
+      internalCanDo: '把方向性观察和可量化的经营信号分开。',
+      fallbackAsk: '提供销售、核销、桌位/订单和活动来源的汇总字段。',
       setupState: input.setupState,
       health: input.health,
     }),
     item({
       id: 'memory-follow-up',
-      label: 'Memory follow-up loop',
+      label: '门店记忆跟进循环',
       fragments: ['hermes', 'memory', 'follow-up', 'staff'],
-      internalCanDo: 'Keep sanitized tasks, wakeups, next actions and owner handoff history.',
-      fallbackAsk: 'Provide persistent runtime and staff delivery channel before autonomous follow-up.',
+      internalCanDo: '保留脱敏任务、唤醒、下一步和负责人交接历史。',
+      fallbackAsk: '自动跟进前先提供常驻通道和员工下发渠道。',
       setupState: input.setupState,
       health: input.health,
     }),
