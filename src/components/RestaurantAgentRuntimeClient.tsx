@@ -213,6 +213,9 @@ const runtimeStatusLabel: Record<string, string> = {
   'sign-merchant-scope-first': '先签授权范围',
   'provider-unlock-first': '先补外部条件',
   'preview-before-run': '先预览再试跑',
+  'provider-setup-required': '待补账号配置',
+  'waiting-provider-setup': '等账号配置',
+  'server-keys-first': '先配服务端账号',
 };
 
 const formatRuntimeStatus = (status: unknown) => {
@@ -4110,7 +4113,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/75">对标训练蓝图</div>
-                    <h4 className="mt-1 text-base font-black text-white">{dispatchState.competitorTrainingBlueprint.verdict} / parity blocked</h4>
+                    <h4 className="mt-1 text-base font-black text-white">{formatRuntimeStatus(dispatchState.competitorTrainingBlueprint.verdict)} / 对标受阻</h4>
                     <p className="mt-1 text-xs leading-5 text-white/60">
                       Maps Claw/Cloud-style abilities into internal training, acceptance proof and provider contracts before any auto-publish, lead capture, redemption or POS analytics claim.
                     </p>
@@ -4300,7 +4303,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase tracking-[0.12em] text-amber-100/70">
                     <span>{commandRoute.payloadShape}</span>
                     <span>{commandRoute.intent}</span>
-                    <span>{commandRoute.verdict}</span>
+                    <span>{formatRuntimeStatus(commandRoute.verdict)}</span>
                     <span>{commandRoute.confidence}</span>
                   </div>
                   <p className="mt-2 text-sm font-black text-white">{commandRoute.primaryAction.label}</p>
@@ -4546,7 +4549,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/70">班次经营闭环</div>
-                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftOperatingLoopPack.verdict}</h5>
+                            <h5 className="mt-1 text-sm font-black text-white">{formatRuntimeStatus(commandShiftOperatingLoopPack.verdict)}</h5>
                             <p className="mt-1 max-w-3xl text-xs leading-5 text-white/55">
                               One customer path: command, shift run, provider unlock, sandbox submit, receipt, closeout training and capability activation.
                             </p>
@@ -4742,7 +4745,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/70">班次沙箱验收</div>
-                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftSandboxAcceptance.verdict}</h5>
+                            <h5 className="mt-1 text-sm font-black text-white">{formatRuntimeStatus(commandShiftSandboxAcceptance.verdict)}</h5>
                             <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">{commandShiftSandboxAcceptance.payloadShape}</p>
                           </div>
                           <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
@@ -4789,7 +4792,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-100/70">班次首轮可转发试跑</div>
-                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftFirstForwardableRun.verdict}</h5>
+                            <h5 className="mt-1 text-sm font-black text-white">{formatRuntimeStatus(commandShiftFirstForwardableRun.verdict)}</h5>
                             <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
                               {commandShiftFirstForwardableRun.payloadShape} converts the latest shift ledger, provider asks, sandbox acceptance and sanitized package into one provider-ready preflight.
                             </p>
@@ -4848,7 +4851,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-100/70">班次沙箱转发尝试</div>
-                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftSandboxForwardAttempt.verdict}</h5>
+                            <h5 className="mt-1 text-sm font-black text-white">{formatRuntimeStatus(commandShiftSandboxForwardAttempt.verdict)}</h5>
                             <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
                               {commandShiftSandboxForwardAttempt.payloadShape} / {commandShiftSandboxForwardAttempt.bridge.message}
                             </p>
@@ -4888,7 +4891,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">班次收尾训练包</div>
-                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftCloseoutTrainingPack.verdict}</h5>
+                            <h5 className="mt-1 text-sm font-black text-white">{formatRuntimeStatus(commandShiftCloseoutTrainingPack.verdict)}</h5>
                             <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
                               {commandShiftCloseoutTrainingPack.payloadShape} turns receipts, recovery, post-run review and capability drafts into the next operating loop.
                             </p>
@@ -4946,7 +4949,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/70">班次收尾训练记录</div>
-                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftCloseoutTrainingRecordAttempt.verdict}</h5>
+                            <h5 className="mt-1 text-sm font-black text-white">{formatRuntimeStatus(commandShiftCloseoutTrainingRecordAttempt.verdict)}</h5>
                             <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
                               {commandShiftCloseoutTrainingRecordAttempt.payloadShape} / {commandShiftCloseoutTrainingRecordAttempt.nextAction}
                             </p>
@@ -4988,7 +4991,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                           <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">班次能力激活包</div>
-                            <h5 className="mt-1 text-sm font-black text-white">{commandShiftCapabilityActivationPack.verdict}</h5>
+                            <h5 className="mt-1 text-sm font-black text-white">{formatRuntimeStatus(commandShiftCapabilityActivationPack.verdict)}</h5>
                             <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
                               {commandShiftCapabilityActivationPack.payloadShape} maps accepted training records into internal-active and provider-gated restaurant AI capabilities.
                             </p>
@@ -5492,7 +5495,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                   <div className="grid gap-2 text-xs sm:grid-cols-5 lg:min-w-[620px]">
                     <div className="border border-white/10 bg-white/[0.05] p-2">
-                      <div className="font-mono text-white">{commandStoreOperatingPlan.verdict}</div>
+                      <div className="font-mono text-white">{formatRuntimeStatus(commandStoreOperatingPlan.verdict)}</div>
                       <p className="mt-1 text-white/55">结论</p>
                     </div>
                     <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -5810,7 +5813,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">商户激活包</div>
-                    <h4 className="mt-1 text-base font-black text-white">{commandMerchantActivationPacket.verdict}</h4>
+                    <h4 className="mt-1 text-base font-black text-white">{formatRuntimeStatus(commandMerchantActivationPacket.verdict)}</h4>
                     <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
                       {commandMerchantActivationPacket.restaurant} / {commandMerchantActivationPacket.offer}: 可转发给店长的落地请求，说明还缺哪些账号配置、门店授权、经营数据规则和试跑验收。
                     </p>
@@ -5962,7 +5965,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <h4 className="mt-1 text-base font-black text-white">一份报告看清对标、凭证和外部卡点</h4>
                 <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
                   {commandAiOsAuditReport
-                    ? `${commandAiOsAuditReport.payloadShape}: ${commandAiOsAuditReport.verdict}. It combines the trial cockpit, connector matrix, public source harvest and operating insight report.`
+                    ? `${commandAiOsAuditReport.payloadShape}: ${formatRuntimeStatus(commandAiOsAuditReport.verdict)}. It combines the trial cockpit, connector matrix, public source harvest and operating insight report.`
                     : '当客户问今天到底能做什么、还缺什么资料、哪些不能承诺时，生成一份边界报告。'}
                 </p>
               </div>
@@ -6599,7 +6602,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <div className="mt-3 border border-white/10 bg-white/[0.04] p-3">
                 <div className="flex flex-wrap items-center gap-2 text-[10px] font-mono uppercase tracking-[0.12em] text-sky-100/70">
                   <span>排程运行</span>
-                  <span>{commandChannelScheduleRun.acceptance.verdict}</span>
+                  <span>{formatRuntimeStatus(commandChannelScheduleRun.acceptance.verdict)}</span>
                   <span>{commandChannelScheduleRun.summary.attempted} attempted</span>
                   <span>{commandChannelScheduleRun.summary.blocked} blocked</span>
                   <span>{commandChannelScheduleRun.summary.retryRecommended} retry/recovery</span>
@@ -6935,7 +6938,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-fuchsia-200/25 bg-fuchsia-200/[0.06] p-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-fuchsia-100/70">回执生命周期</div>
                     <p className="mt-1 text-[11px] leading-4 text-white/65">
-                      {commandProviderReceiptLifecycle.payloadShape} / {commandProviderReceiptLifecycle.verdict} / accepted {commandProviderReceiptLifecycle.summary.acceptedReceipts} / waiting {commandProviderReceiptLifecycle.summary.waitingReceipts}
+                      {commandProviderReceiptLifecycle.payloadShape} / {formatRuntimeStatus(commandProviderReceiptLifecycle.verdict)} / accepted {commandProviderReceiptLifecycle.summary.acceptedReceipts} / waiting {commandProviderReceiptLifecycle.summary.waitingReceipts}
                     </p>
                     {commandProviderReceiptLifecycle.stages.slice(0, 3).map(stage => (
                       <p className="mt-1 text-[11px] leading-4 text-white/45" key={stage.id}>
@@ -6961,7 +6964,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-lime-200/25 bg-lime-200/[0.06] p-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/70">沙箱验收合同</div>
                     <p className="mt-1 text-[11px] leading-4 text-white/65">
-                      {commandProviderSandboxContract.payloadShape} / {commandProviderSandboxContract.verdict} / passed {commandProviderSandboxContract.summary.passed}/{commandProviderSandboxContract.summary.checks}
+                      {commandProviderSandboxContract.payloadShape} / {formatRuntimeStatus(commandProviderSandboxContract.verdict)} / passed {commandProviderSandboxContract.summary.passed}/{commandProviderSandboxContract.summary.checks}
                     </p>
                     {commandProviderSandboxContract.checks.slice(0, 2).map(check => (
                       <p className="mt-1 text-[11px] leading-4 text-white/45" key={check.id}>
@@ -7007,7 +7010,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     </button>
                     {commandProviderSandboxSubmitAttempt ? (
                       <p className="mt-2 border border-white/10 bg-stone-950/40 p-2 text-[11px] leading-4 text-white/55">
-                        attempt: {commandProviderSandboxSubmitAttempt.verdict} / bridge {commandProviderSandboxSubmitAttempt.summary.bridgeStatus} / run {commandProviderSandboxSubmitAttempt.summary.runRecorded ? '已记录' : '未记录'}
+                        attempt: {formatRuntimeStatus(commandProviderSandboxSubmitAttempt.verdict)} / bridge {commandProviderSandboxSubmitAttempt.summary.bridgeStatus} / run {commandProviderSandboxSubmitAttempt.summary.runRecorded ? '已记录' : '未记录'}
                       </p>
                     ) : null}
                   </div>
@@ -7016,7 +7019,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-lime-200/25 bg-lime-200/[0.06] p-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/70">首轮可转发试跑</div>
                     <p className="mt-1 text-[11px] leading-4 text-white/65">
-                      {commandFirstForwardableRunPack.payloadShape} / {commandFirstForwardableRunPack.verdict} / forwardable {commandFirstForwardableRunPack.summary.forwardable} / handoff-only {commandFirstForwardableRunPack.summary.handoffOnly}
+                      {commandFirstForwardableRunPack.payloadShape} / {formatRuntimeStatus(commandFirstForwardableRunPack.verdict)} / forwardable {commandFirstForwardableRunPack.summary.forwardable} / handoff-only {commandFirstForwardableRunPack.summary.handoffOnly}
                     </p>
                     {commandFirstForwardableRunPack.selectedPackage ? (
                       <p className="mt-1 text-[11px] leading-4 text-white/45">
@@ -7043,7 +7046,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-orange-200/25 bg-orange-200/[0.06] p-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-100/70">首跑指挥台</div>
                     <p className="mt-1 text-[11px] leading-4 text-white/65">
-                      {commandFirstRunControlTower.payloadShape} / {commandFirstRunControlTower.verdict} / runs {commandFirstRunControlTower.summary.totalRuns} / waiting receipts {commandFirstRunControlTower.summary.waitingReceipts}
+                      {commandFirstRunControlTower.payloadShape} / {formatRuntimeStatus(commandFirstRunControlTower.verdict)} / runs {commandFirstRunControlTower.summary.totalRuns} / waiting receipts {commandFirstRunControlTower.summary.waitingReceipts}
                     </p>
                     <div className="mt-2 grid gap-1">
                       {commandFirstRunControlTower.lanes.map(lane => (
@@ -7064,7 +7067,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-amber-200/25 bg-amber-200/[0.06] p-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">真实代办启动训练包</div>
                     <p className="mt-1 text-[11px] leading-4 text-white/65">
-                      {commandProviderLaunchTrainingPack.payloadShape} / {commandProviderLaunchTrainingPack.verdict} / ready {commandProviderLaunchTrainingPack.summary.ready}/{commandProviderLaunchTrainingPack.summary.tracks}
+                      {commandProviderLaunchTrainingPack.payloadShape} / {formatRuntimeStatus(commandProviderLaunchTrainingPack.verdict)} / ready {commandProviderLaunchTrainingPack.summary.ready}/{commandProviderLaunchTrainingPack.summary.tracks}
                     </p>
                     {commandProviderLaunchTrainingPack.tracks.slice(0, 2).map(track => (
                       <p className="mt-1 text-[11px] leading-4 text-white/45" key={track.id}>
@@ -7090,7 +7093,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-sky-200/25 bg-sky-200/[0.06] p-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">平台连接器清单</div>
                     <p className="mt-1 text-[11px] leading-4 text-white/65">
-                      {commandPlatformConnectorMatrix.payloadShape} / {commandPlatformConnectorMatrix.verdict} / env {commandPlatformConnectorMatrix.summary.configuredEnvKeys}/{commandPlatformConnectorMatrix.summary.totalEnvKeys}
+                      {commandPlatformConnectorMatrix.payloadShape} / {formatRuntimeStatus(commandPlatformConnectorMatrix.verdict)} / env {commandPlatformConnectorMatrix.summary.configuredEnvKeys}/{commandPlatformConnectorMatrix.summary.totalEnvKeys}
                     </p>
                     {commandPlatformConnectorMatrix.connectors.slice(0, 3).map(connector => (
                       <p className="mt-1 text-[11px] leading-4 text-white/45" key={connector.id}>
@@ -7111,7 +7114,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-violet-200/25 bg-violet-200/[0.06] p-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">门店经营边界报告</div>
                     <p className="mt-1 text-[11px] leading-4 text-white/65">
-                      {commandAiOsAuditReport.payloadShape} / {commandAiOsAuditReport.verdict} / lanes {commandAiOsAuditReport.summary.lanes}
+                      {commandAiOsAuditReport.payloadShape} / {formatRuntimeStatus(commandAiOsAuditReport.verdict)} / lanes {commandAiOsAuditReport.summary.lanes}
                     </p>
                     <p className="mt-1 text-[11px] leading-4 text-white/45">
                       usable {commandAiOsAuditReport.summary.usableNow} / manual {commandAiOsAuditReport.summary.manualReady} / provider {commandAiOsAuditReport.summary.providerRequired} / forbidden {commandAiOsAuditReport.summary.forbidden}
@@ -7894,7 +7897,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-lime-100/65">沙箱试跑台</div>
                     <p className="mt-1 text-xs font-black text-white">提交后在一条时间线里看执行事件、签名回执、验收、收尾和记忆写入资格。</p>
-                    <p className="mt-1 text-[11px] leading-4 text-lime-100/55">verdict: {dispatchState.providerSandboxRunConsole?.verdict || 'blocked-before-submit'}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-lime-100/55">verdict: {formatRuntimeStatus(dispatchState.providerSandboxRunConsole?.verdict || 'blocked-before-submit')}</p>
                   </div>
                   <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">收尾</div>
@@ -8019,7 +8022,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="mt-3 border border-white/10 bg-stone-950/45 p-2">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">最近一次尝试</div>
                     <p className="mt-1 text-[11px] leading-4 text-white/65">
-                      {dispatchState.providerSandboxSubmitAttempt.payloadShape} / {dispatchState.providerSandboxSubmitAttempt.verdict} / bridge {dispatchState.providerSandboxSubmitAttempt.summary.bridgeStatus} / run {dispatchState.providerSandboxSubmitAttempt.summary.runRecorded ? '已记录' : '未记录'}
+                      {dispatchState.providerSandboxSubmitAttempt.payloadShape} / {formatRuntimeStatus(dispatchState.providerSandboxSubmitAttempt.verdict)} / bridge {dispatchState.providerSandboxSubmitAttempt.summary.bridgeStatus} / run {dispatchState.providerSandboxSubmitAttempt.summary.runRecorded ? '已记录' : '未记录'}
                     </p>
                     <p className="mt-1 text-[11px] leading-4 text-orange-100/55">{dispatchState.providerSandboxSubmitAttempt.recoveryNextAction}</p>
                     <p className="mt-1 text-[11px] leading-4 text-white/35">receipt: {dispatchState.providerSandboxSubmitAttempt.receiptExpectation.callbackHeader} / {dispatchState.providerSandboxSubmitAttempt.receiptExpectation.acceptedEvidence.slice(0, 3).join(' / ')}</p>
@@ -8272,7 +8275,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">结论</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.platformConnectorMatrix?.verdict || 'provider-setup-required'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.platformConnectorMatrix?.verdict || 'provider-setup-required')}</div>
                 </div>
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
@@ -8300,13 +8303,13 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">默认路径已对齐真实门店数据源：公开主页、发布凭证、预约、券码核销、POS 销售、会员、库存和毛利。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  This is the data spine behind true operating analysis: every source has owner, canonical fields, sample rows, forbidden fields, next action and Provider boundary.
+                  这是真实经营分析背后的数据主干，每个数据源都有负责人、标准字段、样例行、禁止字段、下一步和外部边界。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-6">
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">结论</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.storeDataImportCenter?.verdict || 'provider-gated'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.storeDataImportCenter?.verdict || 'provider-gated')}</div>
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">来源</div>
@@ -8382,7 +8385,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <div className="mt-3 grid gap-2 md:grid-cols-6">
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">结论</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadCaptureInbox?.verdict || 'provider-unlock-first'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.leadCaptureInbox?.verdict || 'provider-unlock-first')}</div>
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">信号</div>
@@ -8458,7 +8461,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <div className="mt-3 grid gap-2 md:grid-cols-6">
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">结论</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadAcquisitionProviderWorkbench?.verdict || 'provider-setup-required'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.leadAcquisitionProviderWorkbench?.verdict || 'provider-setup-required')}</div>
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">链路</div>
@@ -8533,7 +8536,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <div className="mt-3 grid gap-2 md:grid-cols-6">
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">结论</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.leadSandboxAcceptanceFlow?.verdict || 'waiting-provider-setup'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.leadSandboxAcceptanceFlow?.verdict || 'waiting-provider-setup')}</div>
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">提交</div>
@@ -8604,7 +8607,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <div className="mt-3 grid gap-2 md:grid-cols-6">
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">结论</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.todayCommandCockpit?.verdict || 'provider-unlock-first'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.todayCommandCockpit?.verdict || 'provider-unlock-first')}</div>
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">链路</div>
@@ -8669,7 +8672,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <div className="mt-3 grid gap-2 md:grid-cols-6">
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">结论</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.providerAdapterContractPack?.verdict || 'server-keys-first'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.providerAdapterContractPack?.verdict || 'server-keys-first')}</div>
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">对接器</div>
@@ -8991,11 +8994,11 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">分析</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.operatingInsightReport?.verdict || 'usable-internal-analysis'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.operatingInsightReport?.verdict || 'usable-internal-analysis')}</div>
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">下一轮</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.nextLoopChannelPlan?.verdict || 'ready-for-internal-shift'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.nextLoopChannelPlan?.verdict || 'ready-for-internal-shift')}</div>
                 </div>
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
@@ -9035,7 +9038,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               <div className="mt-3 grid gap-2 md:grid-cols-6">
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">结论</div>
-                  <div className="mt-1 text-xs font-black text-white">{dispatchState.reputationCloseoutPack?.verdict || 'needs-public-proof'}</div>
+                  <div className="mt-1 text-xs font-black text-white">{formatRuntimeStatus(dispatchState.reputationCloseoutPack?.verdict || 'needs-public-proof')}</div>
                 </div>
                 <div className="border border-white/10 bg-stone-950/45 p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">来源</div>
@@ -10550,7 +10553,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="mt-2 grid gap-2 md:grid-cols-6">
                   <div className="border border-white/10 bg-white/[0.05] p-2 md:col-span-2">
                     <div className="font-mono text-white">{dispatchState.operatingInsightReport.payloadShape}</div>
-                    <p className="mt-1 text-white/60">{dispatchState.operatingInsightReport.verdict}</p>
+                    <p className="mt-1 text-white/60">{formatRuntimeStatus(dispatchState.operatingInsightReport.verdict)}</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
                     <div className="font-mono text-white">{dispatchState.operatingInsightReport.summary.measured}</div>
@@ -10597,7 +10600,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="mt-2 grid gap-2 md:grid-cols-6">
                   <div className="border border-white/10 bg-white/[0.05] p-2 md:col-span-2">
                     <div className="font-mono text-white">{commandPostRunReviewPack.payloadShape}</div>
-                    <p className="mt-1 text-white/60">{commandPostRunReviewPack.verdict}</p>
+                    <p className="mt-1 text-white/60">{formatRuntimeStatus(commandPostRunReviewPack.verdict)}</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
                     <div className="font-mono text-white">{commandPostRunReviewPack.summary.acceptedReceipts}</div>
@@ -10647,7 +10650,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="mt-2 grid gap-2 md:grid-cols-7">
                   <div className="border border-cyan-200/20 bg-cyan-200/[0.06] p-2 md:col-span-2">
                     <div className="font-mono text-white">{commandNextLoopChannelPlan.payloadShape}</div>
-                    <p className="mt-1 text-cyan-100/70">{commandNextLoopChannelPlan.verdict}</p>
+                    <p className="mt-1 text-cyan-100/70">{formatRuntimeStatus(commandNextLoopChannelPlan.verdict)}</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
                     <div className="font-mono text-white">{commandNextLoopChannelPlan.summary.internalReadyLanes}</div>
@@ -11315,7 +11318,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <p className="mt-1 text-white/60">目标</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
-                    <div className="font-mono text-white">{dispatchState.runtimeAdapterContract.verdict}</div>
+                    <div className="font-mono text-white">{formatRuntimeStatus(dispatchState.runtimeAdapterContract.verdict)}</div>
                     <p className="mt-1 text-white/60">结论</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -11373,7 +11376,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="text-white/45">试跑跟进闭环包</div>
                 <div className="mt-2 grid gap-2 md:grid-cols-6">
                   <div className="border border-white/10 bg-white/[0.05] p-2">
-                    <div className="font-mono text-white">{dispatchState.runtimeRunnerLoopPack.verdict}</div>
+                    <div className="font-mono text-white">{formatRuntimeStatus(dispatchState.runtimeRunnerLoopPack.verdict)}</div>
                     <p className="mt-1 text-white/60">结论</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -11598,7 +11601,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <p className="mt-1 text-white/60">{dispatchState.externalExecutionWizard.restaurant} / {dispatchState.externalExecutionWizard.offer}</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
-                    <div className="font-mono text-white">{dispatchState.externalExecutionWizard.verdict}</div>
+                    <div className="font-mono text-white">{formatRuntimeStatus(dispatchState.externalExecutionWizard.verdict)}</div>
                     <p className="mt-1 text-white/60">结论</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -11645,7 +11648,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <p className="mt-1 text-white/60">{dispatchState.controlledTrialRun.restaurant} / {dispatchState.controlledTrialRun.offer}</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
-                    <div className="font-mono text-white">{dispatchState.controlledTrialRun.verdict}</div>
+                    <div className="font-mono text-white">{formatRuntimeStatus(dispatchState.controlledTrialRun.verdict)}</div>
                     <p className="mt-1 text-white/60">{dispatchState.controlledTrialRun.mode}</p>
                   </div>
                   <div className="border border-white/10 bg-white/[0.05] p-2">
@@ -11830,7 +11833,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <div>
                         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/70">第一天任务包</div>
                         <p className="mt-1 text-sm font-black text-white">
-                          {dispatchState.dayZeroMissionPack.payloadShape} / {dispatchState.dayZeroMissionPack.verdict}
+                          {dispatchState.dayZeroMissionPack.payloadShape} / {formatRuntimeStatus(dispatchState.dayZeroMissionPack.verdict)}
                         </p>
                         <p className="mt-1 text-[11px] leading-4 text-white/45">
                           {dispatchState.dayZeroMissionPack.restaurant} / {dispatchState.dayZeroMissionPack.offer}
@@ -11891,7 +11894,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <div>
                         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-100/70">公开试跑种子</div>
                         <p className="mt-1 text-sm font-black text-white">
-                          {dispatchState.publicTrialSeed.payloadShape} / {dispatchState.publicTrialSeed.verdict}
+                          {dispatchState.publicTrialSeed.payloadShape} / {formatRuntimeStatus(dispatchState.publicTrialSeed.verdict)}
                         </p>
                         <p className="mt-1 text-[11px] leading-4 text-white/45">
                           {dispatchState.publicTrialSeed.trialIntake.restaurant} / {dispatchState.publicTrialSeed.trialIntake.offer}
@@ -11939,7 +11942,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       <div>
                         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">公开资料采集包</div>
                         <p className="mt-1 text-sm font-black text-white">
-                          {dispatchState.publicSourceHarvestPack.payloadShape} / {dispatchState.publicSourceHarvestPack.verdict}
+                          {dispatchState.publicSourceHarvestPack.payloadShape} / {formatRuntimeStatus(dispatchState.publicSourceHarvestPack.verdict)}
                         </p>
                       </div>
                       <div className="grid gap-2 text-xs sm:grid-cols-3 md:min-w-[420px]">

@@ -3,10 +3,10 @@
 import type { RestaurantProviderForwardableSetupDossier } from '@/lib/restaurant-provider-forwardable-setup-dossier';
 
 const fallbackPackets = [
-  { id: 'runtime-provider', title: 'Runtime Provider Setup', sendTo: 'Provider engineer', asks: ['Configure runtime URL/API key and callback secret'], evidenceRequired: ['runtime health ready'], firstMessage: 'Configure one runtime target server-side.' },
-  { id: 'merchant-owner', title: 'Merchant Authorization Setup', sendTo: 'Merchant owner', asks: ['Approve one platform scope'], evidenceRequired: ['scope and expiry'], firstMessage: 'Approve allowed actions and revocation owner.' },
-  { id: 'data-owner', title: 'Operating Data Setup', sendTo: 'Data/POS owner', asks: ['Provide no-PII aggregate fields'], evidenceRequired: ['field dictionary'], firstMessage: 'Send aggregate data contract only.' },
-  { id: 'ops-lead', title: 'Store Ops Launch Setup', sendTo: 'Store ops lead', asks: ['Review launch gate and closeout'], evidenceRequired: ['accepted receipt'], firstMessage: 'Keep run open until proof is accepted.' },
+  { id: 'runtime-provider', title: '试跑通道配置包', sendTo: '通道对接工程师', asks: ['在服务端配置通道地址/账号和回执密钥'], evidenceRequired: ['通道健康检查通过'], firstMessage: '先在服务端配置一条试跑通道。' },
+  { id: 'merchant-owner', title: '店长授权配置包', sendTo: '店长', asks: ['确认一个平台的授权范围'], evidenceRequired: ['授权范围和有效期'], firstMessage: '确认允许动作和撤销负责人。' },
+  { id: 'data-owner', title: '经营数据配置包', sendTo: '数据/POS 负责人', asks: ['提供去隐私的汇总字段'], evidenceRequired: ['字段表'], firstMessage: '只发汇总数据约定。' },
+  { id: 'ops-lead', title: '门店启动配置包', sendTo: '门店运营负责人', asks: ['复核启动条件和收尾'], evidenceRequired: ['已验收回执'], firstMessage: '凭证验收前保持试跑打开。' },
 ];
 
 export function RestaurantProviderForwardableSetupDossierPanel({ dossier }: { dossier?: RestaurantProviderForwardableSetupDossier }) {
@@ -22,7 +22,7 @@ export function RestaurantProviderForwardableSetupDossierPanel({ dossier }: { do
         </div>
         <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">真实外部</div>
-          <div className="mt-1 text-xs font-black text-white">{dossier?.summary.canStartLiveProviderNow ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{dossier?.summary.canStartLiveProviderNow ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -48,21 +48,21 @@ export function RestaurantProviderForwardableSetupDossierPanel({ dossier }: { do
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">宣称</div>
-          <div className="mt-1 text-xs font-black text-white">{dossier?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{dossier?.summary.canClaimExternalAutomation ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 lg:grid-cols-4">
         {packets.map(item => (
           <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
             <div className="text-xs font-black text-white">{item.title}</div>
-            <p className="mt-1 text-[11px] leading-4 text-violet-100/55">to: {item.sendTo}</p>
+            <p className="mt-1 text-[11px] leading-4 text-violet-100/55">发给: {item.sendTo}</p>
             <p className="mt-1 text-[11px] leading-4 text-white/45">{item.asks.slice(0, 2).join(' / ')}</p>
             <p className="mt-1 text-[11px] leading-4 text-white/55">{item.evidenceRequired.slice(0, 2).join(' / ')}</p>
           </div>
         ))}
       </div>
       <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-violet-100/55">
-        digest: {dossier?.exportDigest.markdown.split('\n')[0] || 'Forwardable Provider Setup Dossier'} / env values always {dossier?.envTemplate[0]?.value || '<server-side-only>'}
+        导出摘要: {dossier?.exportDigest.markdown.split('\n')[0] || '可转发配置档案'} / 配置值一律 {dossier?.envTemplate[0]?.value || '<server-side-only>'}
       </p>
     </div>
   );

@@ -3,12 +3,12 @@
 import type { RestaurantProviderReceiptAcceptanceConsole } from '@/lib/restaurant-provider-receipt-acceptance-console';
 
 const fallbackChecks = [
-  { id: 'signature', status: 'blocked', owner: 'runtime-admin', evidence: ['x-restaurant-agent-signature'], nextAction: 'Validate callback signature.' },
-  { id: 'run-id', status: 'blocked', owner: 'provider', evidence: ['eventId', 'externalRunId'], nextAction: 'Match run id to the packet.' },
-  { id: 'public-proof', status: 'waiting', owner: 'ops', evidence: ['public proof URL', 'screenshot id'], nextAction: 'Collect verifiable proof.' },
-  { id: 'business-signal', status: 'waiting', owner: 'data-ops', evidence: ['aggregate signal'], nextAction: 'Extract only accepted aggregate signals.' },
-  { id: 'memory-write', status: 'blocked', owner: 'store-manager', evidence: ['accepted proof only'], nextAction: 'Wait before writing memory.' },
-  { id: 'claim-boundary', status: 'blocked', owner: 'ops', evidence: ['canClaimExternalAutomation:false'], nextAction: 'No production claim yet.' },
+  { id: 'signature', status: 'blocked', owner: 'runtime-admin', evidence: ['x-restaurant-agent-signature'], nextAction: '校验回执签名。' },
+  { id: 'run-id', status: 'blocked', owner: 'provider', evidence: ['eventId', 'externalRunId'], nextAction: '把运行编号和交接包对上。' },
+  { id: 'public-proof', status: 'waiting', owner: 'ops', evidence: ['公开凭证链接', '截图编号'], nextAction: '收集可核验凭证。' },
+  { id: 'business-signal', status: 'waiting', owner: 'data-ops', evidence: ['汇总信号'], nextAction: '只提取已验收的汇总信号。' },
+  { id: 'memory-write', status: 'blocked', owner: 'store-manager', evidence: ['仅限已验收凭证'], nextAction: '凭证验收前不写记忆。' },
+  { id: 'claim-boundary', status: 'blocked', owner: 'ops', evidence: ['canClaimExternalAutomation:false'], nextAction: '暂不做上线宣称。' },
 ];
 
 export function RestaurantProviderReceiptAcceptancePanel({ consoleData }: { consoleData?: RestaurantProviderReceiptAcceptanceConsole }) {
@@ -24,7 +24,7 @@ export function RestaurantProviderReceiptAcceptancePanel({ consoleData }: { cons
         </div>
         <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">训练下一轮</div>
-          <div className="mt-1 text-xs font-black text-white">{consoleData?.summary.canTrainNextRun ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{consoleData?.summary.canTrainNextRun ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -50,7 +50,7 @@ export function RestaurantProviderReceiptAcceptancePanel({ consoleData }: { cons
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">宣称</div>
-          <div className="mt-1 text-xs font-black text-white">{consoleData?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{consoleData?.summary.canClaimExternalAutomation ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 lg:grid-cols-7">
@@ -67,7 +67,7 @@ export function RestaurantProviderReceiptAcceptancePanel({ consoleData }: { cons
         ))}
       </div>
       <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-emerald-100/55">
-        callback: {consoleData?.callbackContract.action || 'external-receipt'} with {consoleData?.callbackContract.requiredHeader || 'x-restaurant-agent-signature'} / memory {consoleData?.closeoutTraining.memoryWriteAllowed ? 'allowed' : 'blocked'} / forbidden {(consoleData?.closeoutTraining.forbiddenWrites || ['cookies', 'private-message text', 'raw POS rows']).slice(0, 4).join(' / ')}
+        回执: {consoleData?.callbackContract.action || 'external-receipt'} with {consoleData?.callbackContract.requiredHeader || 'x-restaurant-agent-signature'} / 记忆写入 {consoleData?.closeoutTraining.memoryWriteAllowed ? '允许' : '受阻'} / 禁止写入 {(consoleData?.closeoutTraining.forbiddenWrites || ['cookies', 'private-message text', 'raw POS rows']).slice(0, 4).join(' / ')}
       </p>
     </div>
   );

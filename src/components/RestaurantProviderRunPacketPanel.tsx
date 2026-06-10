@@ -3,11 +3,11 @@
 import type { RestaurantProviderRunPacket } from '@/lib/restaurant-provider-run-packet';
 
 const fallbackChecklist = [
-  { id: 'provider-response', status: 'blocked', owner: 'provider', evidence: ['HTTP 200/201/202', 'runId or taskId'], nextAction: 'Return stable run id.' },
-  { id: 'signed-callback', status: 'blocked', owner: 'runtime-admin', evidence: ['external-receipt', 'signature'], nextAction: 'Validate callback signature.' },
-  { id: 'public-proof', status: 'waiting', owner: 'ops', evidence: ['public proof URL', 'screenshot id'], nextAction: 'Accept public proof only.' },
-  { id: 'memory-training', status: 'blocked', owner: 'store-manager', evidence: ['accepted proof only'], nextAction: 'Wait before memory write.' },
-  { id: 'claim-boundary', status: 'blocked', owner: 'ops', evidence: ['canClaimExternalAutomation:false'], nextAction: 'No production claim yet.' },
+  { id: 'provider-response', status: 'blocked', owner: 'provider', evidence: ['HTTP 200/201/202', 'runId 或 taskId'], nextAction: '返回稳定的运行编号。' },
+  { id: 'signed-callback', status: 'blocked', owner: 'runtime-admin', evidence: ['external-receipt', '签名'], nextAction: '校验回执签名。' },
+  { id: 'public-proof', status: 'waiting', owner: 'ops', evidence: ['公开凭证链接', '截图编号'], nextAction: '只接受公开凭证。' },
+  { id: 'memory-training', status: 'blocked', owner: 'store-manager', evidence: ['仅限已验收凭证'], nextAction: '凭证验收前不写记忆。' },
+  { id: 'claim-boundary', status: 'blocked', owner: 'ops', evidence: ['canClaimExternalAutomation:false'], nextAction: '暂不做上线宣称。' },
 ];
 
 export function RestaurantProviderRunPacketPanel({ providerRunPacket }: { providerRunPacket?: RestaurantProviderRunPacket }) {
@@ -23,7 +23,7 @@ export function RestaurantProviderRunPacketPanel({ providerRunPacket }: { provid
         </div>
         <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">真实提交</div>
-          <div className="mt-1 text-xs font-black text-white">{providerRunPacket?.summary.canSubmitRealProviderNow ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{providerRunPacket?.summary.canSubmitRealProviderNow ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -41,7 +41,7 @@ export function RestaurantProviderRunPacketPanel({ providerRunPacket }: { provid
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">模拟器</div>
-          <div className="mt-1 text-xs font-black text-sky-100/75">{providerRunPacket?.summary.canSubmitSimulatorNow ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-sky-100/75">{providerRunPacket?.summary.canSubmitSimulatorNow ? '就绪' : '受阻'}</div>
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">回执</div>
@@ -49,7 +49,7 @@ export function RestaurantProviderRunPacketPanel({ providerRunPacket }: { provid
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">宣称</div>
-          <div className="mt-1 text-xs font-black text-white">{providerRunPacket?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{providerRunPacket?.summary.canClaimExternalAutomation ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 lg:grid-cols-5">

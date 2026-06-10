@@ -4,12 +4,12 @@ import type { RestaurantProviderLiveRunGate } from '@/lib/restaurant-provider-li
 import type { RestaurantProviderLiveRunLaunchAttempt } from '@/lib/restaurant-provider-live-run-launch-attempt';
 
 const fallbackChecks = [
-  { id: 'runtime-health', status: 'blocked', owner: 'runtime-admin', evidence: ['runtime URL/API key'], nextAction: 'Configure Provider health.' },
-  { id: 'browser-gateway', status: 'blocked', owner: 'provider', evidence: ['isolated browser profile'], nextAction: 'Prepare supervised browser gateway.' },
-  { id: 'provider-package', status: 'blocked', owner: 'ops', evidence: ['safe package'], nextAction: 'Select one safe package.' },
-  { id: 'merchant-auth', status: 'blocked', owner: 'merchant', evidence: ['merchant scope'], nextAction: 'Collect merchant authorization.' },
-  { id: 'signed-callback', status: 'blocked', owner: 'runtime-admin', evidence: ['x-restaurant-agent-signature'], nextAction: 'Configure callback secret.' },
-  { id: 'claim-boundary', status: 'blocked', owner: 'ops', evidence: ['canClaimExternalAutomation:false'], nextAction: 'Do not claim production automation.' },
+  { id: 'runtime-health', status: 'blocked', owner: 'runtime-admin', evidence: ['通道地址/账号'], nextAction: '先把外部通道健康检查配通。' },
+  { id: 'browser-gateway', status: 'blocked', owner: 'provider', evidence: ['隔离浏览器环境'], nextAction: '准备受监督的浏览器网关。' },
+  { id: 'provider-package', status: 'blocked', owner: 'ops', evidence: ['脱敏任务包'], nextAction: '选一个脱敏任务包。' },
+  { id: 'merchant-auth', status: 'blocked', owner: 'merchant', evidence: ['店长授权范围'], nextAction: '先收店长授权。' },
+  { id: 'signed-callback', status: 'blocked', owner: 'runtime-admin', evidence: ['x-restaurant-agent-signature'], nextAction: '配置回执密钥。' },
+  { id: 'claim-boundary', status: 'blocked', owner: 'ops', evidence: ['canClaimExternalAutomation:false'], nextAction: '不宣称已实现自动代办。' },
 ];
 
 export function RestaurantProviderLiveRunGatePanel({ liveRunGate, launchAttempt }: { liveRunGate?: RestaurantProviderLiveRunGate; launchAttempt?: RestaurantProviderLiveRunLaunchAttempt }) {
@@ -25,7 +25,7 @@ export function RestaurantProviderLiveRunGatePanel({ liveRunGate, launchAttempt 
         </div>
         <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">真实执行</div>
-          <div className="mt-1 text-xs font-black text-white">{liveRunGate?.summary.canStartRealProviderNow ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{liveRunGate?.summary.canStartRealProviderNow ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -39,11 +39,11 @@ export function RestaurantProviderLiveRunGatePanel({ liveRunGate, launchAttempt 
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">浏览器</div>
-          <div className="mt-1 text-xs font-black text-white">{liveRunGate?.summary.browserExecutable ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{liveRunGate?.summary.browserExecutable ? '就绪' : '受阻'}</div>
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">任务包</div>
-          <div className="mt-1 text-xs font-black text-white">{liveRunGate?.summary.packageReady ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{liveRunGate?.summary.packageReady ? '就绪' : '受阻'}</div>
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">回执</div>
@@ -51,7 +51,7 @@ export function RestaurantProviderLiveRunGatePanel({ liveRunGate, launchAttempt 
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">宣称</div>
-          <div className="mt-1 text-xs font-black text-white">{liveRunGate?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{liveRunGate?.summary.canClaimExternalAutomation ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 lg:grid-cols-4">

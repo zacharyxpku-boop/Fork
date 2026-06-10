@@ -3,9 +3,9 @@
 import type { RestaurantRunnerMissionTimeline } from '@/lib/restaurant-runner-mission-timeline';
 
 const fallbackTimeline = [
-  { id: 'launch-decision', status: 'blocked', title: 'Launch decision', owner: 'ops', evidence: ['runtime health', 'merchant grant'], nextAction: 'Resolve launch gates first.' },
-  { id: 'open_public_page', status: 'waiting', title: 'open_public_page', owner: 'provider', evidence: ['opened url'], nextAction: 'Run after gateway is ready.' },
-  { id: 'signed-receipt-closeout', status: 'blocked', title: 'Signed receipt closeout', owner: 'store-manager', evidence: ['signed external-receipt'], nextAction: 'Wait for accepted proof.' },
+  { id: 'launch-decision', status: 'blocked', title: '启动判断', owner: 'ops', evidence: ['通道健康', '店长授权'], nextAction: '先解决启动条件。' },
+  { id: 'open_public_page', status: 'waiting', title: 'open_public_page', owner: 'provider', evidence: ['已打开链接'], nextAction: '网关就绪后再执行。' },
+  { id: 'signed-receipt-closeout', status: 'blocked', title: '签名回执收尾', owner: 'store-manager', evidence: ['已签名的 external-receipt'], nextAction: '等待已验收凭证。' },
 ];
 
 export function RestaurantRunnerMissionTimelinePanel({ timeline }: { timeline?: RestaurantRunnerMissionTimeline }) {
@@ -47,7 +47,7 @@ export function RestaurantRunnerMissionTimelinePanel({ timeline }: { timeline?: 
         </div>
         <div className="border border-white/10 bg-stone-950/45 p-2">
           <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">宣称</div>
-          <div className="mt-1 text-xs font-black text-white">{timeline?.summary.canClaimExternalAutomation ? 'ready' : 'blocked'}</div>
+          <div className="mt-1 text-xs font-black text-white">{timeline?.summary.canClaimExternalAutomation ? '就绪' : '受阻'}</div>
         </div>
       </div>
       <div className="mt-3 grid gap-2 lg:grid-cols-4">
