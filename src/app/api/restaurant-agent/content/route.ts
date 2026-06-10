@@ -1,37 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildAllContentPrompts, type RestaurantContentIntake, type RestaurantContentPrompt } from '@/lib/restaurant-content-prompts';
+import { hasLlmKey, llmChat, LlmError } from '@/lib/llm-client';
 
 interface GeneratedContent {
   kind: RestaurantContentPrompt['kind'];
   label: string;
   output: string;
-}
-
-const DEEPSEEK_ENDPOINT = 'https://api.deepseek.com/v1/chat/completions';
-
-async function generateWithDeepseek(prompt: RestaurantContentPrompt, apiKey: string): Promise<GeneratedContent> {
-  const response = await fetch(DEEPSEEK_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: prompt.system },
-        { role: 'user', content: prompt.user },
-      ],
-      temperature: 0.8,
-      max_tokens: 800,
-    }),
-  });
-  if (!response.ok) {
-    throw new Error(`deepseek-http-${response.status}`);
-  }
-  const payload = await response.json();
-  const text: string = payload?.choices?.[0]?.message?.content || '';
-  return { kind: prompt.kind, label: prompt.label, output: text };
 }
 
 export async function POST(request: NextRequest) {
@@ -47,9 +21,8 @@ export async function POST(request: NextRequest) {
   }
 
   const prompts = buildAllContentPrompts(intake);
-  const apiKey = process.env.DEEPSEEK_API_KEY;
 
-  if (!apiKey) {
+  if (!hasLlmKey()) {
     return NextResponse.json({
       ok: true,
       mode: 'prompt-preview',
@@ -68,9 +41,12 @@ export async function POST(request: NextRequest) {
   const failures: { kind: string; error: string }[] = [];
   for (const prompt of prompts) {
     try {
-      results.push(await generateWithDeepseek(prompt, apiKey));
+      const result = await llmChat({ system: prompt.system, user: prompt.user });
+      if (result.mode === 'generated') {
+        results.push({ kind: prompt.kind, label: prompt.label, output: result.output });
+      }
     } catch (error) {
-      failures.push({ kind: prompt.kind, error: error instanceof Error ? error.message : 'unknown' });
+      failures.push({ kind: prompt.kind, error: error instanceof LlmError ? error.kind : 'unknown' });
     }
   }
 
