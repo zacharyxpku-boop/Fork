@@ -86,9 +86,9 @@ function itemFor(draft: RestaurantStaffNotificationDraft, env: EnvMap): Restaura
     nextAction: status === 'blocked'
       ? `Configure ${missing[0]} before provider delivery; keep using manual copy meanwhile.`
       : status === 'ready-for-provider'
-        ? 'Forward only through server-side provider code with audit logging and revocation owner.'
-        : 'Copy this draft into the merchant-approved internal staff channel and then mark the task done after evidence review.',
-    safetyBoundary: 'Delivery bridge never sends messages in this request and never includes secrets, phone numbers, WeChat IDs, private-message raw text, coupon codes, POS rows, cookies, tokens, or platform credentials.',
+        ? '只通过带审计日志和撤销负责人的服务端通道代码转发。'
+        : '把这份草稿复制到店长批准的内部员工群，凭证复核后再把任务标记完成。',
+    safetyBoundary: '投递通道在本次请求里不发任何消息，也绝不包含密钥、手机号、微信号、私信原文、券码、POS 行、cookies、tokens 或平台凭据。',
   };
 }
 
@@ -119,10 +119,10 @@ export function buildRestaurantStaffNotificationDeliveryBridge(input: {
       unlocks: ['staff-provider-delivery', 'delivery-audit-log', 'owner-escalation'],
     })),
     externalRequired: [
-      'Work-chat/SMS provider credentials must stay server-side.',
-      'Merchant must approve staff recipient mapping and revocation owner.',
-      'Customer-facing delivery is out of scope for this bridge.',
+      '企业微信/短信通道的凭据必须留在服务端。',
+      '店长必须确认员工接收名单和撤销负责人。',
+      '这条通道不做面向顾客的投递。',
     ],
-    safetyBoundary: 'Staff Notification Delivery Bridge prepares provider-safe delivery payloads and readiness only. It does not send messages, contact customers, expose credentials, store PII, redeem coupons, pull POS rows, or bypass merchant approval.',
+    safetyBoundary: '员工通知投递通道只准备安全投递内容和就绪状态。不发消息、不触达顾客、不暴露凭据、不存隐私、不核销、不拉 POS 行、不绕过店长确认。',
   };
 }

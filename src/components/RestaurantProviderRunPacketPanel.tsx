@@ -66,7 +66,7 @@ export function RestaurantProviderRunPacketPanel({ providerRunPacket }: { provid
         ))}
       </div>
       <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-blue-100/55">
-        body preview: {providerRunPacket?.request.bodyPreview.packageId || 'packageId'} / {providerRunPacket?.request.bodyPreview.capabilityId || 'auto-publish-proof'} / forbidden {(providerRunPacket?.request.forbiddenFields || ['cookies', 'private-message text', 'raw POS rows']).slice(0, 4).join(' / ')}
+        提交内容预览: {providerRunPacket?.request.bodyPreview.packageId || 'packageId'} / {providerRunPacket?.request.bodyPreview.capabilityId || 'auto-publish-proof'} / 禁止字段 {(providerRunPacket?.request.forbiddenFields || ['cookies', '私信原文', '原始 POS 行']).slice(0, 4).join(' / ')}
       </p>
     </div>
   );

@@ -191,7 +191,7 @@ export function buildRestaurantGrantChecklist(input: {
           status: runtimeReady ? 'done' : 'missing',
           unlocks: ['worker dispatch', 'retryable external run'],
           evidenceRequired: ['runtime provider', 'health endpoint', 'tenant scope', 'secret slot configured flag'],
-          blockedReason: runtimeReady ? '' : 'A Lobu/OpenClaw/Hermes runtime URL/key or generic RESTAURANT_AGENT_RUNTIME_URL/key pair is missing.',
+          blockedReason: runtimeReady ? '' : '缺 Lobu/OpenClaw/Hermes 通道地址/账号，或通用的 RESTAURANT_AGENT_RUNTIME_URL/key 配置对。',
           nextAction: runtimeReady ? 'Probe runtime health before forwarding production tasks.' : 'Attach Lobu/OpenClaw/Hermes runtime or stay in local-only mode.',
           safetyBoundary: 'Only configured/missing is returned; runtime keys never leave the server.',
         }),

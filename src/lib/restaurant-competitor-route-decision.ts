@@ -161,7 +161,7 @@ export async function buildRestaurantCompetitorRouteDecision(input: RestaurantTr
       upgradeBeyondCompetitor: ['restaurant action scopes', 'sanitized receipt-only callbacks', 'per-lane unlock instead of all-or-nothing automation'],
       internalCanShipNow: ['local tenant event', 'runtime setup contract', 'provider launch board', 'task provider handoff', 'sandbox acceptance contract'],
       needsTraining: ['runtime stop-line examples', 'accepted/rejected receipt examples', 'sandbox recovery examples'],
-      externalRequired: ['OpenClaw/Hermes/Lobu runtime URL', 'runtime API key', 'isolated browser profile', 'callback secret', 'merchant action-scope approval'],
+      externalRequired: ['OpenClaw/Hermes/Lobu 通道地址', '通道账号密钥', '隔离浏览器环境', '回执密钥', '店长动作范围确认'],
       acceptanceProof: ['sandbox run id', 'callback signature verified', 'sanitized event stream', 'recovery owner assigned'],
     },
     {

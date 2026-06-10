@@ -67,7 +67,7 @@ export function buildRestaurantClawCloudOperatorHome(input: RestaurantTrialIntak
 }): RestaurantClawCloudOperatorHome {
   const now = input.now || new Date();
   const restaurant = clean(input.restaurant || input.forwardableBrief?.restaurant, 'Trial restaurant');
-  const offer = clean(input.offer || input.forwardableBrief?.offer, 'Today featured offer');
+  const offer = clean(input.offer || input.forwardableBrief?.offer, '今日主推套餐');
   const aiMessage = input.commandCenter.aiEmployeeInbox.messages[0];
   const gmLane = input.commandCenter.gmCommandDeck.lanes[0];
   const task = input.commandCenter.storeManagerTaskQueue.tasks[0];
@@ -79,7 +79,7 @@ export function buildRestaurantClawCloudOperatorHome(input: RestaurantTrialIntak
       label: 'Ask AI employee',
       status: input.commandCenter.aiEmployeeInbox.summary.internalRunnable > 0 ? 'ready-internal' : 'needs-review',
       owner: 'ai-employee',
-      customerPromise: 'The user starts from one AI employee answer, not a catalog of expert tools.',
+      customerPromise: '用户从一条 AI 店员回答开始，而不是一堆专家工具目录。',
       actionNow: aiMessage?.body || input.commandCenter.primaryAction.reason,
       visibleProof: input.commandCenter.aiEmployeeInbox.memory.slice(0, 4).map(item => `${item.label}:${item.value}`).join(' / '),
       externalNeeded: input.commandCenter.aiEmployeeInbox.externalRequired.slice(0, 4),
@@ -90,7 +90,7 @@ export function buildRestaurantClawCloudOperatorHome(input: RestaurantTrialIntak
       label: 'Run today shift',
       status: input.commandCenter.gmCommandDeck.summary.canRunWithoutProvider ? 'ready-internal' : 'needs-review',
       owner: 'store-manager',
-      customerPromise: 'Opening brief, service-window watch and closeout become one restaurant shift loop.',
+      customerPromise: '开班简报、服务时段巡视和收尾连成一个门店班次循环。',
       actionNow: gmLane?.actionNow || input.commandCenter.gmCommandDeck.aiAutopilotQueue[0] || input.commandCenter.nextAction,
       visibleProof: gmLane?.visibleProof || 'owner task queue and staff handoff',
       externalNeeded: input.commandCenter.gmCommandDeck.providerQueue.slice(0, 4),
@@ -98,11 +98,11 @@ export function buildRestaurantClawCloudOperatorHome(input: RestaurantTrialIntak
     },
     {
       id: 'publish-and-proof',
-      label: 'Publish and proof',
+      label: '发布与凭证',
       status: 'provider-gated',
       owner: 'ops',
-      customerPromise: 'Approved local content can be prepared internally; real platform publishing needs accepted proof.',
-      actionNow: 'Prepare one approved channel package and proof slot before any Provider run.',
+      customerPromise: '已审核的本地内容可以先在内部备好，真实平台发布要等凭证验收。',
+      actionNow: '任何外部执行前，先准备一个已审核的渠道任务包和凭证槽。',
       visibleProof: 'public URL, screenshot id or signed callback receipt',
       externalNeeded: unique([
         'merchant platform authorization',
@@ -110,15 +110,15 @@ export function buildRestaurantClawCloudOperatorHome(input: RestaurantTrialIntak
         'callback secret',
         ...(input.providerKeyGapBoard?.rows.find(row => row.id === 'auto-publish')?.externalNeeded || []),
       ], 5),
-      stopLine: 'No auto-publish claim until provider health, merchant grant and accepted public receipt exist.',
+      stopLine: '外部条件、店长授权和已验收公开回执齐之前，不宣称代发布。',
     },
     {
       id: 'leads-and-redemption',
-      label: 'Leads and redemption',
+      label: '线索与核销',
       status: 'data-gated',
       owner: 'data-ops',
-      customerPromise: 'Reservations, coupon claims and POS aggregates become follow-up tasks and closeout evidence.',
-      actionNow: task?.action || 'Import aggregate lead, coupon and POS fields before judging business results.',
+      customerPromise: '预约、领券和 POS 汇总会变成跟进任务和收尾凭证。',
+      actionNow: task?.action || '判断经营结果前，先导入线索、券码和 POS 的汇总字段。',
       visibleProof: task?.evidenceRequired || 'aggregate lead/redemption/POS import and accepted receipt',
       externalNeeded: unique([
         'lead source authorization',
@@ -126,18 +126,18 @@ export function buildRestaurantClawCloudOperatorHome(input: RestaurantTrialIntak
         'no-PII aggregate data contract',
         ...(input.providerKeyGapBoard?.rows.find(row => row.id === 'true-operating-analysis')?.externalNeeded || []),
       ], 5),
-      stopLine: 'No customer PII, private-message body, coupon code, payment id or raw POS row can enter the AI employee.',
+      stopLine: '顾客隐私、私信原文、券码、支付单号和原始 POS 行一概不进 AI 店员。',
     },
     {
       id: 'provider-unlock',
-      label: 'Unlock external execution',
+      label: '解锁外部执行',
       status: 'provider-gated',
       owner: 'runtime-admin',
-      customerPromise: 'Every competitor-grade automation lane has a Provider ask, receipt schema and stop line.',
-      actionNow: providerGap?.nextAction || 'Configure runtime URL/key, callback secret, merchant grants and data contract before sandbox submit.',
+      customerPromise: '每条对标自动化链路都有外部资料请求、回执字段和停止线。',
+      actionNow: providerGap?.nextAction || '沙箱提交前先配通道地址/账号、回执密钥、店长授权和数据约定。',
       visibleProof: providerGap?.acceptanceEvidence.join(' / ') || 'provider health, signed callback and accepted receipt',
       externalNeeded: providerGap?.externalNeeded.slice(0, 5) || input.commandCenter.externalRequired.slice(0, 5),
-      stopLine: providerGap?.stopLine || 'External execution remains blocked until Provider proof is accepted.',
+      stopLine: providerGap?.stopLine || '外部凭证验收之前，外部执行保持关闭。',
     },
   ];
 
@@ -168,11 +168,11 @@ export function buildRestaurantClawCloudOperatorHome(input: RestaurantTrialIntak
     offer,
     positioning: 'claw-cloud-style-ai-employee-home',
     hero: {
-      title: 'Wenai Store Operator is ready for the first controlled shift',
+      title: 'Wenai 门店操作员已就绪，可以跑第一个受控班次',
       status: heroStatus,
       promise: `${restaurant} sees one AI employee command surface: ask, run shift, prepare publish proof, follow leads and unlock Provider lanes.`,
       primaryAction: input.commandCenter.primaryAction.label,
-      secondaryAction: input.forwardableBrief?.headline || 'Generate one forwardable operating brief',
+      secondaryAction: input.forwardableBrief?.headline || '生成一份可转发的经营简报',
     },
     summary: {
       lanes: lanes.length,
@@ -202,6 +202,6 @@ export function buildRestaurantClawCloudOperatorHome(input: RestaurantTrialIntak
       'payment ids',
       'raw POS rows',
     ],
-    safetyBoundary: 'Claw Cloud Operator Home is an AI employee command surface over internal tasks, proof queues and Provider gates. It does not log in, publish, contact customers, redeem coupons, read private messages, write POS data, expose secrets or claim external automation without merchant authorization, Provider health, signed receipts and aggregate data contracts.',
+    safetyBoundary: '操作台首页只是盖在本地任务、凭证队列和外部条件上的指挥界面。没有店长授权、外部条件、签名回执和汇总数据约定，不登录、不发布、不触达顾客、不核销、不读私信、不写 POS、不暴露密钥、不宣称外部自动化。',
   };
 }

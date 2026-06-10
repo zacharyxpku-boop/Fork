@@ -68,7 +68,7 @@ export function RestaurantProviderLiveRunGatePanel({ liveRunGate, launchAttempt 
         ))}
       </div>
       <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-cyan-100/55">
-        first action: {liveRunGate?.firstLiveAction.mode || 'simulator'} / {liveRunGate?.firstLiveAction.method || 'POST'} {liveRunGate?.firstLiveAction.endpoint || 'provider runtime or browser gateway'} / callback {liveRunGate?.selectedRun.callbackAction || 'external-receipt'} with {liveRunGate?.selectedRun.callbackHeader || 'x-restaurant-agent-signature'}
+        第一步: {(liveRunGate?.firstLiveAction.mode || 'simulator')} / {liveRunGate?.firstLiveAction.method || 'POST'} {liveRunGate?.firstLiveAction.endpoint || '外部通道或浏览器网关'} / 回执 {liveRunGate?.selectedRun.callbackAction || 'external-receipt'} 带签名头 {liveRunGate?.selectedRun.callbackHeader || 'x-restaurant-agent-signature'}
       </p>
       <div className="mt-2 border border-white/10 bg-stone-950/45 p-2">
         <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:justify-between">

@@ -24,7 +24,7 @@ describe('restaurant AI employee inbox', () => {
     expect(inbox.employee.role).toBe('restaurant-ai-employee');
     expect(inbox.summary.messages).toBeGreaterThan(0);
     expect(inbox.summary.waitingExternal).toBeGreaterThan(0);
-    expect(inbox.messages.map(message => message.actionLabel)).toEqual(expect.arrayContaining(['Run Trial', 'Setup Gates']));
+    expect(inbox.messages.map(message => message.actionLabel)).toEqual(expect.arrayContaining(['运行试跑', '补资料条件']));
     expect(inbox.memory.map(item => item.id)).toEqual(expect.arrayContaining(['restaurant', 'offer', 'provider-gates']));
     expect(inbox.safetyBoundary).toContain('does not publish');
   });
@@ -63,7 +63,7 @@ describe('restaurant AI employee inbox', () => {
 
     expect(center.summary.channelDeliveryAttempts).toBeGreaterThanOrEqual(2);
     expect(center.summary.channelDeliveryRetryRecommended).toBeGreaterThan(0);
-    expect(center.aiEmployeeInbox.messages.map(message => message.actionLabel)).toContain('Recover Schedule');
+    expect(center.aiEmployeeInbox.messages.map(message => message.actionLabel)).toContain('恢复排程');
     expect(center.aiEmployeeInbox.memory.map(item => item.id)).toContain('channel-attempts');
   });
 
@@ -89,7 +89,7 @@ describe('restaurant AI employee inbox', () => {
     });
 
     expect(center.summary.channelDeliveryAcknowledged).toBe(1);
-    expect(center.aiEmployeeInbox.messages.map(message => message.actionLabel)).toContain('Review Acknowledgement');
+    expect(center.aiEmployeeInbox.messages.map(message => message.actionLabel)).toContain('查看确认');
     expect(center.aiEmployeeInbox.memory.map(item => item.id)).toContain('channel-acks');
   });
 });

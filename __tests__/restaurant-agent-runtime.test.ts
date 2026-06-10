@@ -51,7 +51,7 @@ describe('restaurant agent runtime', () => {
 
     expect(RESTAURANT_AGENT_REFERENCES.map(reference => reference.name)).toEqual(['OpenClaw', 'Lobu', 'Hermes']);
     expect(runtime.references.every(reference => reference.canAttachNow === false)).toBe(true);
-    expect(runtime.references.map(reference => reference.attachRequirement).join(' ')).toContain('runtime');
+    expect(runtime.references.map(reference => reference.attachRequirement).join(' ')).toContain('执行');
     expect(runtime.summary.nextRuntimeChoice).toContain('OpenClaw');
     expect(runtime.summary.nextRuntimeChoice).toContain('Hermes');
     expect(runtime.summary.nextRuntimeChoice).toContain('Lobu');
@@ -111,7 +111,7 @@ describe('restaurant agent runtime', () => {
     expect(safetyText).toContain('不保存手机号');
     expect(safetyText).toContain('私信原文');
     expect(blockedText).toContain('没有授权前');
-    expect(blockedText).toContain('不能宣称自动核销');
+    expect(blockedText).toContain('不能宣称核销已完成');
     expect(runtime.connectors.filter(connector => !connector.canRunNow).every(connector => connector.canRunNow === false)).toBe(true);
   });
 });

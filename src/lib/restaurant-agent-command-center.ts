@@ -167,17 +167,17 @@ function primaryActionFor(mode: RestaurantCommandCenterMode, timeline: Restauran
       label: 'Resolve Gates',
       action: 'provider-setup-pack',
       owner: 'runtime-admin',
-      reason: 'Provider, merchant authorization, browser runtime, callback, or POS gates still block external automation.',
-      evidenceRequired: 'configured server env, merchant grant, isolated browser profile, POS/data contract',
+      reason: '外部资料、店长授权、浏览器通道、回执或 POS 条件仍卡住外部自动化。',
+      evidenceRequired: '已配服务端配置、店长授权、隔离浏览器环境、POS/数据约定',
     };
   }
   return {
     id: 'run-controlled-trial',
-    label: 'Run Trial',
+    label: '运行试跑',
     action: 'controlled-trial-run',
     owner: 'ops',
-    reason: 'No real external runtime is required to prove the internal task, callback, receipt, health and follow-up loop.',
-    evidenceRequired: 'local simulator receipt, run health, business signal summary, owner closeout',
+    reason: '验证本地任务、回执、健康和跟进闭环不需要真实外部通道。',
+    evidenceRequired: '本地模拟回执、试跑健康、经营信号摘要、负责人收尾',
   };
 }
 

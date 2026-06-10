@@ -53,6 +53,6 @@ describe('restaurant claw cloud operator home', () => {
     expect(home.lanes.map(lane => lane.status)).toContain('provider-gated');
     expect(home.providerQueue.join(' ')).toContain('callback');
     expect(home.redactedFields).toContain('raw POS rows');
-    expect(home.safetyBoundary).toContain('does not log in');
+    expect(home.safetyBoundary).toContain('不登录');
   });
 });

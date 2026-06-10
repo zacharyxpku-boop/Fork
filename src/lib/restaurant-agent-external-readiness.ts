@@ -91,8 +91,8 @@ export function buildRestaurantExternalReadiness(env: EnvMap = process.env): Res
       'Lobu 多租户 Runtime',
       '把本地 tenant event 投递给 gateway / worker / watcher，并接收执行回执。',
       [
-        envRequirement(env, 'lobu-url', 'Lobu runtime URL', 'RESTAURANT_AGENT_LOBU_RUNTIME_URL'),
-        envRequirement(env, 'lobu-key', 'Lobu server-side API key', 'RESTAURANT_AGENT_LOBU_API_KEY'),
+        envRequirement(env, 'lobu-url', 'Lobu 试跑通道地址', 'RESTAURANT_AGENT_LOBU_RUNTIME_URL'),
+        envRequirement(env, 'lobu-key', 'Lobu 服务端账号密钥', 'RESTAURANT_AGENT_LOBU_API_KEY'),
         envRequirement(env, 'tenant-policy', '租户隔离策略', 'RESTAURANT_AGENT_TENANT_ISOLATION_POLICY'),
         envRequirement(env, 'callback-secret', '回执 webhook 签名密钥', 'RESTAURANT_AGENT_CALLBACK_SECRET'),
       ],
@@ -103,9 +103,9 @@ export function buildRestaurantExternalReadiness(env: EnvMap = process.env): Res
       'OpenClaw / Hermes 浏览器执行器',
       '让 Agent 在隔离 profile 中打开平台、截图、回写回执，不污染个人浏览器。',
       [
-        envRequirement(env, 'openclaw-url', 'OpenClaw runtime URL', 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL'),
-        envRequirement(env, 'openclaw-key', 'OpenClaw server-side API key', 'RESTAURANT_AGENT_OPENCLAW_API_KEY'),
-        envRequirement(env, 'hermes-url', 'Hermes runtime URL', 'RESTAURANT_AGENT_HERMES_RUNTIME_URL'),
+        envRequirement(env, 'openclaw-url', 'OpenClaw 试跑通道地址', 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL'),
+        envRequirement(env, 'openclaw-key', 'OpenClaw 服务端账号密钥', 'RESTAURANT_AGENT_OPENCLAW_API_KEY'),
+        envRequirement(env, 'hermes-url', 'Hermes 试跑通道地址', 'RESTAURANT_AGENT_HERMES_RUNTIME_URL'),
         envRequirement(env, 'browser-profile', '隔离浏览器 profile id', 'RESTAURANT_AGENT_BROWSER_PROFILE_ID'),
       ],
       '至少接一个浏览器 runtime，并由商家在隔离 profile 中完成平台登录授权。',

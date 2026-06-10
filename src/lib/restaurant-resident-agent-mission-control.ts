@@ -87,13 +87,13 @@ function primaryActionFor(mode: RestaurantResidentAgentMissionControl['mode'], i
     return {
       label: 'Close Out Review',
       owner: 'store-manager',
-      reason: 'Accepted receipt exists; move proof into memory, manager follow-up and next local operating loop.',
+      reason: '已有验收回执，把凭证转进记忆、店长跟进和下一轮本地经营循环。',
       evidenceRequired: 'accepted public proof or signed receipt plus sanitized aggregate signal summary',
     };
   }
   if (mode === 'waiting-receipt') {
     return {
-      label: 'Collect Final Receipt',
+      label: '收取最终回执',
       owner: 'ops',
       reason: input.runnerLoop.nextBestAction,
       evidenceRequired: 'externalRunId, public proof URL, screenshot id or signed external-receipt callback',
@@ -109,16 +109,16 @@ function primaryActionFor(mode: RestaurantResidentAgentMissionControl['mode'], i
   }
   if (mode === 'supervised-ready') {
     return {
-      label: 'Run Supervised Browser Task',
+      label: '运行受监督浏览器任务',
       owner: 'runtime-admin',
-      reason: 'Browser gateway and external command center are ready; run only within allowed actions and stop conditions.',
+      reason: '浏览器网关和外部指挥中心已就绪，只在允许动作和停止条件内执行。',
       evidenceRequired: input.browserGateway.browserRequest.requestShape.snapshotPolicyId,
     };
   }
   return {
-    label: 'Run Internal Trial',
+    label: '运行本地试跑',
     owner: 'ops',
-    reason: 'External browser automation is still gated; prove the local workflow and prepare provider setup.',
+    reason: '外部浏览器执行还在补条件，先跑通本地流程并准备外部配置。',
     evidenceRequired: input.commandCenter.primaryAction.evidenceRequired,
   };
 }
@@ -134,7 +134,7 @@ function buildLanes(input: {
       id: 'command',
       status: input.commandCenter.mode === 'needs-recovery' ? 'needs-owner' : input.commandCenter.mode === 'external-ready' ? 'ready' : 'waiting-evidence',
       owner: 'ops',
-      promise: 'Turn the merchant request into one governed restaurant operating mission.',
+      promise: '把店长请求变成一条受控的门店经营任务。',
       proof: `${input.commandCenter.payloadShape} / ${input.commandCenter.mode}`,
       nextAction: input.commandCenter.primaryAction.reason,
     },
@@ -142,9 +142,9 @@ function buildLanes(input: {
       id: 'browser',
       status: input.browserGateway.canExecuteNow ? 'ready' : 'needs-provider',
       owner: 'runtime-admin',
-      promise: 'Run browser tasks only through an allowlisted request contract and redacted snapshots.',
+      promise: '浏览器任务只走白名单请求约定和脱敏快照。',
       proof: `${input.browserGateway.payloadShape} / accepted actions ${input.browserGateway.browserRequest.acceptedActions.length}`,
-      nextAction: input.browserGateway.canExecuteNow ? 'Forward supervised browser request within stop conditions.' : 'Configure runtime URL/key, isolated profile, callback secret and merchant authorization.',
+      nextAction: input.browserGateway.canExecuteNow ? '在停止条件内转发受监督的浏览器请求。' : '配置通道地址/账号、隔离环境、回执密钥和店长授权。',
     },
     {
       id: 'runner',
@@ -156,7 +156,7 @@ function buildLanes(input: {
             ? 'ready'
             : 'waiting-evidence',
       owner: 'provider',
-      promise: 'Convert step events into final signed receipt or explicit recovery.',
+      promise: '把步骤事件转成最终签名回执或明确的恢复动作。',
       proof: `${input.runnerLoop.summary.runnerEvents} runner events / ${input.runnerLoop.summary.waitingReceipts} waiting receipts`,
       nextAction: input.runnerLoop.nextBestAction,
     },
@@ -164,25 +164,25 @@ function buildLanes(input: {
       id: 'memory',
       status: input.heartbeat.memorySuggestions.length > 0 ? 'ready' : 'waiting-evidence',
       owner: 'ai-employee',
-      promise: 'Remember only accepted facts, next owners and reusable operating context.',
+      promise: '只记住已验收的事实、下一个负责人和可复用的经营上下文。',
       proof: `${input.heartbeat.memorySuggestions.length} memory suggestions / ${input.heartbeat.followups.length} followups`,
-      nextAction: input.heartbeat.memorySuggestions[0] || 'Create the first governed run before writing operating memory.',
+      nextAction: input.heartbeat.memorySuggestions[0] || '写经营记忆之前，先跑出第一次受控运行。',
     },
     {
       id: 'store-manager',
       status: input.heartbeat.followups.some(item => item.priority === 'high') ? 'needs-owner' : input.heartbeat.followups.length ? 'ready' : 'waiting-evidence',
       owner: 'store-manager',
-      promise: 'Convert proof and blockers into assigned manager follow-up.',
+      promise: '把凭证和卡点变成指派好的店长跟进。',
       proof: `${input.heartbeat.followups.length} followups / ${input.heartbeat.taskWakeups} task wakeups`,
-      nextAction: input.heartbeat.followups[0]?.nextAction || 'No owner queue yet; run a controlled trial or store-manager task pack.',
+      nextAction: input.heartbeat.followups[0]?.nextAction || '还没有负责人队列，先跑受控试跑或店长任务包。',
     },
     {
       id: 'operating-review',
       status: input.runnerLoop.summary.acceptedReceipts > 0 || input.heartbeat.acceptedReceipts > 0 ? 'complete' : 'waiting-evidence',
       owner: 'store-manager',
-      promise: 'Review only accepted receipts and sanitized aggregate operating signals.',
+      promise: '只复核已验收回执和脱敏的经营信号汇总。',
       proof: `${input.runnerLoop.summary.acceptedReceipts || input.heartbeat.acceptedReceipts} accepted receipts`,
-      nextAction: input.runnerLoop.summary.acceptedReceipts ? 'Run post-run review and next-loop channel plan.' : 'Do not claim business outcomes until accepted receipts exist.',
+      nextAction: input.runnerLoop.summary.acceptedReceipts ? '跑试跑复盘和下一轮渠道计划。' : '回执验收之前不宣称经营结果。',
     },
   ];
 }
@@ -255,7 +255,7 @@ export async function buildRestaurantResidentAgentMissionControl(input: Restaura
       ? '可以进入监督式常驻浏览器执行，但仍必须等签名回执或公开证明后才算完成。'
       : mode === 'review-ready'
         ? '已经有可验收回执，可以进入店长复盘、记忆写入和下一轮计划。'
-        : '现在还不能承诺自动发布、自动获客或自动核销；系统会先跑内部闭环，并列出外部 Provider/授权缺口。',
+        : '现在还不能承诺外部发布、线索承接或核销；系统会先跑内部闭环，并列出外部 Provider/授权缺口。',
     summary: {
       lanes: lanes.length,
       readyLanes: lanes.filter(item => item.status === 'ready' || item.status === 'complete').length,
@@ -306,6 +306,6 @@ export async function buildRestaurantResidentAgentMissionControl(input: Restaura
       taskWakeups: heartbeat.taskWakeups,
     },
     externalRequired,
-    safetyBoundary: 'Resident Agent Mission Control coordinates internal command, browser gateway, runner loop, memory, manager follow-up and operating review. It is supervision and evidence control, not a claim of automatic publishing, automatic acquisition, automatic coupon redemption, private-message access or POS analytics without provider keys, merchant authorization, callback receipts and data contracts.',
+    safetyBoundary: '常驻任务板负责本地指令、浏览器网关、执行循环、记忆、店长跟进和经营复盘的协调。它是监督和凭证控制，不等于自动发布、自动获客、自动核销、私信读取或 POS 分析；这些都要先有通道账号、店长授权、回执和数据约定。',
   };
 }

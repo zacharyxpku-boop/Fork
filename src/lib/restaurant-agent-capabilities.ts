@@ -82,7 +82,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     status: 'bridge-ready',
     productMeaning: 'Agent 有自己的浏览器 profile，可打开页面、截图、读回执，不污染个人浏览器。',
     internalImplementation: '已定义 isolated-agent-browser session、证据字段、OpenClaw/Hermes bridge payload。',
-    missingExternal: 'OpenClaw/Hermes runtime URL、浏览器 profile、商家账号登录和用户批准。',
+    missingExternal: 'OpenClaw/Hermes 通道地址、浏览器环境、商家账号登录和用户批准。',
     safetyBoundary: '默认隔离 profile；接真实登录态必须用户在场批准，不绕过验证码。',
   },
   {
@@ -112,7 +112,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     status: 'internal-ready',
     productMeaning: 'The product can hand an external browser runner a replayable, evidence-first browser workflow instead of a vague task note.',
     internalImplementation: 'browser-runbook API emits preflight, navigate, inspect, capture, extract, signed callback and stop steps with allowlisted domains and evidence schema.',
-    missingExternal: 'Real OpenClaw/Hermes runtime URL/key, isolated browser profile, callback secret and merchant-approved target URL.',
+    missingExternal: '真实的 OpenClaw/Hermes 通道地址/账号、隔离浏览器环境、回执密钥和店长批准的目标链接。',
     safetyBoundary: 'The package does not include secrets, raw browser profile, private-message text, POS rows or fake execution; login, captcha, unapproved publish and private data stop the run.',
   },
   {
@@ -142,7 +142,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     status: 'bridge-ready',
     productMeaning: 'Worker 只拿占位符和白名单工具，真实 token 由 gateway 换出。',
     internalImplementation: 'bridge 只在 server 读取 env key，响应体不返回密钥，payload 保留 blockedActions。',
-    missingExternal: '正式 secret proxy、domain policy、OAuth grant store。',
+    missingExternal: '正式 secret proxy、domain policy、platform grant store。',
     safetyBoundary: '前端、报告、截图、审计日志都不出现 API key/token/cookie。',
   },
   {
@@ -160,7 +160,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     name: '商家授权清单向导',
     competitorPattern: 'Restaurant SaaS',
     status: 'internal-ready',
-    productMeaning: '客户要知道为什么还不能自动发布、自动获客、自动核销或做真实经营分析；清单把外部能力拆成商家、运营、技术、合规可补的步骤。',
+    productMeaning: '客户要知道为什么还不能执行外部发布、承接线索、写核销或做真实经营分析；清单把外部能力拆成商家、运营、技术、合规可补的步骤。',
     internalImplementation: 'grant-checklist API 已输出 checklist sections、step status、unlock capabilities、blocked reasons、evidence requirements and audit-safe summary.',
     missingExternal: '真实商家账号授权、runtime URL/key、隔离浏览器 profile、callback secret、POS 字段字典和核销来源。',
     safetyBoundary: '清单只显示缺口和证据要求，不登录、不绕过验证码、不代发、不读私信、不保存 POS 原始行或顾客身份。',
@@ -170,7 +170,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     name: '经营能力激活门禁',
     competitorPattern: 'Restaurant SaaS',
     status: 'internal-ready',
-    productMeaning: '把客户最在意的自动发布、自动获客、自动核销、真实经营分析变成可解释的 ready/blocked/forbidden，而不是含糊承诺。',
+    productMeaning: '把客户最在意的发布执行、线索承接、核销、真实经营分析变成可解释的 ready/blocked/forbidden，而不是含糊承诺。',
     internalImplementation: 'activation-gates API 已基于 grant checklist 输出每项能力的内部可跑动作、外部必补条件、证据要求和安全边界。',
     missingExternal: '真实平台授权、发布回执、线索聚合、POS/API/CSV 合同、runtime/browser/callback。',
     safetyBoundary: '不编造增长结果，不把草稿或样例数据当真实经营；私信原文读取永久 forbidden。',
@@ -183,7 +183,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     productMeaning: '把“要有竞品所有功能”转成源头可追溯的能力维度、当前证据、缺口和下一轮构建顺序。',
     internalImplementation: 'competitor-audit API 已输出 Lobu/OpenClaw/Hermes sources、target dimensions、current evidence、status summary and next build order.',
     missingExternal: '外部 runtime、浏览器 profile、商家平台授权、POS/API/CSV 合同和真实回执。',
-    safetyBoundary: '审计不等于真实外部执行；没有授权时不声称已自动发布、获客、核销或经营分析。',
+    safetyBoundary: '审计不等于真实外部执行；没有授权时不声称已发布、获客、核销或经营分析。',
   },
   {
     id: 'agent-build-queue',
@@ -200,9 +200,9 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     name: '动作级工具权限评估器',
     competitorPattern: 'Lobu',
     status: 'internal-ready',
-    productMeaning: '把“能不能自动发布、能不能抓回执、能不能拉 POS、能不能读私信”变成可审计的动作级决策，而不是页面文案承诺。',
+    productMeaning: '把“能不能执行发布、能不能抓回执、能不能拉 POS、能不能读私信”变成可审计的动作级决策，而不是页面文案承诺。',
     internalImplementation: 'tool-policy API 已按 grant manifest、browser session、runtime secret slot 和永久禁区输出 internal-ready/external-ready/blocked/forbidden。',
-    missingExternal: '正式 secret proxy、OAuth grant store、平台域名白名单和外部 worker 执行沙箱。',
+    missingExternal: '正式 secret proxy、platform grant store、平台域名白名单和外部 worker 执行沙箱。',
     safetyBoundary: '私信原文读取永久 forbidden；secret proxy 只返回 slot 是否配置，不返回密钥、cookie、token、验证码或个人联系方式。',
   },
   {
@@ -213,7 +213,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     productMeaning: '不是只显示任务状态，而是把回执、阻断、核销导入、浏览器会话和记忆写入变成可追踪的主动跟进 lanes。',
     internalImplementation: 'watcher policy 已输出 receipt/run/browser/POS lanes、wakeups、memory upserts、blocked external gates，并接入 heartbeat。',
     missingExternal: '真实平台 webhook、OpenClaw/Hermes session heartbeat、POS 导出/API 和多租户事件流。',
-    safetyBoundary: '没有授权时只处理本地 run、签名回执和脱敏手工导入；不自动发布、不自动核销、不读取私信或后台明细。',
+    safetyBoundary: '没有授权时只处理本地 run、签名回执和脱敏手工导入；不代发、不写核销、不读取私信或后台明细。',
   },
   {
     id: 'public-profile-intake',
@@ -223,7 +223,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     productMeaning: '餐饮客户不想从空表单开始，系统应能先把公开 POI、白名单公开 URL 或手工资料变成门店 profile 和待补清单。',
     internalImplementation: 'public-profile intake 已生成 profile 字段置信度、证据账本、记忆写入、缺口和外部门禁，并暴露 API/UI。',
     missingExternal: '地图/POI API key、商家平台授权、平台发布/评价回执、POS 数据合同。',
-    safetyBoundary: '公开资料只用于草稿、门店场景和缺口提示，不代表商家授权、平台接入、自动获客或经营效果。',
+    safetyBoundary: '公开资料只用于草稿、门店场景和缺口提示，不代表商家授权、平台接入、线索承接或经营效果。',
   },
   {
     id: 'agent-ops-console',
@@ -260,7 +260,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     name: '证据评分与回执验收',
     competitorPattern: 'Restaurant SaaS',
     status: 'internal-ready',
-    productMeaning: '自动发布、获客、核销和经营分析都不能只靠一句话确认，必须有可追溯证据等级、分数、事件匹配和拒收原因。',
+    productMeaning: '发布执行、线索承接、核销和经营分析都不能只靠一句话确认，必须有可追溯证据等级、分数、事件匹配和拒收原因。',
     internalImplementation: 'receipt validation 已检查 sample URL、unknown event、duplicate evidence、externalRunId、渠道分类、签名来源和隐私风险，并把分数送进 run health。',
     missingExternal: '真实平台发布链接、截图、外部 runtime signed callback、POS/核销导出和商家授权。',
     safetyBoundary: '样例链接、未知事件、重复证据、手机号、微信号和私信原文一律不能解锁 accepted。',
@@ -273,7 +273,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     productMeaning: '餐饮客户真正要看的不是发布任务本身，而是预约、领券、核销、咨询和到店意向如何变成下一步经营动作。',
     internalImplementation: 'business-signals 已从 accepted receipt 聚合脱敏数量、证据均分、负责人和下一步动作，rejected receipt 不进入经营分析。',
     missingExternal: '真实平台线索、券核销、POS 流水、预约系统或社群数据授权。',
-    safetyBoundary: '没有外部授权时只分析手工导入或签名回执里的聚合数，不宣称自动获客、自动核销或实时经营分析。',
+    safetyBoundary: '没有外部授权时只分析手工导入或签名回执里的聚合数，不宣称线索已承接、核销已完成或实时经营分析。',
   },
   {
     id: 'pos-import-schema-validator',
@@ -293,7 +293,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     productMeaning: '连接大众点评/美团、小红书、抖音、微信社群、POS 和核销系统。',
     internalImplementation: '已定义连接器矩阵、接入字段、审计边界和 bridge 外发入口。',
     missingExternal: '商家账号授权、平台 API/导出、POS 字段字典、核销数据。',
-    safetyBoundary: '没有授权不抓后台、不代发、不读取私信、不宣称自动核销。',
+    safetyBoundary: '没有授权不抓后台、不代发、不读取私信、不宣称核销已完成。',
   },
 ];
 

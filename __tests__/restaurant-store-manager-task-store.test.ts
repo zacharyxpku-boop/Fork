@@ -108,7 +108,7 @@ describe('restaurant store manager task store', () => {
     expect(deliveryBridge.summary.manualReady).toBe(1);
     expect(deliveryBridge.summary.providerReady).toBe(0);
     expect(deliveryBridge.items[0].status).toBe('ready-for-manual-copy');
-    expect(deliveryBridge.externalRequired[0]).toContain('Work-chat/SMS');
+    expect(deliveryBridge.externalRequired[0]).toContain('企业微信/短信通道');
     expect(handoffAudit[0].eventType).toBe('handoff-generated');
     expect(deliveryAudit[0].eventType).toBe('delivery-bridge-generated');
     expect(auditLog.payloadShape).toBe('restaurant-staff-notification-audit-log-v1');

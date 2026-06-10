@@ -159,7 +159,7 @@ export function buildRestaurantRuntimeSetupContract(
         envRequirement(env, {
           id: 'lobu-runtime-url',
           key: 'RESTAURANT_AGENT_LOBU_RUNTIME_URL',
-          label: 'Lobu runtime URL',
+          label: 'Lobu 试跑通道地址',
           owner: 'runtime-admin',
           unlocks: ['tenant-event-forwarding', 'worker-dispatch'],
           missingImpact: 'Restaurant tasks are queued locally and cannot be forwarded to Lobu workers.',
@@ -186,7 +186,7 @@ export function buildRestaurantRuntimeSetupContract(
         envRequirement(env, {
           id: 'openclaw-runtime-url',
           key: 'RESTAURANT_AGENT_OPENCLAW_RUNTIME_URL',
-          label: 'OpenClaw runtime URL',
+          label: 'OpenClaw 试跑通道地址',
           owner: 'runtime-admin',
           unlocks: ['browser-tool-forwarding', 'session-heartbeat'],
           missingImpact: 'Browser session manifests can be generated, but no browser tool can execute.',
@@ -213,7 +213,7 @@ export function buildRestaurantRuntimeSetupContract(
         envRequirement(env, {
           id: 'hermes-runtime-url',
           key: 'RESTAURANT_AGENT_HERMES_RUNTIME_URL',
-          label: 'Hermes runtime URL',
+          label: 'Hermes 试跑通道地址',
           owner: 'runtime-admin',
           unlocks: ['browser-use-workflow', 'cloud-browser-run'],
           missingImpact: 'Hermes/browser-use workflows remain a handoff payload only.',

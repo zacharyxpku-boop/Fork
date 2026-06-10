@@ -55,8 +55,8 @@ describe('restaurant resident agent mission control', () => {
     expect(control.summary.canRunInternally).toBe(true);
     expect(control.summary.canClaimAutonomousOutcomes).toBe(false);
     expect(control.lanes.map(item => item.id)).toEqual(['command', 'browser', 'runner', 'memory', 'store-manager', 'operating-review']);
-    expect(control.primaryAction.label).toBe('Collect Final Receipt');
-    expect(control.safetyBoundary).toContain('not a claim of automatic publishing');
+    expect(control.primaryAction.label).toBe('收取最终回执');
+    expect(control.safetyBoundary).toContain('不等于自动发布');
   });
 
   it('moves accepted proof into review-ready mode and keeps external browser claims gated', async () => {

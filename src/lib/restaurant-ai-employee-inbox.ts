@@ -19,7 +19,7 @@ export type RestaurantAiEmployeeInbox = {
   payloadShape: 'restaurant-ai-employee-inbox-v1';
   generatedAt: string;
   employee: {
-    name: 'Wenai Store Operator';
+    name: 'Wenai 门店操作员';
     role: 'restaurant-ai-employee';
     currentMode: RestaurantAgentCommandCenter['mode'];
     status: 'working' | 'waiting-for-proof' | 'waiting-for-provider' | 'ready-to-run';
@@ -88,7 +88,7 @@ function buildTaskMessage(center: RestaurantAiEmployeeInboxSource): RestaurantAi
     lane: 'followup',
     title: wakeup ? `I found a manager follow-up for ${wakeup.owner}` : `I found an open task for ${task?.owner || 'store manager'}`,
     body: wakeup?.nextAction || task?.action || center.storeManagerTaskQueue.nextAction,
-    actionLabel: 'Draft Notice',
+    actionLabel: '起草通知',
     action: 'staff-notification-handoff',
     owner: 'store-manager',
     evidenceRequired: wakeup?.evidenceRequired || task?.evidenceRequired || 'owner confirmation and public proof',
@@ -106,7 +106,7 @@ function buildSetupMessage(center: RestaurantAiEmployeeInboxSource): RestaurantA
     lane: 'setup',
     title: `I cannot unlock ${gate.trackId} yet`,
     body: gate.nextAction,
-    actionLabel: 'Setup Gates',
+    actionLabel: '补资料条件',
     action: 'provider-setup-pack',
     owner: gate.owner === 'merchant' ? 'merchant' : gate.owner === 'ops' ? 'ops' : 'runtime-admin',
     evidenceRequired: gate.evidence,
@@ -124,7 +124,7 @@ function buildAuditMessage(center: RestaurantAiEmployeeInboxSource): RestaurantA
     lane: 'evidence',
     title: `I logged notification readiness: ${latest.eventType}`,
     body: latest.nextAction,
-    actionLabel: 'Delivery Bridge',
+    actionLabel: '投递通道',
     action: 'staff-notification-delivery-bridge',
     owner: 'runtime-admin',
     evidenceRequired: latest.evidenceRequired,
@@ -143,9 +143,9 @@ function buildChannelScheduleMessage(center: RestaurantAiEmployeeInboxSource): R
       lane: needsRecovery ? 'setup' : 'evidence',
       title: needsRecovery
         ? `Staff acknowledgement needs recovery: ${acknowledgement.status}`
-        : 'Staff acknowledged the channel job',
+        : '员工已确认该通道任务',
       body: acknowledgement.nextAction,
-      actionLabel: needsRecovery ? 'Recover Schedule' : 'Review Acknowledgement',
+      actionLabel: needsRecovery ? '恢复排程' : '查看确认',
       action: 'channel-schedule-recovery',
       owner: needsRecovery ? 'runtime-admin' : 'ops',
       evidenceRequired: acknowledgement.evidenceUrl || acknowledgement.note,
@@ -165,7 +165,7 @@ function buildChannelScheduleMessage(center: RestaurantAiEmployeeInboxSource): R
       ? `Schedule runner needs recovery: ${latest.channelName}`
       : `Schedule runner logged: ${latest.channelName}`,
     body: latest.nextAction,
-    actionLabel: needsRecovery ? 'Recover Schedule' : 'Review Schedule',
+    actionLabel: needsRecovery ? '恢复排程' : '查看排程',
     action: 'channel-schedule-recovery',
     owner: needsRecovery ? 'runtime-admin' : 'ops',
     evidenceRequired: latest.payloadPreview.evidenceRequired.join(', ') || latest.providerEvidence,
@@ -190,7 +190,7 @@ export function buildRestaurantAiEmployeeInbox(
     { id: 'restaurant', label: 'Restaurant', value: center.restaurant },
     { id: 'offer', label: 'Offer', value: center.offer },
     { id: 'mode', label: 'Mode', value: center.mode },
-    { id: 'receipts', label: 'Accepted receipts', value: String(center.summary.acceptedReceipts) },
+    { id: 'receipts', label: '已验收回执', value: String(center.summary.acceptedReceipts) },
     { id: 'provider-gates', label: 'Provider gates', value: String(center.summary.providerGates) },
     { id: 'channel-attempts', label: 'Channel attempts', value: String(center.summary.channelDeliveryAttempts) },
     { id: 'channel-acks', label: 'Channel acks', value: String(center.summary.channelDeliveryAcknowledged) },
@@ -201,7 +201,7 @@ export function buildRestaurantAiEmployeeInbox(
     payloadShape: 'restaurant-ai-employee-inbox-v1',
     generatedAt: now.toISOString(),
     employee: {
-      name: 'Wenai Store Operator',
+      name: 'Wenai 门店操作员',
       role: 'restaurant-ai-employee',
       currentMode: center.mode,
       status: statusFor(center),

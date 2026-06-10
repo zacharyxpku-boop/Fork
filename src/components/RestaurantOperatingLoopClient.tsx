@@ -121,7 +121,7 @@ function buildTaskRows(state: LoopState): TaskRow[] {
     {
       title: '等待外部系统接入',
       owner: '产品 / 技术',
-      proof: 'POS、库存、预约、会员、平台 OAuth、消息通知、审计日志。',
+      proof: 'POS、库存、预约、会员、平台授权、消息通知、审计日志。',
       next: '未接入前只做手工导入和证据账本，不宣称自动经营分析。',
       status: 'blocked',
     },
@@ -202,7 +202,7 @@ export function RestaurantOperatingLoopClient() {
     <section className="overflow-hidden rounded-lg border border-stone-200 bg-white shadow-sm">
       <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Local Operating Loop</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">本地经营循环</p>
           <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">本地可跑的 100% 试用闭环</h2>
         </div>
         <p className="text-sm leading-6 text-stone-600">
@@ -275,7 +275,7 @@ export function RestaurantOperatingLoopClient() {
           <div className="rounded-lg border border-stone-200 bg-[#fbfaf7] p-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">Manual import gate</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">人工导入条件</p>
                 <h3 className="mt-1 text-lg font-black text-stone-950">手工导入先跑，外部接入后再自动化</h3>
               </div>
               <span className="w-fit rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-stone-600">不造假自动化</span>
@@ -294,7 +294,7 @@ export function RestaurantOperatingLoopClient() {
           <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Public data sample pack</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">公开数据样例包</p>
                 <h3 className="mt-1 text-lg font-black text-stone-950">公开门店信息样本包，不冒充平台接入</h3>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -371,7 +371,7 @@ export function RestaurantOperatingLoopClient() {
           <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">External setup checklist</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">外部配置清单</p>
                 <h3 className="mt-1 text-lg font-black text-stone-950">需要你配置后才能继续补的外部能力</h3>
               </div>
               <span className="w-fit rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">现在只保留人工回填</span>
@@ -391,7 +391,7 @@ export function RestaurantOperatingLoopClient() {
           <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">External data boundary</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">外部数据边界</p>
                 <h3 className="mt-1 text-lg font-black text-stone-950">外部数据源能否现在用</h3>
               </div>
               <span className="w-fit rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-800">需要授权的不会伪装接入</span>

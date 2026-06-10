@@ -40,13 +40,13 @@ export function buildRestaurantBenchmarkStrategy(): RestaurantBenchmarkStrategy 
         '平台化权限、审计、Provider callback 和规模化交付门禁',
       ],
       doNotCopyBlindly: [
-        '不要把电商广告投放口径直接搬到餐饮',
+        '不要把旧广告投放口径直接搬到餐饮',
         '不要在没有 POS/平台授权时承诺真实转化或增长',
       ],
       externalGates: [
         '模型 Provider key',
         '内容/图片/视频 Provider callback',
-        '发布平台 OAuth/API',
+        '发布平台授权/API',
         'POS/核销/会员/库存/财务数据合同',
       ],
     },
@@ -66,7 +66,7 @@ export function buildRestaurantBenchmarkStrategy(): RestaurantBenchmarkStrategy 
         '不要让浏览器执行器直接接触密钥、验证码、私信原文或顾客身份',
       ],
       externalGates: [
-        'OpenClaw/Hermes runtime URL',
+        'OpenClaw/Hermes 通道地址',
         '隔离浏览器 profile',
         'callback secret',
         '商家登录授权和人工审批规则',
@@ -113,7 +113,7 @@ export function buildRestaurantBenchmarkStrategy(): RestaurantBenchmarkStrategy 
         title: '平台级经营账本主干',
         source: 'kuaizi-platform',
         internalNow: '把内容任务、发布回执、训练批次、POS 导入和经营信号聚合成一个可筛选 timeline。',
-        externalGate: '真实平台 OAuth、Provider callback、POS/核销/会员数据源。',
+        externalGate: '真实平台授权、Provider callback、POS/核销/会员数据源。',
         acceptance: '任一门店任务能看到从输入、生成、发布、回执、信号、复盘到下一步的完整状态。',
       },
       {
