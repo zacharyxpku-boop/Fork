@@ -7,7 +7,7 @@ export function RestaurantAdvancedAudit() {
     const clawBenchmarks = [
       {
         claim: '开箱即用，无需额外训练',
-        gap: '当前还需要解释“这从电商改来能干什么”，餐饮老板不能一眼开始。',
+        gap: '当前还需要让餐饮老板一眼看出能从哪一个门店任务开始。',
         internalFix: '把第一屏改成餐厅活动表单和 6 个餐饮任务包，默认带样例字段、证据要求和下一步。',
         externalNeed: '如果要做到真实门店自动诊断，需要导入历史经营数据、菜单、评价和门店权限。',
       },
@@ -15,7 +15,7 @@ export function RestaurantAdvancedAudit() {
         claim: '跨平台数据分析能力',
         gap: '现在只能承接手工链接和截图，还不能像 Claw 那样打通线上线下经营壁垒。',
         internalFix: '先做手工数据槽位、证据账本、负责人和复盘摘要，避免空谈“数据分析”。',
-        externalNeed: 'POS、外卖、点评、抖音、小红书、社群、会员系统的 API/OAuth 或合法导出。',
+        externalNeed: 'POS、外卖、点评、抖音、小红书、社群、会员系统的 API、平台授权或合法导出。',
       },
       {
         claim: '餐饮技能内置',
@@ -33,7 +33,7 @@ export function RestaurantAdvancedAudit() {
     const quickTasks = [
       { title: '经营日报', input: '昨日营业额、桌数、客单、差评、缺货', output: '异常点、店长追问、明日动作', boundary: '无 POS 前只支持手工导入' },
       { title: '菜单优化', input: '菜单图、价格、毛利、库存、顾客评价', output: '主推菜、下架风险、禁用表达', boundary: '不自动定价，不判断真实毛利' },
-      { title: '本地生活内容', input: '菜品图、到店理由、团购券、平台', output: '点评/小红书/抖音/社群草稿', boundary: '无账号授权不自动发布' },
+      { title: '本地生活内容', input: '菜品图、到店理由、团购券、平台', output: '点评/小红书/抖音/社群草稿', boundary: '无账号授权不执行外部发布' },
       { title: '排班与服务复盘', input: '时段客流、投诉、员工备注、等位情况', output: '高压时段、服务提醒、复盘清单', boundary: '无排班系统前不改班表' },
       { title: '社群跟进', input: '券领取、私信、群反馈、生日/复购标签', output: '负责人分配、话术、下次触达', boundary: '未授权不自动联系顾客' },
       { title: '食品安全审核', input: '食材来源、过敏原、功效词、限量说明', output: '红线提示、审核人、待确认字段', boundary: '不替代门店合规签字' },
@@ -42,13 +42,13 @@ export function RestaurantAdvancedAudit() {
       { source: 'POS / 收银 / 损益', today: 'CSV 或截图导入营业额、桌数、菜品销量', external: 'POS API、财务口径、门店账号权限', output: '经营日报、菜品贡献、异常提醒', risk: '未接入前不做实时盈亏和自动归因' },
       { source: '库存 / 采购 / 供应链', today: '手工录入缺货、采购价、损耗备注', external: '库存系统、供应商单据、采购审批', output: '缺货风险、采购提醒、菜单可售边界', risk: '未接入前不自动下采购单' },
       { source: '预订 / 排队 / 电话', today: '粘贴预约表、电话备注、爽约原因', external: '桌台库存、电话助手、小程序/WhatsApp', output: '待确认预约、取消风险、店长回拨清单', risk: '未授权前不自动确认客人' },
-      { source: '点评 / 小红书 / 抖音', today: '链接、截图、评论摘录、发布证明', external: '平台 OAuth/API 或合法导出', output: '内容复盘、差评原因、下轮发布任务', risk: '无凭证不说已发布或已分析全量评价' },
+      { source: '点评 / 小红书 / 抖音', today: '链接、截图、评论摘录、发布证明', external: '平台授权、API 或合法导出', output: '内容复盘、差评原因、下轮发布任务', risk: '无凭证不说已发布或已分析全量评价' },
       { source: '会员 / 私域 / 社群', today: '券领取、私信、群反馈、复购标签', external: '会员系统、短信/微信触达、权限审计', output: '高意向名单、负责人分配、社群话术', risk: '未授权前不自动触达顾客' },
     ];
     const skillMap = [
       { group: '运营中台', skills: ['经营日报', '排班复盘', '门店服务 SOP', '等位与翻台诊断'], internal: '表单 + 复盘模板', external: 'POS、排班、桌台数据' },
       { group: '增长中台', skills: ['本地生活内容', '团购券跟进', '社群私域', '评价复盘'], internal: '内容草稿 + 证据账本', external: '平台账号、评论和私信数据' },
-      { group: '商品中台', skills: ['菜单优化', '主推菜选择', '新品研发', '食品安全红线'], internal: '菜单卡 + 禁用表达审核', external: '销量、毛利、库存、食材凭证' },
+      { group: '菜单中台', skills: ['菜单优化', '主推菜选择', '新品研发', '食品安全红线'], internal: '菜单卡 + 禁用表达审核', external: '销量、毛利、库存、食材凭证' },
       { group: '财务成本', skills: ['毛利核对', '损耗记录', '采购异常', '人效复盘'], internal: '异常清单和店长追问', external: '财务系统、供应链和工资排班' },
       { group: '组织管理', skills: ['负责人分配', '交接班备注', '培训清单', '多店标准化'], internal: '任务流和责任人', external: '账号体系、权限、审计日志' },
     ];
@@ -96,7 +96,7 @@ export function RestaurantAdvancedAudit() {
         finalForm: '所有外部账号、顾客数据、财务数据和发布动作都在授权沙箱中运行，可审计、可撤回。',
         currentGap: '当前只能承诺不伪装自动化，还没有真实授权和审计链。',
         internalPath: '先把停止线产品化：无凭证不发布、无授权不触达、无来源不归因。',
-        externalPath: 'OAuth、企业权限、日志、加密存储、数据处理协议。',
+        externalPath: '平台授权、企业权限、日志、加密存储、数据处理协议。',
         proof: '页面上每个高风险动作都有授权状态、责任人和阻断原因。',
       },
       {
@@ -140,7 +140,7 @@ export function RestaurantAdvancedAudit() {
       {
         dimension: '安全沙箱',
         internalClosed: '无凭证不发布、无授权不触达、无来源不归因的停止线已产品化。',
-        externalOpen: 'OAuth、企业权限、加密存储、数据处理协议、操作日志。',
+        externalOpen: '平台授权、企业权限、加密存储、数据处理协议、操作日志。',
         hundredPercentGate: '所有高风险动作都有授权状态、责任人、阻断原因和可审计记录。',
         claimGuard: '无授权链路前，不宣称已接入平台账号或顾客数据。',
       },
@@ -182,7 +182,7 @@ export function RestaurantAdvancedAudit() {
       {
         domain: '本地生活发布',
         internal: ['生成点评、小红书、抖音、社群任务', '记录链接、截图、负责人和审核状态', '整理复用素材包'],
-        external: ['平台 OAuth / API', '自动发布权限', '平台回执和评论同步'],
+        external: ['平台授权 / API', '发布执行权限', '平台回执和评论同步'],
         stopLine: '没有发布凭证时，不能冒充已接入或已发布。',
       },
       {
@@ -194,7 +194,7 @@ export function RestaurantAdvancedAudit() {
       {
         domain: '评价 / 复盘 / 舆情',
         internal: ['粘贴评价和截图', '汇总差评原因和下轮动作', '沉淀门店偏好和红线'],
-        external: ['评价平台合法采集', 'Analytics Sync', '跨门店权限和企业存储'],
+        external: ['评价平台合法采集', '反馈回流', '跨门店权限和企业存储'],
         stopLine: '没有来源证据时，不输出趋势结论或增长承诺。',
       },
     ];
@@ -210,7 +210,7 @@ export function RestaurantAdvancedAudit() {
               <section className="overflow-hidden rounded-3xl border border-stone-200 bg-stone-950 text-white shadow-sm">
                 <div className="grid gap-5 border-b border-white/10 p-5 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">Claw Benchmark</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">对标清单</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight">对标勺子 Claw：差距先摆出来</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-300">
@@ -234,11 +234,11 @@ export function RestaurantAdvancedAudit() {
               <section className="rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Final State</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">最终状态</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮 AI 大脑最终形态定义</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
-                    不再以电商工厂为参照，而是按餐饮经营系统的终局拆维度：每一层都必须说明最终形态、当前差距、内部补足、外部必需和验收证据。
+                    不再以旧交付工厂为参照，而是按餐饮经营系统的终局拆维度：每一层都必须说明最终形态、当前差距、内部补足、外部必需和验收证据。
                   </p>
                 </div>
                 <div className="divide-y divide-stone-100">
@@ -309,7 +309,7 @@ export function RestaurantAdvancedAudit() {
               <section className="rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Ready Tasks</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">可做任务</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮 AI 开箱任务包</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
@@ -345,7 +345,7 @@ export function RestaurantAdvancedAudit() {
               <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">Data Connector Board</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">数据连接板</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">跨平台数据接入板</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
@@ -382,7 +382,7 @@ export function RestaurantAdvancedAudit() {
                 <div className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Restaurant Skill Map</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">门店技能图</p>
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮技能地图，不只做营销</h2>
                     </div>
                     <span className="w-fit rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-600">先覆盖可交付任务，再接系统自动化</span>
@@ -404,7 +404,7 @@ export function RestaurantAdvancedAudit() {
                 </div>
 
                 <div className="rounded-3xl border border-stone-200 bg-stone-950 p-5 text-white shadow-sm">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">Self-Evolving Memory</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">自我进化记忆</p>
                   <h2 className="mt-2 text-2xl font-black tracking-tight">分层记忆写回闭环</h2>
                   <p className="mt-3 text-sm leading-6 text-stone-300">Claw 的“越用越懂”不能只停留在口号。试用版先把每轮反馈写回的位置、用途和沙箱门槛显性化。</p>
                   <div className="mt-5 space-y-3">
@@ -427,7 +427,7 @@ export function RestaurantAdvancedAudit() {
                 <div className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Live Copilot</p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">现场副驾</p>
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">像店长一样问问题</h2>
                     </div>
                     <span className="w-fit rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-600">先给判断路径，不冒充实时数据</span>
@@ -443,7 +443,7 @@ export function RestaurantAdvancedAudit() {
                 </div>
 
                 <div className="rounded-3xl border border-stone-200 bg-stone-950 p-5 text-white shadow-sm">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">Memory Profile</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">记忆档案</p>
                   <h2 className="mt-2 text-2xl font-black tracking-tight">越用越懂这家店</h2>
                   <div className="mt-5 grid gap-3 sm:grid-cols-2">
                     {memoryProfile.map(item => (
@@ -458,7 +458,7 @@ export function RestaurantAdvancedAudit() {
 
               <section className="rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="border-b border-stone-200 p-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Agent Roster</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">员工花名册</p>
                   <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">六个餐饮数字员工，各自有证据门槛</h2>
                 </div>
                 <div className="grid gap-3 p-5 md:grid-cols-2 xl:grid-cols-3">
@@ -478,7 +478,7 @@ export function RestaurantAdvancedAudit() {
               <section className="rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">Capability Boundary</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">能力边界</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">内部可先跑，外部必须接入</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
@@ -526,7 +526,7 @@ export function RestaurantAdvancedAudit() {
               <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="grid gap-0 lg:grid-cols-[300px_minmax(0,1fr)]">
                   <div className="border-b border-stone-200 bg-[#f8f6f0] p-5 lg:border-b-0 lg:border-r">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">No Fake Automation</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">不假装自动化</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">接入门槛先说清</h2>
                     <p className="mt-3 text-sm leading-6 text-stone-600">竞品强在 POS、预订、菜单、库存、会员和语音入口；当前试用版先把字段和阻断线展示出来，避免把手工流程包装成已自动化。</p>
                   </div>

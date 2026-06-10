@@ -11,8 +11,9 @@ describe('factory page', () => {
     const html = renderToStaticMarkup(page);
 
     expect(html).toContain('/factory/creative?variant=friend_trial');
-    expect(html).toContain('Next Step');
+    expect(html).toContain('下一步');
     expect(html).toContain('打开流程入口');
+    expect(html).not.toContain('Next Step');
     expect(html).toContain('Wenai 餐饮门店增长工作台');
     expect(html).toContain('今天先创建一个门店活动');
     expect(html).toContain('带着信息进入下一步');
@@ -22,11 +23,11 @@ describe('factory page', () => {
     expect(html).toContain('已有证据');
     expect(html).toContain('发布链接或截图必须回填');
     expect(html).toContain('原通用工厂入口太像概念展板');
-    expect(html).toContain('内部已解决');
-    expect(html).toContain('外部数据必需');
+    expect(html).toContain('当前可试跑');
+    expect(html).toContain('等门店资料');
     expect(html).toContain('本地可跑的 100% 试用闭环');
     expect(html).toContain('生成本地闭环任务');
-    expect(html).toContain('内部闭环');
+    expect(html).toContain('本地试跑');
     expect(html).toContain('非外部接入');
     expect(html).toContain('手工经营数据');
     expect(html).toContain('证据账本');

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { buildRestaurantClawSkillCatalog } from '@/lib/restaurant-claw-skill-catalog';
 import { buildRestaurantCapabilityTrainingPlan } from '@/lib/restaurant-capability-training-plan';
+import { buildRestaurantTrialOrchestratorPack } from '@/lib/restaurant-trial-orchestrator';
 import { appendRestaurantTrialIntake, type RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
 
 type Tone = 'slate' | 'emerald' | 'amber' | 'sky';
@@ -86,8 +87,8 @@ const DELIVERABLES = [
 const OPERATING_KERNEL = [
   { title: '餐饮技能内置', body: '把品牌定位、菜单优化、外卖增长、本地生活、会员增长和盈利分析拆成可调用任务。' },
   { title: '门店分层记忆', body: '记录常用菜品、禁用表达、客群偏好、活动边界和负责人，不让下一轮从零开始。' },
-  { title: '沙箱安全隔离', body: '外部账号未授权前只做手动导入和证据回填，门店资料不会被伪装成自动发布结果。' },
-  { title: '模型任务路由', body: '文案、表格、长文档、图片理解和逻辑复盘分开处理，页面只展示可审核结论。' },
+  { title: '沙箱安全隔离', body: '外部账号未确认前只做手动导入和证据回填，门店资料不会被伪装成已发布结果。' },
+  { title: '任务分工清楚', body: '文案、表格、长文档、图片理解和逻辑复盘分开处理，页面只展示可审核结论。' },
 ];
 
 const RESTAURANT_SKILLS = [
@@ -122,33 +123,33 @@ const DATA_INPUTS = [
 
 const CLAW_FEATURES = [
   { title: '今日任务包', detail: '把门店、菜品、活动边界和渠道变成可审核的工作单，不让客户从空白页开始。', state: '可试用' },
-  { title: '证据回执', detail: '发布链接、截图、券领取、预约和私信咨询先进入证据账本，再交给负责人处理。', state: '内部闭环' },
-  { title: '经营导入', detail: '支持链接、截图、CSV 和人工回填；POS、核销、会员和评论需要合法 API/OAuth 或导出。', state: '需授权' },
-  { title: '浏览器执行', detail: '外部账号接入前只生成受控 runbook；配置 Runner 后再回传步骤、截图和失败原因。', state: '需 Provider' },
-  { title: '安全边界', detail: '无授权不读账号，无凭证不宣称发布，无来源不做经营归因，高风险动作进入阻断态。', state: '已产品化' },
+  { title: '证据回执', detail: '发布链接、截图、券领取、预约和私信咨询先进入证据账本，再交给负责人处理。', state: '本地试跑' },
+  { title: '经营汇总', detail: '先支持链接、截图、表格和人工回填；核销、会员和评论数据等店长确认后再用。', state: '等店长确认' },
+  { title: '发布代办清单', detail: '先生成每个渠道该怎么发、谁负责、要回填什么截图；确认账号后再记录真实步骤。', state: '等店长确认' },
+  { title: '安全边界', detail: '没确认账号不读取，没回填凭证不说已发布，没来源不做经营结论。', state: '已产品化' },
 ];
 
 const OPENING_STEPS = [
   { title: '填门店任务', detail: '先确认餐厅、菜品/套餐、目标客群、渠道和本轮活动边界。' },
-  { title: '跑受控试单', detail: '生成内容计划、负责人、证据要求和下一步，不直接冒充外部发布。' },
-  { title: '补外部钥匙', detail: '需要自动发布、核销或真实经营分析时，再接 Provider Key、Runner、授权和数据合同。' },
+  { title: '生成今日工单', detail: '生成内容计划、负责人、凭证要求和下一步，不把待办说成已完成。' },
+  { title: '补缺的资料', detail: '需要真实发布、核销或经营分析时，再让店长补账号确认、截图或经营汇总表。' },
 ];
 
 const AI_EMPLOYEE_TRIAL_STEPS = [
   {
-    label: 'Step 1',
-    title: 'Intake the store task',
-    body: 'Restaurant, offer, diner segment, channels, visit reason and stop lines are captured before any content or automation claim.',
+    label: '第 1 步',
+    title: '填门店和本次活动',
+    body: '只要先填餐厅、主推菜/套餐、想吸引的人群、准备发到哪里，以及哪些话不能乱说。',
   },
   {
-    label: 'Step 2',
-    title: 'AI employee accepts the shift',
-    body: 'Wenai Store Operator creates the operating brief, owner queue, publish proof slots and provider gaps from one controlled path.',
+    label: '第 2 步',
+    title: '生成今天能执行的方案',
+    body: '工作台整理出内容草稿、需要的图片/菜单/券信息、发布后要回填的链接或截图，以及谁来负责。',
   },
   {
-    label: 'Step 3',
-    title: 'Forward manager actions',
-    body: 'The store manager receives today actions, evidence required, follow-up copy and the exact Provider keys needed for external execution.',
+    label: '第 3 步',
+    title: '交给店长跟进',
+    body: '把预约、券领取、私信咨询、社群跟进和下一步动作交给店长；没确认过的结果不写成已经完成。',
   },
 ];
 
@@ -156,15 +157,15 @@ const RESTAURANT_SCENARIOS = [
   { title: '菜单定价与结构分析', detail: '输入菜单、销量、毛利或缺失字段，输出主推菜、下架风险、价格待确认项。' },
   { title: '外卖活动方案设计', detail: '把套餐边界、平台活动和库存限制转成可审查的活动说明与发布素材。' },
   { title: '门店选址量化评估', detail: '沉淀商圈、人流、竞品、租金和堂食/外卖结构，缺真实数据时只给评估清单。' },
-  { title: '财务报表解读与诊断', detail: '从营业额、客单、毛利、损耗和人效看异常，不接 POS 前不做实时结论。' },
+  { title: '财务报表解读与诊断', detail: '从营业额、客单、毛利、损耗和人效看异常，不接收银系统前不做实时结论。' },
   { title: '节日会员营销策划', detail: '按会员标签、券领取、复购意向生成社群话术、负责人和下一次触达。' },
   { title: '员工绩效改进方案', detail: '从投诉、排班、翻台和服务 SOP 形成复盘问题，避免替代管理决策。' },
 ];
 
 const HERMES_LAYERS = [
   { title: '深度分层记忆', detail: '门店、菜品、客群、证据、负责人分层写回，下一轮任务能复用已确认边界。' },
-  { title: '沙箱安全隔离', detail: '外部账号、顾客数据、财务数据和发布动作都要求授权、日志、停止条件和人工确认。' },
-  { title: 'Browser Runner', detail: '常驻浏览器只执行受控 runbook，回传 step event、截图证据和失败原因。' },
+  { title: '沙箱安全隔离', detail: '外部账号、顾客数据、财务数据和发布动作都要求店长确认、记录、停止条件和人工复核。' },
+  { title: '受控浏览器执行', detail: '常驻浏览器只执行确认过的操作清单，回传步骤记录、截图证据和失败原因。' },
   { title: '主动跟进', detail: '把预约、券领取、私信、差评和复购信号变成店长/社群/运营的下一步任务。' },
 ];
 
@@ -176,6 +177,27 @@ const activeStepLabel: Record<FactoryFriendTrialExperienceProps['active'], strin
   cast: '正在安排门店渠道发布',
   manage: '正在回收预约和咨询',
 };
+
+const ORCHESTRATOR_STAGE_LABELS = {
+  'trial-intake': '试跑输入',
+  'standard-pack': '标准交付包',
+  'content-production': '内容/素材生产',
+  'publish-proof': '发布凭证',
+  'ops-followup': '线索/店长跟进',
+} as const;
+
+const ORCHESTRATOR_STATUS_LABELS = {
+  ready: '内部可跑',
+  'needs-review': '待复核',
+  'external-gated': '等账号资料',
+} as const;
+
+const ORCHESTRATOR_OWNER_LABELS = {
+  merchant: '商户',
+  ops: '运营',
+  'store-manager': '店长',
+  'runtime-admin': '技术复核',
+} as const;
 
 export function FactoryFriendTrialExperience({
   active,
@@ -200,6 +222,15 @@ export function FactoryFriendTrialExperience({
     ...item,
     value: intake[item.name as keyof RestaurantTrialIntake] || item.value,
   }));
+  const trialOrchestratorPack = buildRestaurantTrialOrchestratorPack({
+    restaurant: productFields[0]?.value,
+    offer: productFields[1]?.value,
+    audience: productFields[2]?.value,
+    channels: productFields[3]?.value,
+    visitReason: intake.visitReason || '工作日晚餐不用排队，双人套餐更适合附近白领。',
+    constraints: intake.constraints || '价格、库存、核销口径由店长确认，发布前必须回填链接或截图。',
+    evidence: intake.evidence || '菜单截图、菜品图、点评链接或券领取截图。',
+  });
   const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlan();
 
   return (
@@ -257,7 +288,7 @@ export function FactoryFriendTrialExperience({
               <p className="sr-only">一眼看懂：这套内容怎么帮门店拿到预约、券领取和私信咨询。</p>
             </div>
             <div className="flex items-center gap-2 overflow-x-auto">
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">样例数据，不代表真实效果</span>
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">不承诺爆单，只跑清楚第一轮</span>
               {nextHref ? (
                 <Link className="rounded-full bg-stone-950 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-stone-800" href={withIntake(nextHref)}>
                   {nextLabel}
@@ -276,15 +307,15 @@ export function FactoryFriendTrialExperience({
                 <div className="relative grid gap-0 lg:grid-cols-[minmax(0,1fr)_390px]">
                   <div className="p-5 sm:p-7 lg:p-8">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Wenai Claw Runtime</span>
-                      <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-semibold text-stone-200">对标勺子 Claw / Cloud 的试用工作台</span>
+                      <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-[11px] font-semibold tracking-[0.12em] text-emerald-200">门店今天就能试跑</span>
+                      <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-[11px] font-semibold text-stone-200">本地门店试跑入口</span>
                     </div>
 
-                    <h2 className="mt-6 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-6xl">
+                    <h2 className="mt-6 max-w-3xl text-4xl font-black leading-tight tracking-tight sm:text-5xl">
                       今天先跑一张门店经营工单
                     </h2>
                     <p className="mt-4 max-w-2xl text-base leading-7 text-stone-300">
-                      从菜品、套餐、门店活动和本地渠道开始，生成可审核的内容计划、发布证据、负责人和下一步。自动发布、自动核销和真实经营分析只在 Provider、商家授权、浏览器 Runner 与数据合同就绪后开启。
+                      从菜品、套餐、门店活动和本地渠道开始，生成可审核的内容计划、发布凭证、负责人和下一步。今天先用公开资料、本地工具和手工回填跑出老板能执行的工单，需要账号、核销或经营表格时再提示补齐。
                     </p>
 
                     <div className="mt-6 flex flex-wrap gap-3">
@@ -298,10 +329,10 @@ export function FactoryFriendTrialExperience({
 
                     <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                       {[
-                        { label: 'AI OS Audit', body: '先看哪些能力能跑、哪些必须接 Provider', href: '#restaurant-agent-runtime' },
-                        { label: 'Run Trial', body: '生成一张受控试单和签名回执', href: '#restaurant-agent-runtime' },
-                        { label: 'Provider Setup', body: '列出自动发布/核销/数据分析的钥匙', href: '#restaurant-agent-runtime' },
-                        { label: 'Operating Insight', body: '只用回执和脱敏 POS 聚合做经营判断', href: '#restaurant-agent-runtime' },
+                        { label: '先看今天能做啥', body: '直接告诉老板今天能先做哪几件事', href: '#restaurant-trial-spine' },
+                        { label: '生成试跑工单', body: '做出一张门店活动工单、负责人和回填凭证要求', href: '#restaurant-trial-spine' },
+                        { label: '补缺的资料', body: '不用等接口 key，先列出还差哪些截图或表格', href: '#restaurant-trial-spine' },
+                        { label: '看回收结果', body: '只用链接、截图、预约、券领取和去掉隐私的汇总表做判断', href: withIntake('/factory/manage?variant=friend_trial') },
                       ].map(item => (
                         <a className="border border-white/10 bg-white/[0.055] px-3 py-2 text-left transition hover:border-emerald-200/40 hover:bg-emerald-200/10" href={item.href} key={item.label}>
                           <span className="block text-xs font-black text-white">{item.label}</span>
@@ -313,11 +344,11 @@ export function FactoryFriendTrialExperience({
                     <div className="mt-4 rounded-2xl border border-sky-200/20 bg-sky-200/[0.07] p-3">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-100/70">3-step AI employee trial</div>
-                          <p className="mt-1 text-sm font-black text-white">One path: intake, AI employee shift, manager handoff.</p>
+                          <div className="text-[10px] font-semibold tracking-[0.16em] text-sky-100/70">第一次使用，只走 3 步</div>
+                          <p className="mt-1 text-sm font-black text-white">1 家门店、1 个爆品、1 个到店理由。</p>
                         </div>
-                        <a className="w-fit rounded-full border border-sky-100/30 px-3 py-1.5 text-[11px] font-black text-sky-100 transition hover:bg-sky-100/10" href="#restaurant-agent-runtime">
-                          Start Default Path
+                        <a className="w-fit rounded-full border border-sky-100/30 px-3 py-1.5 text-[11px] font-black text-sky-100 transition hover:bg-sky-100/10" href="#restaurant-trial-spine">
+                          从这里开始
                         </a>
                       </div>
                       <div className="mt-3 grid gap-2 md:grid-cols-3">
@@ -359,11 +390,11 @@ export function FactoryFriendTrialExperience({
                     </div>
 
                     <div className="mt-4 rounded-3xl border border-white/10 bg-white/[0.055] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">Provider 门槛</p>
+                      <p className="text-[11px] font-semibold tracking-[0.18em] text-stone-400">上线前需要准备</p>
                       <ul className="mt-3 space-y-2 text-xs leading-5 text-stone-300">
-                        <li>OpenAI / Claude / 本地模型 Key：用于真实生成、理解图片和长文档。</li>
-                        <li>POS / 核销 / 会员 / 点评等授权：用于真实经营分析和自动回执。</li>
-                        <li>浏览器 Runner：用于常驻执行、截图证明、失败恢复和主动跟进。</li>
+                        <li>公开资料和门店素材：菜单、菜品图、活动规则、点评链接或截图先手工确认。</li>
+                        <li>发布账号确认：需要真实发布、核销或评论回收时，再由店长确认账号和权限。</li>
+                        <li>经营汇总表：核销、会员和预约数据先用汇总表，不能上传顾客隐私。</li>
                       </ul>
                     </div>
                   </div>
@@ -430,7 +461,7 @@ export function FactoryFriendTrialExperience({
                             </div>
                             <Link className="flex min-h-[120px] flex-col justify-between rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-stone-950 transition hover:border-emerald-300 hover:bg-emerald-100/70" href={primaryActionHref}>
                               <div>
-                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Next Step</div>
+                                <div className="text-[11px] font-semibold tracking-[0.16em] text-emerald-700">下一步</div>
                                 <div className="mt-2 text-base font-semibold">{nextLabel}</div>
                                 <p className="mt-2 text-xs leading-5 text-stone-600">先确认当前门店任务状态，再进入下一步，不用靠口头解释继续试用。</p>
                               </div>
@@ -443,7 +474,7 @@ export function FactoryFriendTrialExperience({
                       <div className="rounded-2xl border border-stone-200 bg-stone-950 p-4 text-white">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Today</p>
+                            <p className="text-[11px] font-semibold tracking-[0.16em] text-stone-400">今天要做</p>
                             <h3 className="mt-1 text-lg font-bold">下一步很明确</h3>
                           </div>
                           <span className="rounded-full bg-emerald-400 px-2.5 py-1 text-[11px] font-bold text-stone-950">可继续</span>
@@ -509,13 +540,89 @@ export function FactoryFriendTrialExperience({
                 ))}
               </section>
 
+              <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm" id="restaurant-trial-spine">
+                <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_330px]">
+                  <div className="p-5 sm:p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald-700">门店试跑主流程</p>
+                        <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">五段试跑主链路</h2>
+                        <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{trialOrchestratorPack.spine}</p>
+                      </div>
+                      <div className="grid w-full grid-cols-3 overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 text-center sm:w-[310px]">
+                        <div className="border-r border-stone-200 p-3">
+                          <div className="text-[11px] font-semibold text-stone-500">阶段</div>
+                          <div className="mt-1 text-xl font-black text-stone-950">{trialOrchestratorPack.summary.stages}</div>
+                        </div>
+                        <div className="border-r border-stone-200 p-3">
+                          <div className="text-[11px] font-semibold text-stone-500">发布凭证</div>
+                          <div className="mt-1 text-xl font-black text-stone-950">{trialOrchestratorPack.summary.acceptedProofs}/{trialOrchestratorPack.summary.publishProofSlots}</div>
+                        </div>
+                        <div className="p-3">
+                          <div className="text-[11px] font-semibold text-stone-500">店长跟进</div>
+                          <div className="mt-1 text-xl font-black text-stone-950">{trialOrchestratorPack.summary.followupTasks}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 xl:grid-cols-5">
+                      {trialOrchestratorPack.stages.map(stage => (
+                        <article className="flex min-h-[188px] flex-col justify-between rounded-2xl border border-stone-200 bg-[#fbfaf7] p-4" key={stage.id}>
+                          <div>
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div className="text-[11px] font-semibold text-stone-500">{stage.id}</div>
+                                <h3 className="mt-1 text-sm font-black text-stone-950">{ORCHESTRATOR_STAGE_LABELS[stage.id]}</h3>
+                              </div>
+                              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${stage.status === 'ready' ? 'bg-emerald-100 text-emerald-800' : stage.status === 'external-gated' ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-600'}`}>
+                                {ORCHESTRATOR_STATUS_LABELS[stage.status]}
+                              </span>
+                            </div>
+                            <p className="mt-3 text-xs leading-5 text-stone-600">{stage.nextAction}</p>
+                          </div>
+                          <div className="mt-4 space-y-2 text-[11px] leading-4 text-stone-500">
+                            <div>负责人：{ORCHESTRATOR_OWNER_LABELS[stage.owner]}</div>
+                            <div>证据项：{stage.evidence.length}</div>
+                            <div className="truncate">输出：{stage.outputRef}</div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-stone-200 bg-stone-950 p-5 text-white lg:border-l lg:border-t-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">主链路边界</p>
+                    <h3 className="mt-2 text-lg font-black">内部产包、凭证槽和任务队列先跑通</h3>
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+                        <div className="text-xs font-semibold text-stone-400">标准交付包</div>
+                        <div className="mt-1 text-sm font-bold">{trialOrchestratorPack.standardPack.route}</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+                        <div className="text-xs font-semibold text-stone-400">内容交付包</div>
+                        <div className="mt-1 text-sm font-bold">{trialOrchestratorPack.contentDelivery.title}</div>
+                      </div>
+                      <div className="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-3">
+                        <div className="text-xs font-semibold text-amber-100">外部解锁条件</div>
+                        <ul className="mt-2 space-y-1 text-[11px] leading-4 text-amber-50/90">
+                          {trialOrchestratorPack.externalGates.slice(0, 3).map(item => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <p className="text-[11px] leading-5 text-stone-400">{trialOrchestratorPack.safetyBoundary}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
               <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_340px]">
                   <div className="p-5 sm:p-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Restaurant AI Brain</p>
-                        <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮人的数字员工，不是一次性聊天框</h2>
+                        <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald-700">门店经营记忆</p>
+                        <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮人的门店任务助手，不是一次性聊天框</h2>
                       </div>
                       <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">只展示已确认能力</span>
                     </div>
@@ -530,7 +637,7 @@ export function FactoryFriendTrialExperience({
                   </div>
 
                   <div className="border-t border-stone-200 bg-stone-950 p-5 text-white lg:border-l lg:border-t-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Data Gate</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">数据条件</p>
                     <h3 className="mt-2 text-lg font-bold">先接证据，再谈优化</h3>
                     <div className="mt-4 space-y-2">
                       {DATA_INPUTS.map(item => (
@@ -546,7 +653,7 @@ export function FactoryFriendTrialExperience({
                 <div className="border-t border-stone-200 bg-white p-5 sm:p-6">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">Claw Skill Catalog</p>
+                      <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald-700">内部能力清单</p>
                       <h3 className="mt-2 text-xl font-black tracking-tight text-stone-950">20 模块 / 200 技能 / 60 工具，逐项标注能否现在执行</h3>
                     </div>
                     <p className="max-w-2xl text-sm leading-6 text-stone-600">{clawSkillCatalog.safetyBoundary}</p>
@@ -555,17 +662,17 @@ export function FactoryFriendTrialExperience({
                     <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
                       <div className="text-[11px] font-semibold text-stone-500">模块 / 技能 / 工具</div>
                       <div className="mt-2 text-2xl font-black text-stone-950">{clawSkillCatalog.summary.modules} / {clawSkillCatalog.summary.skills} / {clawSkillCatalog.summary.tools}</div>
-                      <p className="mt-2 text-xs leading-5 text-stone-600">不是口号，每个模块固定 10 个技能，每个工具都有安全动作和外部门槛。</p>
+                      <p className="mt-2 text-xs leading-5 text-stone-600">不是口号，每个模块固定 10 个技能，每个工具都有安全动作和补资料条件。</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                      <div className="text-[11px] font-semibold text-emerald-700">内部可用 / 待训练 / 等 Provider</div>
+                      <div className="text-[11px] font-semibold text-emerald-700">内部可用 / 待训练 / 等账号资料</div>
                       <div className="mt-2 text-2xl font-black text-emerald-950">{clawSkillCatalog.summary.internalReadySkills} / {clawSkillCatalog.summary.trainingNeededSkills} / {clawSkillCatalog.summary.providerGatedSkills}</div>
-                      <p className="mt-2 text-xs leading-5 text-emerald-900">先把内部技能训练成任务包；外部执行只在授权后解锁。</p>
+                      <p className="mt-2 text-xs leading-5 text-emerald-900">先把内部技能训练成任务包；外部执行只在账号确认后解锁。</p>
                     </div>
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                       <div className="text-[11px] font-semibold text-amber-700">工具权限</div>
                       <div className="mt-2 text-2xl font-black text-amber-950">{clawSkillCatalog.summary.internalReadyTools} / {clawSkillCatalog.summary.trainingNeededTools} / {clawSkillCatalog.summary.providerGatedTools}</div>
-                      <p className="mt-2 text-xs leading-5 text-amber-900">导入器、检查器可先跑；回执器、复盘器必须等平台/POS/Runner。</p>
+                      <p className="mt-2 text-xs leading-5 text-amber-900">导入器、检查器可先跑；回执器、复盘器必须等平台、收银系统或执行工具。</p>
                     </div>
                   </div>
                   <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -586,7 +693,7 @@ export function FactoryFriendTrialExperience({
                       ))}
                     </div>
                     <div className="rounded-2xl border border-stone-900 bg-stone-950 p-4 text-white">
-                      <h4 className="text-sm font-black">下一轮训练与外部接入</h4>
+                      <h4 className="text-sm font-black">下一轮复用与补资料</h4>
                       <div className="mt-3 space-y-2">
                         {clawSkillCatalog.nextInternalTraining.slice(0, 4).map(item => (
                           <div className="rounded-xl border border-white/10 bg-white/[0.06] p-2 text-[11px] leading-4 text-stone-300" key={`${item.moduleId}-${item.skillId}`}>
@@ -595,7 +702,7 @@ export function FactoryFriendTrialExperience({
                         ))}
                         {clawSkillCatalog.externalSetupRequests.slice(0, 3).map(item => (
                           <div className="rounded-xl border border-amber-300/20 bg-amber-300/10 p-2 text-[11px] leading-4 text-amber-100" key={`${item.toolId}-${item.unlocks}`}>
-                            外部：{item.provider} 解锁 {item.unlocks}
+                            外部账号：补齐账号、截图或经营表格后解锁 {item.unlocks}
                           </div>
                         ))}
                       </div>
@@ -606,7 +713,7 @@ export function FactoryFriendTrialExperience({
                 <div className="border-t border-stone-200 bg-[#fbfaf7] p-5 sm:p-6">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <h3 className="text-sm font-bold text-stone-950">餐饮技能矩阵</h3>
-                    <p className="text-xs leading-5 text-stone-500">先在试用工作台暴露任务入口，真实自动化等账号、数据和权限接入后再打开。</p>
+                    <p className="text-xs leading-5 text-stone-500">先在试用工作台暴露任务入口，真实代办等账号、数据和权限确认后再打开。</p>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {RESTAURANT_SKILLS.map(skill => (
@@ -621,11 +728,11 @@ export function FactoryFriendTrialExperience({
               <section className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Real Restaurant Scenarios</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">真实餐饮场景</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">真实餐饮场景，即刻体验</h2>
                   </div>
                   <p className="max-w-2xl text-sm leading-6 text-stone-600">
-                    这些不是泛泛的内容生成入口，而是餐饮老板每天会问的问题。没有外部数据时，系统只输出清单、草稿和待确认项；接入授权后再升级为真实经营分析和执行。
+                    这些不是泛泛的内容生成入口，而是餐饮老板每天会问的问题。没有外部数据时，工作台只输出清单、草稿和待确认项；账号确认后再升级为真实经营分析和执行。
                   </p>
                 </div>
                 <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -641,12 +748,12 @@ export function FactoryFriendTrialExperience({
               <section className="overflow-hidden rounded-3xl border border-stone-800 bg-stone-950 text-white shadow-sm">
                 <div className="grid gap-0 lg:grid-cols-[0.85fr_1.15fr]">
                   <div className="border-b border-white/10 p-5 sm:p-6 lg:border-b-0 lg:border-r">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">Hermes Architecture</p>
-                    <h2 className="mt-3 text-3xl font-black tracking-tight">Hermes 架构：自我进化的智能内核</h2>
+                    <p className="text-[11px] font-semibold tracking-[0.18em] text-emerald-300">门店安全记忆</p>
+                    <h2 className="mt-3 text-3xl font-black tracking-tight">把确认过的门店经验记下来</h2>
                     <div className="mt-5 grid gap-3">
                       <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4">
                         <h3 className="text-lg font-black text-emerald-100">不追求领先，但追求安全</h3>
-                        <p className="mt-2 text-sm leading-6 text-stone-300">外部账号、顾客数据、财务数据和发布动作必须带授权、回执和审计记录。</p>
+                        <p className="mt-2 text-sm leading-6 text-stone-300">外部账号、顾客数据、财务数据和发布动作必须带店长确认、回执和复核记录。</p>
                       </div>
                       <div className="rounded-2xl border border-white/10 bg-white/[0.055] p-4">
                         <h3 className="text-lg font-black text-white">不追求完美，但追求适配</h3>
@@ -669,11 +776,11 @@ export function FactoryFriendTrialExperience({
                 <div className="border-b border-stone-200 bg-[#fbfaf7] p-5 sm:p-6">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">Capability Training Matrix</p>
+                      <p className="text-[11px] font-semibold tracking-[0.18em] text-emerald-700">能力训练清单</p>
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">竞品能力训练与接入矩阵</h2>
                     </div>
                     <p className="max-w-2xl text-sm leading-6 text-stone-600">
-                      目标不是堆技能数量，而是每项能力都有训练材料、外部门槛、验收证据和第一步。内部能做的先训练成任务包，外部必须接的明确列出来。
+                      目标不是堆技能数量，而是每项能力都有训练材料、外部条件、验收证据和第一步。内部能做的先训练成任务包，外部要补的明确列出来。
                     </p>
                   </div>
                 </div>
@@ -681,7 +788,7 @@ export function FactoryFriendTrialExperience({
                   {capabilityTrainingPlan.items.map(item => (
                     <article className="grid gap-0 lg:grid-cols-[220px_minmax(0,1fr)]" key={item.capability}>
                       <div className="border-stone-200 bg-stone-950 p-4 text-white lg:border-r">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">Capability</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300">能力</div>
                         <h3 className="mt-2 text-lg font-black">{item.capability}</h3>
                         <p className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-3 text-xs leading-5 text-emerald-50">
                           第一步：{item.firstRun}
@@ -697,8 +804,8 @@ export function FactoryFriendTrialExperience({
                           <p className="mt-2 text-xs leading-5 text-stone-700">{item.trainingMaterials.join(' / ')}</p>
                         </div>
                         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
-                          <div className="text-[11px] font-semibold text-amber-700">外部 Provider / 授权</div>
-                          <p className="mt-2 text-xs leading-5 text-amber-900">{item.externalProviders.join(' / ')}</p>
+                          <div className="text-[11px] font-semibold text-amber-700">外部账号 / 权限</div>
+                          <p className="mt-2 text-xs leading-5 text-amber-900">补齐账号确认、公开链接、截图、核销汇总表或经营导出表。</p>
                         </div>
                         <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
                           <div className="text-[11px] font-semibold text-emerald-700">验收标准</div>

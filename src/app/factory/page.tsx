@@ -48,13 +48,13 @@ export default async function FactoryPage({
       { label: '第 5 步', title: '交给店长或社群跟进', href: '/factory/manage?variant=friend_trial', value: '记录负责人' },
     ];
     const usabilityGaps = [
-      { gap: '原通用工厂入口太像概念展板', fix: '第一屏改成餐厅活动表单，客户直接填餐厅、菜品、客群、渠道和证据。', owner: '内部已解决' },
-      { gap: '缺少餐饮真实经营输入', fix: '把预约、POS、库存、券核销、评价和社群反馈列成接入门槛。', owner: '外部数据必需' },
-      { gap: '不能把内容生成说成经营自动化', fix: '所有自动化都带停止线：无凭证不说已发布，无授权不联系顾客。', owner: '内部护栏已解决' },
+      { gap: '原通用工厂入口太像概念展板', fix: '第一屏改成餐厅活动表单，客户直接填餐厅、菜品、客群、渠道和证据。', owner: '当前可试跑' },
+      { gap: '缺少餐饮真实经营输入', fix: '把预约、收银汇总、库存、券核销、评价和社群反馈列成补资料清单。', owner: '等门店资料' },
+      { gap: '不能把内容生成说成经营自动化', fix: '所有代办都带停止线：无凭证不说已发布，无授权不联系顾客。', owner: '已加边界' },
     ];
     const contentScaleAudit = [
       { label: '默认可操作区', value: '6 块', detail: '入口表单、步骤卡、差距提示、门店作战板、规模判断、高级入口' },
-      { label: '高级审计区', value: '折叠', detail: 'Claw 对标、终局定义、接入门槛、Agent 和数据门禁' },
+      { label: '高级审计区', value: '折叠', detail: '底层能力、接入门槛和数据门禁收进内部复核区' },
       { label: '当前判断', value: '先跑闭环', detail: '默认页不再加模块，后续只加到作战板或折叠审计里' },
     ];
 
@@ -62,7 +62,7 @@ export default async function FactoryPage({
       <FactoryFriendTrialExperience
         active="overview"
         title="从一家餐厅和一道主推菜开始，生成可审核的门店内容任务"
-        subtitle="客户先录入餐厅、菜品/套餐、目标客群和渠道，系统给出菜品卖点、素材清单、本地内容、发布凭证和到店跟进的下一步。"
+        subtitle="客户先录入餐厅、菜品/套餐、目标客群和渠道，工作台整理出菜品卖点、素材清单、本地内容、发布凭证和到店跟进的下一步。"
         metrics={[
           { label: '门店资料', value: '待确认', detail: '客户可编辑', tone: 'slate' },
           { label: '本地内容计划', value: '待生成', detail: '先审核后发布', tone: 'emerald' },
@@ -108,7 +108,7 @@ export default async function FactoryPage({
         <section className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">Content Scale Audit</p>
+              <p className="text-[11px] font-semibold tracking-[0.18em] text-rose-700">老板入口检查</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">内容规模先收住</h2>
             </div>
             <p className="max-w-2xl text-sm leading-6 text-stone-600">
@@ -135,18 +135,18 @@ export default async function FactoryPage({
     <main>
       <section className="border-b border-slate-200 bg-slate-950 px-6 py-8 text-white">
         <div className="mx-auto max-w-6xl">
-          <div className="text-[12px] font-black uppercase tracking-[0.22em] text-amber-200">Wenai 电商增长作战台</div>
+          <div className="text-[12px] font-black uppercase tracking-[0.22em] text-amber-200">Wenai 餐饮门店增长作战台</div>
           <div className="mt-3 grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
             <div>
               <h1 className="max-w-4xl text-3xl font-black leading-tight sm:text-5xl">
-                从 SKU 上新到创意、视频、分发、审核和回流的一张工作台
+                从门店活动到内容、视频、发布凭证、店长审核和到店回流的一张工作台
               </h1>
               <p className="mt-4 max-w-3xl text-[14px] leading-7 text-white/70">
-                这里是最终产品形态入口：筷子科技给出全链路工业化参照，Hookshot / Hookly 给出 hook 和 UGC 广告结构参照，Wenai 的目标是把它们收成可验收、可交接、可复盘的电商增长系统。
+                这里是最终产品形态入口：筷子科技给出全链路工业化参照，Hookshot / Hookly 给出 hook 和 UGC 内容结构参照，Wenai 的目标是把它们收成可验收、可交接、可复盘的餐饮门店增长系统。
               </p>
             </div>
             <div className="rounded-md border border-amber-300/25 bg-amber-300/10 p-4 text-[13px] leading-6 text-amber-50">
-              当前边界：内部闭环已可跑；真实 OAuth、自动发布、广告投放、视频 provider、平台数据同步和企业云资产接入前，不宣称平台级规模执行。
+              当前边界：本地试跑已可跑；真实平台授权、外部发布执行、门店活动权限、视频素材通道、平台反馈回流和企业云资产接入前，不宣称平台级规模执行。
             </div>
           </div>
 
@@ -221,7 +221,7 @@ export default async function FactoryPage({
                 <h2 className="mt-1 text-2xl font-black">移动端介绍要讲清楚的六个能力</h2>
               </div>
               <p className="max-w-xl text-[12px] leading-6 text-white/60">
-                这些是对外最容易被理解的入口：能展示内部闭环，但每张卡都必须带外部门禁，避免把竞品级规模能力误写成当前已商用。
+                这些是对外最容易被理解的入口：能展示本地试跑链路，但每张卡都必须带补资料条件，避免把竞品级规模能力误写成当前已商用。
               </p>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
