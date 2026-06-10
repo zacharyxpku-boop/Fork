@@ -5,6 +5,7 @@ import { POST as chatPost } from '@/app/api/restaurant-agent/chat/route';
 import { POST as reviewReplyPost } from '@/app/api/restaurant-agent/review-reply/route';
 import { POST as memoryPost } from '@/app/api/restaurant-agent/memory/route';
 import { POST as contentPost } from '@/app/api/restaurant-agent/content/route';
+import { GET as llmHealthGet } from '@/app/api/restaurant-agent/llm-health/route';
 import { buildRevisionUserPrompt } from '@/lib/restaurant-advisor-prompts';
 
 const originalKey = process.env.DEEPSEEK_API_KEY;
@@ -122,5 +123,14 @@ describe('restaurant advisor routes (no-key mode)', () => {
     expect(prompt).toContain('别用感叹号');
     expect(prompt).toContain('标题不超过 20 字');
     expect(prompt).toContain('不解释修改过程');
+  });
+
+  it('llm health reports no-key with setup instructions', async () => {
+    delete process.env.DEEPSEEK_API_KEY;
+    const response = await llmHealthGet();
+    const payload = await response.json();
+    expect(payload.ok).toBe(false);
+    expect(payload.status).toBe('no-key');
+    expect(payload.message).toContain('DEEPSEEK_API_KEY');
   });
 });
