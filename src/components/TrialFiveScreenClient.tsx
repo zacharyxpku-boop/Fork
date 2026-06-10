@@ -5,6 +5,7 @@ import {
   buildShareSummary,
   deriveTodayActions,
   deriveTomorrowPlan,
+  type TrialMemoryNote,
   type TrialProofEntry,
 } from '@/lib/restaurant-trial-five-screen';
 import type { RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
@@ -76,6 +77,15 @@ export function TrialFiveScreenClient() {
   const [contentError, setContentError] = useState('');
   const [copyFeedback, setCopyFeedback] = useState('');
   const [proofDraft, setProofDraft] = useState({ channel: '', proofUrl: '', note: '' });
+  const [revisionDrafts, setRevisionDrafts] = useState<Record<string, string>>({});
+  const [revisionBusy, setRevisionBusy] = useState('');
+  const [reviewDraft, setReviewDraft] = useState({ text: '', sentiment: 'negative' as 'positive' | 'negative' });
+  const [reviewResult, setReviewResult] = useState<{ mode: string; text: string } | null>(null);
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const [advisorQuestion, setAdvisorQuestion] = useState('');
+  const [advisorResult, setAdvisorResult] = useState<{ mode: string; text: string } | null>(null);
+  const [advisorBusy, setAdvisorBusy] = useState(false);
+  const [memoryNotes, setMemoryNotes] = useState<TrialMemoryNote[]>([]);
 
   useEffect(() => {
     setIntake(readJson(STORAGE_KEYS.intake, EMPTY_INTAKE));
@@ -100,7 +110,130 @@ export function TrialFiveScreenClient() {
 
   const intakeReady = Boolean(intake.restaurant && intake.offer);
   const todayActions = useMemo(() => (intakeReady ? deriveTodayActions(intake) : []), [intake, intakeReady]);
-  const tomorrowPlan = useMemo(() => (intakeReady ? deriveTomorrowPlan(intake, proofs) : []), [intake, intakeReady, proofs]);
+  const tomorrowPlan = useMemo(
+    () => (intakeReady ? deriveTomorrowPlan(intake, proofs, memoryNotes) : []),
+    [intake, intakeReady, proofs, memoryNotes],
+  );
+
+  useEffect(() => {
+    if (!hydrated || !intake.restaurant) return;
+    fetch('/api/restaurant-agent/memory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'list', restaurant: intake.restaurant }),
+    })
+      .then(response => response.json())
+      .then(payload => {
+        if (payload?.ok && Array.isArray(payload.entries)) {
+          setMemoryNotes(payload.entries.map((entry: { kind: string; note: string }) => ({ kind: entry.kind, note: entry.note })));
+        }
+      })
+      .catch(() => {
+        // 记忆读不到不阻塞主流程
+      });
+  }, [hydrated, intake.restaurant]);
+
+  function rememberRevisionPreference(feedback: string) {
+    if (!intake.restaurant) return;
+    void fetch('/api/restaurant-agent/memory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ restaurant: intake.restaurant, kind: 'revision-preference', note: feedback, source: 'revision' }),
+    }).catch(() => undefined);
+  }
+
+  async function reviseContent(kind: string, previousOutput: string) {
+    const feedback = (revisionDrafts[kind] || '').trim();
+    if (!feedback) return;
+    setRevisionBusy(kind);
+    try {
+      const response = await fetch('/api/restaurant-agent/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intake, revision: { kind, previousOutput, feedback } }),
+      });
+      const payload = await response.json();
+      if (!payload?.ok) throw new Error(payload?.error || 'revision-failed');
+      setContent(previous => {
+        if (!previous) return previous;
+        if (payload.mode === 'prompt-preview' && payload.prompts?.[0]) {
+          return {
+            ...previous,
+            prompts: (previous.prompts || []).map(p => (p.kind === kind ? payload.prompts[0] : p)),
+          };
+        }
+        if (payload.mode === 'generated' && payload.results?.[0]) {
+          return {
+            ...previous,
+            results: (previous.results || []).map(r => (r.kind === kind ? payload.results[0] : r)),
+          };
+        }
+        return previous;
+      });
+      rememberRevisionPreference(feedback);
+      setRevisionDrafts(previous => ({ ...previous, [kind]: '' }));
+      setCopyFeedback('已按你的意见重新生成这条');
+      window.setTimeout(() => setCopyFeedback(''), 2500);
+    } catch {
+      setCopyFeedback('重新生成失败，稍后再试');
+      window.setTimeout(() => setCopyFeedback(''), 2500);
+    } finally {
+      setRevisionBusy('');
+    }
+  }
+
+  async function submitReviewReply() {
+    if (!reviewDraft.text.trim()) return;
+    setReviewBusy(true);
+    setReviewResult(null);
+    try {
+      const response = await fetch('/api/restaurant-agent/review-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intake, reviewText: reviewDraft.text, sentiment: reviewDraft.sentiment }),
+      });
+      const payload = await response.json();
+      if (!payload?.ok) throw new Error(payload?.error || 'review-reply-failed');
+      setReviewResult(
+        payload.mode === 'prompt-preview'
+          ? { mode: 'prompt-preview', text: `${payload.prompt.system}\n\n${payload.prompt.user}` }
+          : { mode: 'generated', text: payload.reply },
+      );
+    } catch {
+      setReviewResult({ mode: 'error', text: '生成失败，稍后再试。' });
+    } finally {
+      setReviewBusy(false);
+    }
+  }
+
+  async function askAdvisor() {
+    const question = advisorQuestion.trim();
+    if (!question) return;
+    setAdvisorBusy(true);
+    setAdvisorResult(null);
+    try {
+      const response = await fetch('/api/restaurant-agent/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          intake,
+          question,
+          proofs: proofs.map(proof => ({ channel: proof.channel, note: proof.proofUrl || proof.note })),
+        }),
+      });
+      const payload = await response.json();
+      if (!payload?.ok) throw new Error(payload?.error || 'chat-failed');
+      setAdvisorResult(
+        payload.mode === 'prompt-preview'
+          ? { mode: 'prompt-preview', text: `${payload.prompt.system}\n\n${payload.prompt.user}` }
+          : { mode: 'generated', text: payload.reply },
+      );
+    } catch {
+      setAdvisorResult({ mode: 'error', text: '顾问暂时没回上来，稍后再试。' });
+    } finally {
+      setAdvisorBusy(false);
+    }
+  }
 
   async function copyText(text: string, label: string) {
     let copied = false;
@@ -304,6 +437,22 @@ export function TrialFiveScreenClient() {
                       >
                         一键复制生成指令
                       </button>
+                      <div className="mt-3 border-t border-stone-200 pt-3">
+                        <input
+                          className="w-full border border-stone-300 p-2 text-sm"
+                          placeholder="不满意？说哪里不行，例：太文艺了，口语点"
+                          value={revisionDrafts[prompt.kind] || ''}
+                          onChange={event => setRevisionDrafts(previous => ({ ...previous, [prompt.kind]: event.target.value }))}
+                        />
+                        <button
+                          type="button"
+                          disabled={revisionBusy === prompt.kind || !(revisionDrafts[prompt.kind] || '').trim()}
+                          onClick={() => void reviseContent(prompt.kind, prompt.user)}
+                          className="mt-2 w-full border border-stone-400 p-2 text-sm font-bold text-stone-700 disabled:opacity-40"
+                        >
+                          {revisionBusy === prompt.kind ? '正在改…' : '按我的意见重新生成'}
+                        </button>
+                      </div>
                     </article>
                   ))
                 : (content.results || []).map(result => (
@@ -317,11 +466,78 @@ export function TrialFiveScreenClient() {
                       >
                         复制这条内容
                       </button>
+                      <div className="mt-3 border-t border-stone-200 pt-3">
+                        <input
+                          className="w-full border border-stone-300 p-2 text-sm"
+                          placeholder="不满意？说哪里不行，例：太文艺了，口语点"
+                          value={revisionDrafts[result.kind] || ''}
+                          onChange={event => setRevisionDrafts(previous => ({ ...previous, [result.kind]: event.target.value }))}
+                        />
+                        <button
+                          type="button"
+                          disabled={revisionBusy === result.kind || !(revisionDrafts[result.kind] || '').trim()}
+                          onClick={() => void reviseContent(result.kind, result.output)}
+                          className="mt-2 w-full border border-stone-400 p-2 text-sm font-bold text-stone-700 disabled:opacity-40"
+                        >
+                          {revisionBusy === result.kind ? '正在改…' : '按我的意见重新生成'}
+                        </button>
+                      </div>
                     </article>
                   ))}
               <p className="border border-stone-300 bg-stone-100 p-3 text-sm font-semibold leading-6 text-stone-800">
                 发布前店长逐条确认事实和价格：价格、限量、时段、赠品都要和店里实际一致，确认无误再发。
               </p>
+              <details className="border border-stone-300 bg-white p-4">
+                <summary className="cursor-pointer text-base font-bold text-stone-900">收到顾客评价？粘贴进来生成店主回复</summary>
+                <div className="mt-3 space-y-3">
+                  <textarea
+                    className="w-full border border-stone-300 p-3 text-sm leading-6"
+                    rows={4}
+                    placeholder="把顾客评价原文粘贴到这里，例：等位四十分钟，面都坨了…"
+                    value={reviewDraft.text}
+                    onChange={event => setReviewDraft(previous => ({ ...previous, text: event.target.value }))}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setReviewDraft(previous => ({ ...previous, sentiment: 'negative' }))}
+                      className={`flex-1 border p-2 text-sm font-bold ${reviewDraft.sentiment === 'negative' ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-600'}`}
+                    >
+                      这是差评
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReviewDraft(previous => ({ ...previous, sentiment: 'positive' }))}
+                      className={`flex-1 border p-2 text-sm font-bold ${reviewDraft.sentiment === 'positive' ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 text-stone-600'}`}
+                    >
+                      这是好评
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={reviewBusy || !reviewDraft.text.trim()}
+                    onClick={() => void submitReviewReply()}
+                    className="w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:opacity-40"
+                  >
+                    {reviewBusy ? '正在写…' : '生成店主回复'}
+                  </button>
+                  {reviewResult ? (
+                    <div className="border border-stone-300 bg-stone-50 p-3">
+                      {reviewResult.mode === 'prompt-preview' ? (
+                        <p className="text-sm text-stone-600">还没配置 AI 账号，复制下面的指令到任意对话模型即可得到回复。</p>
+                      ) : null}
+                      <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{reviewResult.text}</pre>
+                      <button
+                        type="button"
+                        onClick={() => void copyText(reviewResult.text, '店主回复')}
+                        className="mt-2 w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
+                      >
+                        复制
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </details>
             </div>
           )}
           <button type="button" onClick={() => setStep(4)} className="mt-5 w-full border border-stone-400 bg-white p-3 text-base font-bold text-stone-800">
@@ -390,6 +606,39 @@ export function TrialFiveScreenClient() {
                 <p className="mt-2 text-sm leading-6 text-stone-700">{item.detail}</p>
               </article>
             ))}
+          </div>
+          <div className="mt-6 border border-stone-300 bg-white p-4">
+            <h3 className="text-base font-bold text-stone-900">问顾问一句</h3>
+            <p className="mt-1 text-sm text-stone-600">例：周三晚上没人来怎么办？顾问知道你的门店、边界和今天的凭证。</p>
+            <input
+              className="mt-3 w-full border border-stone-300 p-3 text-base"
+              placeholder="输入你的问题"
+              value={advisorQuestion}
+              onChange={event => setAdvisorQuestion(event.target.value)}
+            />
+            <button
+              type="button"
+              disabled={advisorBusy || !advisorQuestion.trim()}
+              onClick={() => void askAdvisor()}
+              className="mt-3 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:opacity-40"
+            >
+              {advisorBusy ? '顾问在想…' : '问顾问'}
+            </button>
+            {advisorResult ? (
+              <div className="mt-3 border border-stone-300 bg-stone-50 p-3">
+                {advisorResult.mode === 'prompt-preview' ? (
+                  <p className="text-sm text-stone-600">还没配置 AI 账号，复制下面的指令到任意对话模型，就是顾问会说的话。</p>
+                ) : null}
+                <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{advisorResult.text}</pre>
+                <button
+                  type="button"
+                  onClick={() => void copyText(advisorResult.text, '顾问回答')}
+                  className="mt-2 w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
+                >
+                  复制
+                </button>
+              </div>
+            ) : null}
           </div>
           <button type="button" onClick={resetAll} className="mt-6 w-full border border-stone-400 bg-white p-3 text-base font-bold text-stone-700">
             清空重来（换一家门店）

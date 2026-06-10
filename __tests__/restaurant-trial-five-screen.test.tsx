@@ -58,6 +58,16 @@ describe('restaurant trial five screen', () => {
     expect(withProof[0].title).toContain('1 条凭证');
   });
 
+  it('surfaces a memory-backed suggestion when the store has confirmed history', () => {
+    const plan = deriveTomorrowPlan(intake, [], [
+      { kind: 'revision-preference', note: '不要文艺腔' },
+      { kind: 'campaign-note', note: '酸梅汤赠品反响不错' },
+    ]);
+    expect(plan[0].title).toContain('明天可以续用');
+    expect(plan[0].detail).toContain('酸梅汤赠品反响不错');
+    expect(plan[0].kind).toBe('next-action');
+  });
+
   it('builds wechat share summaries that never promise growth', () => {
     const summary2 = buildShareSummary({ screen: 2, intake, todayActions: deriveTodayActions(intake) });
     expect(summary2).toContain('椒香记');

@@ -48,9 +48,28 @@ export function deriveTodayActions(intake: RestaurantTrialIntake): TrialTodayAct
   }));
 }
 
-export function deriveTomorrowPlan(intake: RestaurantTrialIntake, proofs: TrialProofEntry[]): TrialTomorrowItem[] {
+export interface TrialMemoryNote {
+  kind: string;
+  note: string;
+}
+
+export function deriveTomorrowPlan(
+  intake: RestaurantTrialIntake,
+  proofs: TrialProofEntry[],
+  memoryNotes: TrialMemoryNote[] = [],
+): TrialTomorrowItem[] {
   const pack = buildRestaurantTrialWorkflowPack(intake);
   const items: TrialTomorrowItem[] = [];
+  const reusable = memoryNotes.filter(note => note.kind === 'campaign-note' || note.kind === 'effective-angle');
+  if (reusable.length > 0) {
+    const latest = reusable[reusable.length - 1];
+    items.push({
+      id: 'memory-suggestion',
+      title: '上次验证有效的做法，明天可以续用',
+      detail: `之前记过：「${latest.note}」。明天的内容和活动可以沿着这个角度再来一次，效果有变化就更新这条记忆。`,
+      kind: 'next-action',
+    });
+  }
   if (proofs.length === 0) {
     items.push({
       id: 'collect-first-proof',
