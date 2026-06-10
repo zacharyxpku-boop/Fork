@@ -3,6 +3,7 @@ import { buildAllContentPrompts, type RestaurantContentIntake, type RestaurantCo
 import { buildRevisionUserPrompt } from '@/lib/restaurant-advisor-prompts';
 import { renderRestaurantStoreMemoryForPrompt } from '@/lib/restaurant-store-memory';
 import { parseLlmJson, toContentFields, type ContentField } from '@/lib/llm-output-parser';
+import { checkContentFacts, type ContentFactWarning } from '@/lib/restaurant-content-fact-check';
 import { hasLlmKey, llmChat, LlmError } from '@/lib/llm-client';
 
 interface GeneratedContent {
@@ -10,6 +11,7 @@ interface GeneratedContent {
   label: string;
   output: string;
   fields: ContentField[];
+  warnings: ContentFactWarning[];
 }
 
 interface ContentRequestBody {
@@ -76,6 +78,7 @@ export async function POST(request: NextRequest) {
           label: prompt.label,
           output: result.output,
           fields: parsed.ok ? toContentFields(prompt.kind, parsed.data) : [],
+          warnings: checkContentFacts(result.output, intake),
         });
       }
     } catch (error) {

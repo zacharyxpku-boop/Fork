@@ -36,6 +36,7 @@ interface ContentGenerated {
   label: string;
   output: string;
   fields?: { key: string; label: string; value: string }[];
+  warnings?: { code: string; message: string }[];
 }
 
 interface ContentState {
@@ -476,6 +477,14 @@ export function TrialFiveScreenClient() {
                 : (content.results || []).map(result => (
                     <article key={result.kind} className="border border-stone-300 bg-white p-4">
                       <h3 className="text-base font-bold text-stone-900">{result.label}</h3>
+                      {result.warnings && result.warnings.length > 0 ? (
+                        <div className="mt-2 border border-rose-300 bg-rose-50 p-2">
+                          <p className="text-xs font-bold text-rose-800">发布前必须处理：</p>
+                          {result.warnings.map(warning => (
+                            <p key={`${warning.code}-${warning.message}`} className="mt-1 text-xs leading-5 text-rose-700">· {warning.message}</p>
+                          ))}
+                        </div>
+                      ) : null}
                       {result.fields && result.fields.length > 0 ? (
                         <div className="mt-2 space-y-3">
                           {result.fields.map(fieldItem => (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { buildReviewReplySystemPrompt, buildReviewReplyUserPrompt } from '@/lib/restaurant-advisor-prompts';
 import type { RestaurantContentIntake } from '@/lib/restaurant-content-prompts';
 import { llmChat, LlmError } from '@/lib/llm-client';
+import { checkContentFacts } from '@/lib/restaurant-content-fact-check';
 
 interface ReviewReplyRequestBody {
   intake?: RestaurantContentIntake;
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       mode: 'generated',
       reply: result.output,
+      warnings: checkContentFacts(result.output, intake),
       message: '回复发出前店长确认事实：涉及补偿、价格和时段的内容必须和店里实际一致。',
     });
   } catch (error) {
