@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildAllContentPrompts, type RestaurantContentIntake, type RestaurantContentPrompt } from '@/lib/restaurant-content-prompts';
+import { buildRevisionUserPrompt } from '@/lib/restaurant-advisor-prompts';
+import { renderRestaurantStoreMemoryForPrompt } from '@/lib/restaurant-store-memory';
 import { hasLlmKey, llmChat, LlmError } from '@/lib/llm-client';
 
 interface GeneratedContent {
@@ -8,8 +10,18 @@ interface GeneratedContent {
   output: string;
 }
 
+interface ContentRequestBody {
+  intake?: RestaurantContentIntake;
+  revision?: { kind?: RestaurantContentPrompt['kind']; previousOutput?: string; feedback?: string };
+}
+
+function withStoreMemory(prompt: RestaurantContentPrompt, memoryBlock: string): RestaurantContentPrompt {
+  if (!memoryBlock) return prompt;
+  return { ...prompt, system: `${prompt.system}\n\n${memoryBlock}` };
+}
+
 export async function POST(request: NextRequest) {
-  let body: { intake?: RestaurantContentIntake };
+  let body: ContentRequestBody;
   try {
     body = await request.json();
   } catch {
@@ -20,7 +32,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'missing-restaurant-or-offer' }, { status: 400 });
   }
 
-  const prompts = buildAllContentPrompts(intake);
+  const memoryBlock = renderRestaurantStoreMemoryForPrompt(intake.restaurant);
+  const allPrompts = buildAllContentPrompts(intake).map(prompt => withStoreMemory(prompt, memoryBlock));
+
+  const revision = body.revision;
+  const isRevision = Boolean(revision?.kind && revision?.previousOutput && revision?.feedback);
+  const prompts = isRevision
+    ? allPrompts
+        .filter(prompt => prompt.kind === revision!.kind)
+        .map(prompt => ({ ...prompt, user: buildRevisionUserPrompt(revision!.previousOutput!, revision!.feedback!, prompt.user) }))
+    : allPrompts;
+
+  if (prompts.length === 0) {
+    return NextResponse.json({ ok: false, error: 'unknown-revision-kind' }, { status: 400 });
+  }
 
   if (!hasLlmKey()) {
     return NextResponse.json({

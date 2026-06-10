@@ -18,6 +18,9 @@ const PUBLIC_EXACT_PATHS = new Set([
   '/api/unsubscribe',
   '/api/restaurant-agent/runtime',
   '/api/restaurant-agent/content',
+  '/api/restaurant-agent/chat',
+  '/api/restaurant-agent/review-reply',
+  '/api/restaurant-agent/memory',
 ]);
 
 const PUBLIC_PAGE_PREFIXES = [

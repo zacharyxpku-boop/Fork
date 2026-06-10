@@ -19,7 +19,7 @@ export interface RestaurantContentPrompt {
   outputSchema: string;
 }
 
-const SHARED_RULES = `硬性约束（违反任何一条都算失败）：
+export const SHARED_RULES = `硬性约束（违反任何一条都算失败）：
 1. 只许使用输入资料里明确给出的事实。没给的信息（食材来源、历史、口碑、获奖）一律不编。
 2. 价格、限量份数、时段只用输入里的数字，不得改动或夸大。
 3. 禁用广告法风险词：最、第一、顶级、绝无仅有、国家级、全网、独家、百分之百，以及任何疗效或保证性承诺。
