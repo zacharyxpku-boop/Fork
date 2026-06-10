@@ -1604,7 +1604,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         : ['pos-coupon-and-redemption-data-contract:pos-field-dictionary'];
       const notes = unlockPack
         ? unlockPack.setupStateProjection.notes
-        : ['Demo setup state records identifiers only; secret values stay server-side.'];
+        : ['演示配置状态只记录标识，密钥值一律留在服务端。'];
       const response = await fetch('/api/restaurant-agent/runtime', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1794,7 +1794,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       setDispatchState(previous => ({
         ...previous,
         status: response.ok ? 'queued' : 'blocked',
-        message: response.ok ? `Store-manager task moved to ${taskStatus}.` : 'Task status update failed; refresh the task queue and try again.',
+        message: response.ok ? `Store-manager task moved to ${taskStatus}.` : '任务状态更新失败，请刷新任务队列后重试。',
         storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
         storeManagerTaskWatcher: payload?.storeManagerTaskWatcher || previous.storeManagerTaskWatcher,
         staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
@@ -1834,7 +1834,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       setDispatchState(previous => ({
         ...previous,
         status: response.ok ? 'queued' : 'blocked',
-        message: response.ok ? 'Staff notification handoff drafted.' : 'Staff notification handoff unavailable.',
+        message: response.ok ? '员工通知交接已起草。' : '员工通知交接暂不可用。',
         storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
         storeManagerTaskWatcher: payload?.storeManagerTaskWatcher || previous.storeManagerTaskWatcher,
         staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
@@ -1874,7 +1874,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
       setDispatchState(previous => ({
         ...previous,
         status: response.ok ? 'queued' : 'blocked',
-        message: response.ok ? 'Staff notification delivery bridge is ready.' : 'Staff notification delivery bridge unavailable.',
+        message: response.ok ? '员工通知投递通道已就绪。' : '员工通知投递通道暂不可用。',
         staffNotificationHandoff: payload?.staffNotificationHandoff || previous.staffNotificationHandoff,
         staffNotificationDeliveryBridge: payload?.staffNotificationDeliveryBridge || previous.staffNotificationDeliveryBridge,
         staffNotificationAuditLog: payload?.staffNotificationAuditLog || previous.staffNotificationAuditLog,
@@ -1902,7 +1902,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         status: response.ok && payload?.taskProviderHandoff?.summary?.blocked === 0 ? 'queued' : 'blocked',
         message: response.ok
           ? `Task provider handoff built: ${payload?.taskProviderHandoff?.summary?.packages ?? 0} packages, ${payload?.taskProviderHandoff?.summary?.forwardable ?? 0} forwardable.`
-          : 'Task provider handoff unavailable.',
+          : '任务外部交接暂不可用。',
         storeManagerTaskQueue: payload?.storeManagerTaskQueue || previous.storeManagerTaskQueue,
         taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
         commandCenter: previous.commandCenter
@@ -1938,7 +1938,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         status: response.ok ? 'queued' : 'blocked',
         eventId: payload?.run?.eventId || previous.eventId,
         tenantId: payload?.run?.tenantId || previous.tenantId,
-        message: payload?.bridge?.message || 'Provider forward attempt recorded.',
+        message: payload?.bridge?.message || '外部转发尝试已记录。',
         latestRuns: payload?.runs?.slice?.(0, 3) || previous.latestRuns,
         receipts: payload?.receipts || previous.receipts,
         taskProviderHandoff: payload?.taskProviderHandoff || previous.taskProviderHandoff,
@@ -2576,8 +2576,8 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
           externalRunId: 'openclaw-run-demo',
           stepId: 'capture-proof-screenshot',
           eventType: 'step-completed',
-          evidenceSummary: 'Public proof screenshot captured; waiting for receipt extraction.',
-          nextAction: 'Continue to extract receipt fields, then send final signed receipt.',
+          evidenceSummary: '公开凭证截图已采集，等待回执字段提取。',
+          nextAction: '继续提取回执字段，然后发送最终签名回执。',
         }),
       });
       const payload = await response.json();
@@ -3657,61 +3657,61 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
           title: '开班指令',
           status: 'ai-can-run-internal',
           owner: 'ai-employee',
-          customerPromise: 'Confirm offer, owner, service window and proof before pushing traffic.',
-          actionNow: 'Build the morning brief, task owners and stop line.',
+          customerPromise: '推流量之前先确认套餐、负责人、服务时段和凭证。',
+          actionNow: '生成早班简报、任务负责人和停止线。',
           visibleProof: 'store facts, offer, service window',
           providerAsk: 'staff delivery channel for autonomous follow-up',
-          stopLine: 'No external account action without merchant authorization.',
+          stopLine: '没有店长授权不动外部账号。',
         },
         {
           id: 'demand',
-          title: 'Demand and lead capture',
+          title: '需求与线索承接',
           status: 'staff-review',
           owner: 'store-manager',
-          customerPromise: 'Turn reservations, coupon claims and visit intent into owner-visible follow-up.',
-          actionNow: 'Classify imported demand signals and assign manager tasks.',
+          customerPromise: '把预约、领券和到店意向变成负责人可见的跟进。',
+          actionNow: '归类导入的需求信号并分派店长任务。',
           visibleProof: 'accepted proof or imported lead aggregate',
           providerAsk: 'platform inbox/export permission',
-          stopLine: 'No private-message scraping or customer identifiers.',
+          stopLine: '不抓私信、不存顾客身份信息。',
         },
         {
           id: 'publish-proof',
           title: 'Publish and proof',
           status: 'provider-required',
           owner: 'ops',
-          customerPromise: 'Close every channel action with public proof or signed receipt.',
-          actionNow: 'Prepare one governed channel package.',
+          customerPromise: '每个渠道动作都用公开凭证或签名回执收口。',
+          actionNow: '准备一个受控渠道任务包。',
           visibleProof: 'public link, screenshot id or callback receipt',
           providerAsk: 'merchant platform authorization and callback secret',
-          stopLine: 'No auto-publish claim before Provider health is ready.',
+          stopLine: '外部条件没就绪，不宣称代发布。',
         },
         {
           id: 'service-window',
-          title: 'Service window watch',
+          title: '服务时段巡视',
           status: 'staff-review',
           owner: 'store-manager',
-          customerPromise: 'Watch stock, coupon pressure and service risk as tasks.',
-          actionNow: 'Review coupon pressure and recovery queue.',
+          customerPromise: '把库存、券压力和服务风险盯成任务。',
+          actionNow: '复核券压力和恢复队列。',
           visibleProof: 'coupon rule screenshot and staff acknowledgement',
           providerAsk: 'POS/coupon aggregate contract',
-          stopLine: 'No POS write, payment, delivery or coupon mutation.',
+          stopLine: '不写 POS、不碰支付、配送和券的改动。',
         },
         {
           id: 'closeout',
-          title: 'Closeout and next loop',
+          title: '收尾与下一轮',
           status: 'evidence-required',
           owner: 'finance',
-          customerPromise: 'End the day with measured evidence and tomorrow actions.',
-          actionNow: 'Separate public proof, lead counts and redemption aggregate.',
+          customerPromise: '用可量化凭证和明天的动作收掉今天。',
+          actionNow: '把公开凭证、线索数量和核销汇总分开。',
           visibleProof: 'sanitized POS/coupon/member aggregate',
           providerAsk: 'aggregate field dictionary',
-          stopLine: 'No operating-analysis claim without accepted data proof.',
+          stopLine: '数据凭证没验收，不宣称经营分析。',
         },
       ],
       aiAutopilotQueue: ['开班指令: Build the morning brief, task owners and stop line.'],
-      staffQueue: ['Demand and lead capture: accepted proof or imported lead aggregate', 'Service window watch: coupon rule screenshot and staff acknowledgement'],
-      providerQueue: ['Publish and proof: merchant platform authorization and callback secret'],
-      evidenceQueue: ['Closeout and next loop: sanitized POS/coupon/member aggregate'],
+      staffQueue: ['需求与线索承接：已验收凭证或导入的线索汇总', '服务时段巡视：券规则截图和员工确认'],
+      providerQueue: ['发布与凭证：店长平台授权和回执密钥'],
+      evidenceQueue: ['收尾与下一轮：脱敏 POS/券码/会员汇总'],
       safetyBoundary: '店总指挥台 preview does not log in, publish, scrape private messages, redeem coupons, write POS orders, expose secrets or claim growth without accepted proof.',
     } satisfies Pick<RestaurantGmCommandDeck, 'payloadShape' | 'shiftMode' | 'answerForOwner' | 'summary' | 'lanes' | 'aiAutopilotQueue' | 'staffQueue' | 'providerQueue' | 'evidenceQueue' | 'safetyBoundary'>;
   const commandShiftAutopilot =
@@ -3744,7 +3744,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
         stopLine: lane.stopLine,
       })),
       nowQueue: commandGmCommandDeck.aiAutopilotQueue,
-      nextWakeups: ['开班指令: 09:30 local', 'Runtime and inbox heartbeat: every 60 minutes', 'Closeout and next loop: 22:30 local'],
+      nextWakeups: ['开班指令: 09:30 local', '通道和收件箱心跳：每 60 分钟', '收尾与下一轮：当地 22:30'],
       providerQueue: commandGmCommandDeck.providerQueue,
       evidenceQueue: commandGmCommandDeck.evidenceQueue,
       operatingPolicy: [
@@ -4115,7 +4115,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/75">对标训练蓝图</div>
                     <h4 className="mt-1 text-base font-black text-white">{formatRuntimeStatus(dispatchState.competitorTrainingBlueprint.verdict)} / 对标受阻</h4>
                     <p className="mt-1 text-xs leading-5 text-white/60">
-                      Maps Claw/Cloud-style abilities into internal training, acceptance proof and provider contracts before any auto-publish, lead capture, redemption or POS analytics claim.
+                      把同类产品的能力先映射成本地训练、验收凭证和外部数据约定，再谈代发布、代接线索、核销或 POS 分析。
                     </p>
                   </div>
                   <div className="grid min-w-[360px] grid-cols-4 gap-2 text-xs">
@@ -4446,7 +4446,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">班次自动巡航</div>
                         <h4 className="mt-1 text-sm font-black text-white">{commandShiftAutopilot.payloadShape}</h4>
                         <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
-                          Turns GM lanes and scheduled channel jobs into a bounded shift queue: what can run internally now, what needs staff review, and what is blocked by Provider proof.
+                          把店总链路和定时通道任务收成一个有边界的班次队列，现在本地能跑什么、哪些要员工审核、哪些被外部凭证卡住。
                         </p>
                         <button
                           className="mt-3 border border-sky-200 bg-sky-200 px-3 py-2 text-xs font-black text-stone-950 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -4551,7 +4551,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                             <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/70">班次经营闭环</div>
                             <h5 className="mt-1 text-sm font-black text-white">{formatRuntimeStatus(commandShiftOperatingLoopPack.verdict)}</h5>
                             <p className="mt-1 max-w-3xl text-xs leading-5 text-white/55">
-                              One customer path: command, shift run, provider unlock, sandbox submit, receipt, closeout training and capability activation.
+                              一条客户路径：指令、班次运行、资料解锁、沙箱提交、回执、收尾训练和能力激活。
                             </p>
                             <p className="mt-2 text-[11px] leading-4 text-emerald-100/70">
                               next: {commandShiftOperatingLoopPack.nextBestAction.label} / {commandShiftOperatingLoopPack.nextBestAction.owner}
@@ -5303,10 +5303,10 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-white/10 bg-white/[0.05] p-3">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">主执行手册</div>
                     {(commandAiCockpit?.primaryRunbook || [
-                      'Open Today Operations first and confirm merchant evidence.',
-                      'Use AI Consultant only to create owner-visible plays, not hidden automation.',
+                      '先打开今日门店运营，确认店长凭证。',
+                      'AI 经营顾问只产出负责人可见的打法，不做暗箱自动化。',
                       '真实代办逐项通过账号检查、门店授权和签名回执后再启动。',
-                      'Close Evidence Review with public proof or sanitized aggregate imports before next-loop decisions.',
+                      '下一轮决策前，用公开凭证或脱敏汇总导入关掉凭证复核。',
                     ]).map(line => (
                       <p className="mt-2 text-[11px] leading-4 text-amber-100/65" key={line}>{line}</p>
                     ))}
@@ -5318,7 +5318,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <div className="border border-white/10 bg-white/[0.05] p-3">
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">资料解锁</div>
                     <p className="mt-2 text-xs leading-5 text-amber-100/65">{(commandAiCockpit?.providerUnlocks || ['门店授权', '账号配置', '浏览器会话', '签名回执', 'POS 汇总数据规则']).slice(0, 12).join(' / ') || 'none'}</p>
-                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandAiCockpit?.safetyBoundary || 'Preview only: no auto-publish, live call, POS write, payment, delivery, coupon redemption or private-message access without accepted Provider proof.'}</p>
+                    <p className="mt-3 text-[11px] leading-4 text-white/40">{commandAiCockpit?.safetyBoundary || '仅预览：外部凭证没验收，不代发布、不接电话、不写 POS、不碰支付配送、不核销、不读私信。'}</p>
                   </div>
                 </div>
               </div>
@@ -5646,7 +5646,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/70">语音点单台</div>
                     <h4 className="mt-1 text-base font-black text-white">{commandVoiceOrderConsole.payloadShape}</h4>
                     <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
-                      Phone/order/reservation layer for menu answers, intent classification, order drafts, POS/payment/delivery gates and staff takeover.
+                      电话/点单/预约层，负责菜单问答、意图分类、订单草稿、POS/支付/配送条件和员工接管。
                     </p>
                   </div>
                   <div className="grid gap-2 text-xs sm:grid-cols-4 lg:min-w-[520px]">
@@ -6014,7 +6014,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   </div>
                   <div className="border border-white/10 bg-white/[0.04] p-2">
                     <div className="text-white/45">需要外部</div>
-                    {(commandAiOsAuditReport.externalRequired.length ? commandAiOsAuditReport.externalRequired : ['No extra provider blocker detected by the audit.']).slice(0, 6).map(item => (
+                    {(commandAiOsAuditReport.externalRequired.length ? commandAiOsAuditReport.externalRequired : ['检查未发现额外的外部资料卡点。']).slice(0, 6).map(item => (
                       <p className="mt-1 text-[11px] leading-4 text-white/60" key={item}>{item}</p>
                     ))}
                   </div>
@@ -6037,7 +6037,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-100/70">能力工单台</div>
                 <h4 className="mt-1 text-base font-black text-white">选一个门店技能，拿一个可执行任务包</h4>
                 <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
-                  Turns the 20-module Claw-style catalog into runnable internal skills, training requests and provider unlock tasks for this exact restaurant. This is the usable layer between a fancy skill library and real store work.
+                  把 20 个模块的能力库变成这家门店可运行的本地技能、训练请求和资料解锁任务，是花哨技能库和真实门店工作之间能用的那一层。
                 </p>
               </div>
               <div className="grid gap-2 text-xs sm:grid-cols-5 xl:min-w-[620px]">
@@ -6160,7 +6160,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-100/70">公开情报简报</div>
                 <h4 className="mt-1 text-base font-black text-white">门店事实、本地平台、素材缺口</h4>
                 <p className="mt-1 max-w-4xl text-xs leading-5 text-white/55">
-                  Convert public store facts or merchant-provided text into channel-specific jobs for Dianping/Meituan, Xiaohongshu, Douyin, WeChat groups and POI context. Public facts only start internal trials; real publish, acquisition, redemption and operating analysis stay gated.
+                  把公开门店资料或店长提供的文字转成点评/美团、小红书、抖音、微信社群和位置场景的分渠道任务。公开资料只用来启动本地试跑，真实发布、获客、核销和经营分析仍要补条件。
                 </p>
               </div>
               <div className="grid gap-2 text-xs sm:grid-cols-4 xl:min-w-[560px]">
@@ -6769,7 +6769,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <button
                           className="border border-amber-200/40 px-2 py-1 text-[11px] font-black text-amber-100 transition hover:bg-amber-200/10 disabled:cursor-not-allowed disabled:opacity-60"
                           disabled={dispatchState.status === 'loading'}
-                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'needs-evidence', 'Owner must attach accepted evidence before closeout or provider handoff.')}
+                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'needs-evidence', '收尾或交外部执行之前，负责人必须附上已验收凭证。')}
                           type="button"
                         >
                           Need Evidence
@@ -6777,7 +6777,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <button
                           className="border border-sky-200/40 px-2 py-1 text-[11px] font-black text-sky-100 transition hover:bg-sky-200/10 disabled:cursor-not-allowed disabled:opacity-60"
                           disabled={dispatchState.status === 'loading'}
-                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'ready-for-provider', 'Owner reviewed internal evidence; runtime-admin must verify provider gates before external forwarding.')}
+                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'ready-for-provider', '负责人已复核本地凭证，对外转发前由通道管理员核验外部条件。')}
                           type="button"
                         >
                           Provider Ready
@@ -6785,7 +6785,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <button
                           className="border border-rose-200/40 px-2 py-1 text-[11px] font-black text-rose-100 transition hover:bg-rose-200/10 disabled:cursor-not-allowed disabled:opacity-60"
                           disabled={dispatchState.status === 'loading'}
-                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'blocked', 'Blocked until merchant authorization, public proof, signed callback, or sanitized aggregate data is supplied.')}
+                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'blocked', '店长授权、公开凭证、签名回执或脱敏汇总数据补齐之前保持暂停。')}
                           type="button"
                         >
                           Block
@@ -6793,7 +6793,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                         <button
                           className="border border-white/20 px-2 py-1 text-[11px] font-black text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                           disabled={dispatchState.status === 'loading'}
-                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'done', 'Closed from friend-trial command center after owner reviewed evidence and stop line.')}
+                          onClick={() => updateStoreManagerTask(String(task.taskMemoryId), 'done', '负责人复核凭证和停止线后，从试跑指挥台关闭。')}
                           type="button"
                         >
                           Mark Done
@@ -6804,7 +6804,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 ))}
                 {!commandFollowupTasks.length ? (
                   <p className="text-xs leading-5 text-white/55">
-                    Run a controlled trial or import accepted public proof first; external contact, redemption and POS work stay gated until authorization is configured.
+                    先跑一次受控试跑或导入已验收的公开凭证，外部触达、核销和 POS 操作在授权配齐前保持关闭。
                   </p>
                 ) : null}
                 {commandTaskQueue ? (
@@ -7027,7 +7027,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                       </p>
                     ) : (
                       <p className="mt-1 text-[11px] leading-4 text-white/45">
-                        No provider package selected. Mark one reviewed task as Provider Ready, then rebuild this preflight.
+                        还没选外部任务包。先把一条已审核任务标记为可交外部执行，再重新生成这份预检。
                       </p>
                     )}
                     <div className="mt-2 grid gap-1">
@@ -7932,9 +7932,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 </div>
                 <div className="mt-3 grid gap-2 lg:grid-cols-3">
                   {(dispatchState.providerSandboxRunConsole?.timeline || [
-                    { id: 'readiness', label: 'Sandbox readiness decision', status: 'blocked', owner: 'ops', evidence: ['missing provider setup'], nextAction: 'Complete provider setup before sandbox submit.', stopLine: 'No submit without accepted setup evidence.' },
-                    { id: 'submit-package', label: 'Sanitized submit package selected', status: 'blocked', owner: 'ops', evidence: ['package:none'], nextAction: 'Build safe provider package.', stopLine: 'No secrets or private data in payload.' },
-                    { id: 'signed-callback', label: 'Signed external receipt callback', status: 'waiting', owner: 'runtime-admin', evidence: ['waitingReceipts:0'], nextAction: 'Require signed callback before closeout.', stopLine: 'Unsigned callbacks never close the run.' },
+                    { id: 'readiness', label: '沙箱就绪判断', status: 'blocked', owner: 'ops', evidence: ['missing provider setup'], nextAction: '沙箱提交前先补齐外部配置。', stopLine: '配置凭证没验收不提交。' },
+                    { id: 'submit-package', label: '已选脱敏提交包', status: 'blocked', owner: 'ops', evidence: ['package:none'], nextAction: '先生成安全的外部任务包。', stopLine: '载荷里不带密钥和隐私数据。' },
+                    { id: 'signed-callback', label: '签名外部回执', status: 'waiting', owner: 'runtime-admin', evidence: ['waitingReceipts:0'], nextAction: '收尾前必须有签名回执。', stopLine: '未签名回执永远关不掉运行。' },
                   ]).slice(0, 6).map(step => (
                     <div className="border border-white/10 bg-stone-950/45 p-2" key={step.id}>
                       <div className="flex items-center justify-between gap-2">
@@ -8227,8 +8227,8 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="mt-3 grid gap-2 lg:grid-cols-5">
                   {(dispatchState.externalAccessGuide?.steps || [
                     { id: 'runtime', title: '连接一个隔离外部试跑通道', owner: 'runtime-admin', status: 'provider-gated', customerAsk: '在服务端配置试跑通道地址、账号和隔离环境。', providerAsk: ['试跑通道地址/账号'], unlocks: ['外部浏览器试跑通道'], acceptanceEvidence: ['试跑通道检查通过'], nextAction: '配置试跑通道和回执密钥。', stopLine: '没有已验收回执，不执行真实外部动作。' },
-                    { id: 'merchant-grants', title: 'Sign merchant platform grants', owner: 'merchant', status: 'provider-gated', customerAsk: 'Approve allowed platform actions and proof type.', providerAsk: ['merchant authorization'], unlocks: ['publish proof', 'lead receipt'], acceptanceEvidence: ['platform grant'], nextAction: 'Collect scoped merchant authorization.', stopLine: 'Public context is not authorization.' },
-                    { id: 'operating-data', title: 'Approve POS, coupon and operating data contract', owner: 'data-ops', status: 'data-gated', customerAsk: 'Provide aggregate field dictionary and no-PII sample.', providerAsk: ['POS/coupon field dictionary'], unlocks: ['true operating analysis'], acceptanceEvidence: ['aggregate import'], nextAction: 'Import sanitized aggregate data.', stopLine: 'No raw POS rows or payment ids.' },
+                    { id: 'merchant-grants', title: '签店长平台授权', owner: 'merchant', status: 'provider-gated', customerAsk: '确认允许的平台动作和凭证类型。', providerAsk: ['merchant authorization'], unlocks: ['publish proof', 'lead receipt'], acceptanceEvidence: ['platform grant'], nextAction: '收限定范围的店长授权。', stopLine: '公开资料不等于授权。' },
+                    { id: 'operating-data', title: '确认 POS、券码和经营数据约定', owner: 'data-ops', status: 'data-gated', customerAsk: '提供汇总字段表和去隐私样例。', providerAsk: ['POS/coupon field dictionary'], unlocks: ['true operating analysis'], acceptanceEvidence: ['aggregate import'], nextAction: '导入脱敏汇总数据。', stopLine: '不收原始 POS 行和支付单号。' },
                   ]).slice(0, 5).map(item => (
                     <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
                       <div className="flex items-center justify-between gap-2">
@@ -8253,7 +8253,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">默认路径覆盖门店 AI 产品面：公开主页、内容、发布凭证、线索承接、券码核销和经营分析。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  It separates internal workbench value from Provider-required lanes across Dianping/Meituan, Xiaohongshu, Douyin, WeChat community, POS/coupon systems and persistent runtime.
+                  把本地工作台价值和需要外部资料的链路分开，覆盖点评/美团、小红书、抖音、微信社群、POS/券码系统和常驻执行通道。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-5">
@@ -8334,10 +8334,10 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-4">
                 {(dispatchState.storeDataImportCenter?.sources || [
-                  { id: 'coupon-redemption', label: 'Coupon claim and redemption export', status: 'sample-ready', owner: 'data-ops', nextAction: 'Map claim/redemption fields from merchant export.', acceptedInputs: ['couponClaimCount', 'redemptionCount'], forbiddenInputs: ['coupon code', 'payment id'] },
-                  { id: 'pos-sales', label: 'POS sales and order aggregate', status: 'sample-ready', owner: 'data-ops', nextAction: 'Import sanitized POS aggregate rows.', acceptedInputs: ['grossSales', 'orderCount'], forbiddenInputs: ['raw order rows', 'payment id'] },
-                  { id: 'member-retention', label: 'Member and community retention aggregate', status: 'provider-gated', owner: 'data-ops', nextAction: 'Define privacy-safe segment exports with the merchant.', acceptedInputs: ['segmentName', 'followupCount'], forbiddenInputs: ['phone', 'WeChat ID'] },
-                  { id: 'finance-margin', label: 'Finance, margin and discount guardrail', status: 'provider-gated', owner: 'finance', nextAction: 'Collect merchant-approved aggregate cost fields before recommending discount scale.', acceptedInputs: ['ingredientCost', 'platformFee'], forbiddenInputs: ['bank account', 'payment transaction id'] },
+                  { id: 'coupon-redemption', label: '领券与核销导出', status: 'sample-ready', owner: 'data-ops', nextAction: '从店长导出里映射领券/核销字段。', acceptedInputs: ['couponClaimCount', 'redemptionCount'], forbiddenInputs: ['coupon code', 'payment id'] },
+                  { id: 'pos-sales', label: 'POS sales and order aggregate', status: 'sample-ready', owner: 'data-ops', nextAction: '导入脱敏 POS 汇总行。', acceptedInputs: ['grossSales', 'orderCount'], forbiddenInputs: ['raw order rows', 'payment id'] },
+                  { id: 'member-retention', label: '会员与社群留存汇总', status: 'provider-gated', owner: 'data-ops', nextAction: '和店长一起定义不带隐私的分群导出。', acceptedInputs: ['segmentName', 'followupCount'], forbiddenInputs: ['phone', 'WeChat ID'] },
+                  { id: 'finance-margin', label: '财务、毛利与折扣护栏', status: 'provider-gated', owner: 'finance', nextAction: '建议折扣力度之前，先收店长确认的成本汇总字段。', acceptedInputs: ['ingredientCost', 'platformFee'], forbiddenInputs: ['bank account', 'payment transaction id'] },
                 ]).slice(0, 4).map(item => (
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -8353,9 +8353,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
                 {(dispatchState.storeDataImportCenter?.validationQueue || [
-                  { id: 'field-dictionary', owner: 'data-ops', priority: 'today', action: 'Confirm canonical fields, source headers, time grain and definitions.', evidenceRequired: 'merchant-approved field dictionary', stopLine: 'Do not import raw order rows or customer identifiers.' },
-                  { id: 'sample-import', owner: 'store-manager', priority: 'today', action: 'Upload or paste a sanitized aggregate sample.', evidenceRequired: 'accepted sample row', stopLine: 'No true operating analysis claim before validation.' },
-                  { id: 'provider-data-contract', owner: 'runtime-admin', priority: 'blocked', action: 'Collect Provider/API or browser-runner data contract.', evidenceRequired: 'authorization and callback receipt', stopLine: 'No auto redemption or POS write without Provider proof.' },
+                  { id: 'field-dictionary', owner: 'data-ops', priority: 'today', action: '确认标准字段、来源表头、时间粒度和口径。', evidenceRequired: 'merchant-approved field dictionary', stopLine: '不导入原始订单行和顾客身份信息。' },
+                  { id: 'sample-import', owner: 'store-manager', priority: 'today', action: '上传或粘贴一份脱敏汇总样例。', evidenceRequired: 'accepted sample row', stopLine: '校验之前不宣称真实经营分析。' },
+                  { id: 'provider-data-contract', owner: 'runtime-admin', priority: 'blocked', action: '收外部接口或浏览器执行的数据约定。', evidenceRequired: 'authorization and callback receipt', stopLine: '外部凭证没齐，不代核销、不写 POS。' },
                 ]).slice(0, 3).map(item => (
                   <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -8369,7 +8369,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 ))}
               </div>
               <p className="mt-3 border border-white/10 bg-white/[0.04] p-2 text-[11px] leading-4 text-cyan-100/55">
-                next: {dispatchState.storeDataImportCenter?.nextBestAction.label || 'Confirm POS Definitions'} / external: {(dispatchState.storeDataImportCenter?.externalRequired || ['merchant-approved field dictionary', 'POS/coupon data source', 'finance export or owner cost sheet']).slice(0, 4).join(' / ')}
+                next: {dispatchState.storeDataImportCenter?.nextBestAction.label || '确认 POS 口径'} / external: {(dispatchState.storeDataImportCenter?.externalRequired || ['merchant-approved field dictionary', 'POS/coupon data source', 'finance export or owner cost sheet']).slice(0, 4).join(' / ')}
               </p>
             </div>
             <div className="mt-3 border border-sky-200/15 bg-sky-200/[0.035] p-3">
@@ -8379,7 +8379,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">默认路径把预约、领券、私域咨询、到店意向和差评挽回收进一个受控线索队列。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  Auto lead capture and customer contact stay blocked until merchant authorization, channel provider, callback receipts and no-PII data contracts are configured.
+                  店长授权、渠道通道、回执和去隐私数据约定配齐之前，代接线索和顾客触达保持关闭。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -8410,10 +8410,10 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-5">
                 {(dispatchState.leadCaptureInbox?.sources || [
-                  { id: 'reservation', label: 'Reservation and waitlist intent', status: 'provider-gated', signalCount: 0, nextAction: 'Import sanitized reservation aggregate before routing table intent.' },
-                  { id: 'coupon-claim', label: 'Coupon and group-buy claims', status: 'provider-gated', signalCount: 0, nextAction: 'Collect coupon rule proof and aggregate claim count.' },
-                  { id: 'private-domain-inquiry', label: 'Private-domain inquiry summary', status: 'provider-gated', signalCount: 0, nextAction: 'Keep as manual summary until staff channel provider is configured.' },
-                  { id: 'visit-intent', label: 'Visit intent from public proof', status: 'needs-evidence', signalCount: 0, nextAction: 'Collect public proof or accepted receipt before claiming visit intent.' },
+                  { id: 'reservation', label: '预约与等位意向', status: 'provider-gated', signalCount: 0, nextAction: '分派桌位意向前先导入脱敏预约汇总。' },
+                  { id: 'coupon-claim', label: '券与团购领取', status: 'provider-gated', signalCount: 0, nextAction: '收券规则凭证和领取数量汇总。' },
+                  { id: 'private-domain-inquiry', label: '私域咨询摘要', status: 'provider-gated', signalCount: 0, nextAction: '员工通道配好之前，保持人工摘要。' },
+                  { id: 'visit-intent', label: '公开凭证里的到店意向', status: 'needs-evidence', signalCount: 0, nextAction: '宣称到店意向前先收公开凭证或已验收回执。' },
                   { id: 'review-recovery', label: '差评触发的服务恢复', status: 'needs-evidence', signalCount: 0, nextAction: '先生成口碑收尾包，再做差评驱动的跟进。' },
                 ]).slice(0, 5).map(item => (
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
@@ -8428,9 +8428,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
                 {(dispatchState.leadCaptureInbox?.leadItems || [
-                  { id: 'lead-reservation-capacity', title: 'Confirm reservation capacity before replying', priority: 'blocked', owner: 'store-manager', signalCount: 0, staffAction: 'Check service window, table capacity and queue pressure.', evidenceRequired: 'service window + capacity note + aggregate reservation count', stopLine: 'No automatic confirmation without provider authorization.' },
-                  { id: 'lead-coupon-redemption-prep', title: 'Prepare coupon claim to redemption follow-up', priority: 'blocked', owner: 'ops', signalCount: 0, staffAction: 'Clarify coupon validity, exclusions and redemption window.', evidenceRequired: 'coupon rule proof + aggregate claim count', stopLine: 'No coupon redemption or ROI claim without evidence.' },
-                  { id: 'lead-private-domain-summary', title: 'Classify private-domain inquiries without storing chats', priority: 'blocked', owner: 'community-ops', signalCount: 0, staffAction: 'Summarize aggregate inquiry themes and draft staff-approved replies.', evidenceRequired: 'source channel + aggregate count + approved reply script', stopLine: 'No private message read or customer contact automation.' },
+                  { id: 'lead-reservation-capacity', title: '回复前先确认接待容量', priority: 'blocked', owner: 'store-manager', signalCount: 0, staffAction: '核对服务时段、桌位容量和排队压力。', evidenceRequired: 'service window + capacity note + aggregate reservation count', stopLine: '没有外部授权不做自动确认。' },
+                  { id: 'lead-coupon-redemption-prep', title: '准备领券到核销的跟进', priority: 'blocked', owner: 'ops', signalCount: 0, staffAction: '讲清券的有效期、不可用范围和核销时段。', evidenceRequired: 'coupon rule proof + aggregate claim count', stopLine: '没凭证不宣称核销和投产比。' },
+                  { id: 'lead-private-domain-summary', title: '归类私域咨询但不存聊天', priority: 'blocked', owner: 'community-ops', signalCount: 0, staffAction: '汇总咨询主题，起草员工审核过的回复。', evidenceRequired: 'source channel + aggregate count + approved reply script', stopLine: '不读私信、不自动触达顾客。' },
                 ]).slice(0, 3).map(item => (
                   <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -8455,7 +8455,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">默认路径把线索承接变成可验收的外部对接路径，覆盖预约、领券、私域咨询、到店意向和差评挽回。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  This is the execution bridge for auto-acquisition parity: internal staff tasks now, automatic capture/contact only after merchant grants, signed callbacks, no-PII contracts and staff approval.
+                  这是对标自动获客的执行桥，现在先做员工任务，自动承接和触达要等店长授权、签名回执、去隐私约定和员工审核都齐。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -8486,11 +8486,11 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-5">
                 {(dispatchState.leadAcquisitionProviderWorkbench?.lanes || [
-                  { id: 'reservation', label: 'Reservation and waitlist capture', status: 'provider-gated', owner: 'store-manager', signalCount: 0, firstRunnableTask: 'Create a staff-reviewed capacity check before any reservation reply.' },
-                  { id: 'coupon-claim', label: 'Coupon and group-buy lead capture', status: 'provider-gated', owner: 'ops', signalCount: 0, firstRunnableTask: 'Confirm coupon rules and aggregate claims before redemption follow-up.' },
-                  { id: 'private-domain', label: 'Private-domain inquiry follow-up', status: 'blocked', owner: 'community-ops', signalCount: 0, firstRunnableTask: 'Classify aggregate inquiry themes and draft approved replies for staff send.' },
-                  { id: 'visit-intent', label: 'Public visit-intent capture', status: 'provider-gated', owner: 'store-manager', signalCount: 0, firstRunnableTask: 'Turn public proof into service-prep and next-loop content tasks.' },
-                  { id: 'review-recovery', label: 'Review-led recovery follow-up', status: 'provider-gated', owner: 'runtime-admin', signalCount: 0, firstRunnableTask: 'Assign recovery owner and approved reply draft before platform response.' },
+                  { id: 'reservation', label: '预约与等位承接', status: 'provider-gated', owner: 'store-manager', signalCount: 0, firstRunnableTask: '任何预约回复前先做员工复核的容量检查。' },
+                  { id: 'coupon-claim', label: '券与团购线索承接', status: 'provider-gated', owner: 'ops', signalCount: 0, firstRunnableTask: '核销跟进前先确认券规则和领取汇总。' },
+                  { id: 'private-domain', label: '私域咨询跟进', status: 'blocked', owner: 'community-ops', signalCount: 0, firstRunnableTask: '归类咨询主题汇总，起草给员工发送的已审回复。' },
+                  { id: 'visit-intent', label: '公开到店意向承接', status: 'provider-gated', owner: 'store-manager', signalCount: 0, firstRunnableTask: '把公开凭证变成备餐和下一轮内容任务。' },
+                  { id: 'review-recovery', label: '差评驱动的挽回跟进', status: 'provider-gated', owner: 'runtime-admin', signalCount: 0, firstRunnableTask: '平台回复前先定恢复负责人和已审回复稿。' },
                 ]).slice(0, 5).map(item => (
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -8504,9 +8504,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
                 {(dispatchState.leadAcquisitionProviderWorkbench?.operatorQueue || [
-                  { id: 'lead-provider-reservation', owner: 'merchant', priority: 'blocked', action: 'Collect merchant authorization for reservation, coupon, private-domain or review source.', evidenceRequired: 'platform grant / allowed source list', providerRequired: ['reservation provider API or export'] },
-                  { id: 'lead-provider-callback', owner: 'runtime-admin', priority: 'blocked', action: 'Configure callback secret and receipt schema before provider execution.', evidenceRequired: 'signed lead receipt', providerRequired: ['RESTAURANT_AGENT_CALLBACK_SECRET'] },
-                  { id: 'lead-provider-private-domain', owner: 'runtime-admin', priority: 'blocked', action: 'Use manual aggregate summaries until messaging provider and no-PII contract are accepted.', evidenceRequired: 'no-PII private-domain data contract', providerRequired: ['WeCom/WeChat/SMS provider'] },
+                  { id: 'lead-provider-reservation', owner: 'merchant', priority: 'blocked', action: '按预约、券码、私域或评价来源收店长授权。', evidenceRequired: 'platform grant / allowed source list', providerRequired: ['reservation provider API or export'] },
+                  { id: 'lead-provider-callback', owner: 'runtime-admin', priority: 'blocked', action: '外部执行前先配回执密钥和回执字段。', evidenceRequired: 'signed lead receipt', providerRequired: ['RESTAURANT_AGENT_CALLBACK_SECRET'] },
+                  { id: 'lead-provider-private-domain', owner: 'runtime-admin', priority: 'blocked', action: '消息通道和去隐私约定验收前，用人工汇总。', evidenceRequired: 'no-PII private-domain data contract', providerRequired: ['企业微信/微信/短信通道'] },
                 ]).slice(0, 3).map(item => (
                   <div className="border border-white/10 bg-white/[0.04] p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -8530,7 +8530,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">外部提交有一条受控路径：脱敏任务包、签名线索回执、失败回执恢复、员工审核和只进汇总的记忆门槛。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  This is how the product gets closer to auto-acquisition without faking it: no customer contact, member enrichment or memory write until accepted proof exists.
+                  产品靠这条路接近自动获客而不造假，凭证验收之前不触达顾客、不补全会员、不写记忆。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -8561,9 +8561,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
                 {(dispatchState.leadSandboxAcceptanceFlow?.stages || [
-                  { id: 'sanitized-package', label: 'Sanitized lead provider package', status: 'passed', owner: 'ops', evidence: ['aggregate fields only'], nextAction: 'Send only aggregate source counts, owner tasks and proof ids.', stopLine: 'No PII, private messages, coupon codes or raw profiles.' },
-                  { id: 'signed-lead-receipt', label: 'Signed lead receipt acceptance', status: 'waiting-proof', owner: 'runtime-admin', evidence: ['no accepted lead receipt'], nextAction: 'Import a signed lead-acquisition receipt.', stopLine: 'Unsigned receipts cannot unlock memory writes.' },
-                  { id: 'memory-write-boundary', label: 'Aggregate lead memory write', status: 'waiting-proof', owner: 'data-ops', evidence: ['accepted receipt required'], nextAction: 'Wait for accepted receipt before writing memory.', stopLine: 'Never write raw customer identity into memory.' },
+                  { id: 'sanitized-package', label: '脱敏线索任务包', status: 'passed', owner: 'ops', evidence: ['aggregate fields only'], nextAction: '只发来源数量汇总、负责人任务和凭证编号。', stopLine: '不带个人信息、私信、券码和原始档案。' },
+                  { id: 'signed-lead-receipt', label: '签名线索回执验收', status: 'waiting-proof', owner: 'runtime-admin', evidence: ['no accepted lead receipt'], nextAction: '导入一份签名的线索承接回执。', stopLine: '未签名回执解锁不了记忆写入。' },
+                  { id: 'memory-write-boundary', label: '线索汇总记忆写入', status: 'waiting-proof', owner: 'data-ops', evidence: ['accepted receipt required'], nextAction: '回执验收之前不写记忆。', stopLine: '永远不把顾客原始身份写进记忆。' },
                 ]).slice(0, 6).map(item => (
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -8589,7 +8589,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="border border-white/10 bg-white/[0.04] p-2">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">记忆门槛</div>
                   <p className="mt-1 font-mono text-[11px] leading-4 text-cyan-100/60">{dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.writeMode || 'aggregate-only-after-accepted-receipt'}</p>
-                  <p className="mt-1 text-[11px] leading-4 text-white/60">{dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.nextAction || 'Collect accepted lead receipt before writing memory.'}</p>
+                  <p className="mt-1 text-[11px] leading-4 text-white/60">{dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.nextAction || '写记忆前先收已验收的线索回执。'}</p>
                   <p className="mt-1 text-[11px] leading-4 text-rose-100/45">forbidden: {(dispatchState.leadSandboxAcceptanceFlow?.leadMemoryGate.forbiddenFields || ['phone', 'WeChat ID', 'raw private message', 'coupon code']).slice(0, 5).join(' / ')}</p>
                 </div>
               </div>
@@ -8601,7 +8601,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">默认路径把门店 AI 面收成四条链路：获客、发布凭证、核销/POS、复盘/训练。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  The operator sees one next action, one owner and one evidence gate instead of hunting through expert modules.
+                  操作员只看到一个下一步、一个负责人和一个凭证条件，不用在专家模块里翻找。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -8632,17 +8632,17 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 border border-white/10 bg-white/[0.04] p-2">
                 <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/40">下一步最优动作</div>
-                <p className="mt-1 text-xs font-black text-white">{dispatchState.todayCommandCockpit?.nextBestAction.action || 'Configure provider gates or collect accepted proof before claiming automation.'}</p>
+                <p className="mt-1 text-xs font-black text-white">{dispatchState.todayCommandCockpit?.nextBestAction.action || '宣称自动化之前，先配外部条件或收已验收凭证。'}</p>
                 <p className="mt-1 text-[11px] leading-4 text-emerald-100/55">
-                  owner: {dispatchState.todayCommandCockpit?.nextBestAction.owner || 'runtime-admin'} / reason: {dispatchState.todayCommandCockpit?.nextBestAction.reason || 'Provider setup and proof gates are not complete.'}
+                  owner: {dispatchState.todayCommandCockpit?.nextBestAction.owner || 'runtime-admin'} / reason: {dispatchState.todayCommandCockpit?.nextBestAction.reason || '外部配置和凭证条件还没齐。'}
                 </p>
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-4">
                 {(dispatchState.todayCommandCockpit?.lanes || [
-                  { id: 'get-customers', title: 'Get customers into the store', status: 'provider-gated', owner: 'community-ops', businessQuestion: 'Can reservations, coupons and inquiries become owner-visible tasks?', todayAction: 'Create staff-reviewed lead follow-up tasks.', proofToCollect: ['signed lead receipt'], providerGate: ['merchant authorization'], acceptance: 'Accepted receipt and staff approval exist.', stopLine: 'No customer contact automation.', sourceEvidence: ['leadFlow:waiting-provider'] },
-                  { id: 'publish-proof', title: 'Publish only with proof slots', status: 'needs-proof', owner: 'ops', businessQuestion: 'Can content close with public proof?', todayAction: 'Prepare content and proof slot.', proofToCollect: ['public URL or screenshot id'], providerGate: ['browser runtime'], acceptance: 'Proof id exists before closeout.', stopLine: 'No auto publish claim.', sourceEvidence: ['publishInbox:waiting-receipt'] },
-                  { id: 'redeem-and-pos', title: 'Redeem coupons and import POS aggregates', status: 'blocked', owner: 'finance', businessQuestion: 'Can redemption and sales be explained from aggregate data?', todayAction: 'Import sanitized POS and coupon aggregate fields.', proofToCollect: ['couponClaimCount', 'redemptionCount'], providerGate: ['POS field dictionary'], acceptance: 'Aggregate import accepted.', stopLine: 'No raw POS rows.', sourceEvidence: ['operatingInsight:provider-gated'] },
-                  { id: 'review-and-train', title: 'Review the shift and train the agent', status: 'waiting-proof', owner: 'store-manager', businessQuestion: 'Can the next shift reuse accepted proof?', todayAction: 'Close the loop with proof and training.', proofToCollect: ['accepted receipt'], providerGate: ['training record'], acceptance: 'Next shift has one action.', stopLine: 'No training from unverified proof.', sourceEvidence: ['shiftLoop:waiting-proof'] },
+                  { id: 'get-customers', title: '把客人带进店', status: 'provider-gated', owner: 'community-ops', businessQuestion: 'Can reservations, coupons and inquiries become owner-visible tasks?', todayAction: '生成员工复核的线索跟进任务。', proofToCollect: ['signed lead receipt'], providerGate: ['merchant authorization'], acceptance: '已有验收回执和员工确认。', stopLine: '不自动触达顾客。', sourceEvidence: ['leadFlow:waiting-provider'] },
+                  { id: 'publish-proof', title: '有凭证槽才发布', status: 'needs-proof', owner: 'ops', businessQuestion: 'Can content close with public proof?', todayAction: '准备内容和凭证槽。', proofToCollect: ['public URL or screenshot id'], providerGate: ['browser runtime'], acceptance: '收尾前必须有凭证编号。', stopLine: '不宣称代发布。', sourceEvidence: ['publishInbox:waiting-receipt'] },
+                  { id: 'redeem-and-pos', title: '核销券码并导入 POS 汇总', status: 'blocked', owner: 'finance', businessQuestion: 'Can redemption and sales be explained from aggregate data?', todayAction: '导入脱敏的 POS 和券码汇总字段。', proofToCollect: ['couponClaimCount', 'redemptionCount'], providerGate: ['POS field dictionary'], acceptance: '汇总导入已验收。', stopLine: 'No raw POS rows.', sourceEvidence: ['operatingInsight:provider-gated'] },
+                  { id: 'review-and-train', title: '复盘班次并训练助手', status: 'waiting-proof', owner: 'store-manager', businessQuestion: 'Can the next shift reuse accepted proof?', todayAction: '用凭证和训练闭环。', proofToCollect: ['accepted receipt'], providerGate: ['training record'], acceptance: '下一班有一个明确动作。', stopLine: '不用未核验凭证做训练。', sourceEvidence: ['shiftLoop:waiting-proof'] },
                 ]).slice(0, 4).map(item => (
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -8666,7 +8666,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">外部对接拆成六份约定：试跑通道、平台凭证、线索承接、员工下发、POS 核销和模型智能。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  This is the concrete Provider/key list: server env, merchant grants, callback events, sandbox acceptance and the internal fallback if the adapter is missing.
+                  这就是具体的外部资料清单，服务端配置、店长授权、回执事件、沙箱验收，以及对接缺失时的本地兜底。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -8847,7 +8847,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-100/65">第一次沙箱试跑</div>
-                    <p className="mt-1 text-xs font-black text-white">Pick one merchant scope, one sanitized package and one Provider target; keep it open until signed receipt decides whether the next run can be trained.</p>
+                    <p className="mt-1 text-xs font-black text-white">选一个店长授权范围、一个脱敏任务包和一条外部通道，保持打开直到签名回执决定下一轮能否训练。</p>
                     <p className="mt-1 text-[11px] leading-4 text-indigo-100/55">当前选择: {dispatchState.firstProviderSandboxRunConsole?.selectedRun.scopeLabel || '大众点评 / 美团本地生活账号'} / {dispatchState.firstProviderSandboxRunConsole?.selectedRun.targetProvider || 'openclaw'}</p>
                   </div>
                   <div className="border border-white/10 bg-stone-950/45 px-3 py-2 text-right">
@@ -8945,10 +8945,10 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-4">
                 {(dispatchState.aiCockpit?.zones || [
-                  { id: 'today-operations', title: 'Today Operations', status: 'provider-gated', owner: 'store-manager', answer: 'Confirm the offer, service window, owner and proof requirements before today starts.', primaryAction: 'Run the store operating plan.', visibleProof: ['owner and proof requirements'], providerGate: 'merchant evidence and provider unlocks', stopLine: 'Do not push demand without confirmed store boundaries.' },
-                  { id: 'ai-consultant', title: 'AI Consultant', status: 'needs-evidence', owner: 'ops', answer: 'Turn advice into owner-visible plays.', primaryAction: 'Build restaurant consultant prescription.', visibleProof: ['owner-visible plays'], providerGate: 'training evidence', stopLine: 'Advice becomes a task only with evidence.' },
+                  { id: 'today-operations', title: 'Today Operations', status: 'provider-gated', owner: 'store-manager', answer: '开工前确认套餐、服务时段、负责人和凭证要求。', primaryAction: '运行门店经营计划。', visibleProof: ['owner and proof requirements'], providerGate: 'merchant evidence and provider unlocks', stopLine: '门店边界没确认不推需求。' },
+                  { id: 'ai-consultant', title: 'AI Consultant', status: 'needs-evidence', owner: 'ops', answer: '把建议变成负责人可见的打法。', primaryAction: '生成经营顾问处方。', visibleProof: ['owner-visible plays'], providerGate: 'training evidence', stopLine: '建议有凭证才变成任务。' },
                   { id: 'automation-launch', title: '真实代办启动', status: 'provider-gated', owner: 'runtime-admin', answer: '选择一个外部通道，先跑签名沙箱回执。', primaryAction: '配置账号、门店授权、回执和数据规则。', visibleProof: ['代办启动看板'], providerGate: '试跑通道和回执', stopLine: '没有回执，不承诺外部代办完成。' },
-                  { id: 'evidence-review', title: 'Evidence Review', status: 'needs-evidence', owner: 'finance', answer: 'Closeout only uses public proof and sanitized aggregate operating data.', primaryAction: 'Import accepted proof and aggregate rows.', visibleProof: ['proof receipt'], providerGate: 'POS/coupon field dictionary', stopLine: 'No raw POS or customer identifiers.' },
+                  { id: 'evidence-review', title: 'Evidence Review', status: 'needs-evidence', owner: 'finance', answer: '收尾只用公开凭证和脱敏经营汇总。', primaryAction: '导入已验收凭证和汇总行。', visibleProof: ['proof receipt'], providerGate: 'POS/coupon field dictionary', stopLine: '不碰原始 POS 和顾客身份信息。' },
                 ]).slice(0, 4).map(zone => (
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={zone.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -8972,7 +8972,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">默认路径把预约和领券闭环到 POS 汇总导入、核销复盘和下一班动作。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  It uses sanitized aggregate rows only: no phone numbers, member ids, raw order rows, payment ids, coupon codes or private chat content.
+                  只用脱敏汇总行，不碰手机号、会员号、原始订单行、支付单号、券码和私聊内容。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -9003,9 +9003,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
                 {(dispatchState.operatingInsightReport?.insights || [
-                  { id: 'coupon-redemption-rate', label: 'Coupon claim to redemption rate', status: 'measured', value: '58% (29/50)', evidence: ['sanitized POS aggregate'], interpretation: 'Calculated from sanitized aggregate rows.', nextAction: 'Confirm coupon window before changing offer.' },
-                  { id: 'order-sales-aggregate', label: 'Order and gross sales aggregate', status: 'measured', value: '58 orders / gross sales 4456.00', evidence: ['accepted imports=1'], interpretation: 'Usable as aggregate evidence.', nextAction: 'Compare service capacity and stock readiness.' },
-                  { id: 'prep-inventory-pressure', label: 'Prep and inventory pressure', status: 'directional', value: '29 units', evidence: ['inventoryUsed aggregate'], interpretation: 'Directional until stockout and waste definitions are confirmed.', nextAction: 'Confirm prep-batch definition.' },
+                  { id: 'coupon-redemption-rate', label: '领券到核销转化率', status: 'measured', value: '58% (29/50)', evidence: ['sanitized POS aggregate'], interpretation: '由脱敏汇总行计算。', nextAction: '改套餐前先确认券的时间窗。' },
+                  { id: 'order-sales-aggregate', label: '订单与销售额汇总', status: 'measured', value: '58 orders / gross sales 4456.00', evidence: ['accepted imports=1'], interpretation: '可作为汇总凭证使用。', nextAction: '对比接待容量和备货情况。' },
+                  { id: 'prep-inventory-pressure', label: '备餐与库存压力', status: 'directional', value: '29 units', evidence: ['inventoryUsed aggregate'], interpretation: '缺货和损耗口径确认前仅供参考。', nextAction: '确认备餐批次口径。' },
                 ]).slice(0, 3).map(item => (
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -9032,7 +9032,7 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
                   <p className="mt-1 text-xs font-black text-white">公开评价、评论主题和服务问题会变成店长审核的回复、恢复任务和下一轮内容。</p>
                 </div>
                 <p className="max-w-3xl text-[11px] leading-4 text-white/45">
-                  Auto review reply stays blocked until merchant authorization, platform/provider sync, callback proof and consent boundaries exist.
+                  店长授权、平台同步、回执凭证和告知边界没齐之前，自动回评保持关闭。
                 </p>
               </div>
               <div className="mt-3 grid gap-2 md:grid-cols-6">
@@ -9063,9 +9063,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
                 {(dispatchState.reputationCloseoutPack?.themes || [
-                  { id: 'taste-offer-fit', label: 'Dish taste and offer fit', signal: 'unknown', operatorAction: 'Collect public proof before turning taste claims into content.', staffScript: 'Confirm availability and service window before recommending add-ons.' },
+                  { id: 'taste-offer-fit', label: '菜品口味与套餐匹配', signal: 'unknown', operatorAction: '把口味说法写进内容前先收公开凭证。', staffScript: '推荐加购前确认供应和服务时段。' },
                   { id: 'wait-time-service', label: '等位与服务恢复', signal: 'mixed', operatorAction: '把排队处理和员工负责人挂到下一轮跟进。', staffScript: '说明预计等位时间，并给出明确的预约或自取替代方案。' },
-                  { id: 'coupon-expectation', label: 'Coupon expectation and redemption clarity', signal: 'risk', operatorAction: 'Import sanitized coupon/POS aggregate before judging coupon friction.', staffScript: 'Confirm coupon validity, excluded items and redemption steps before guests arrive.' },
+                  { id: 'coupon-expectation', label: '券预期与核销清晰度', signal: 'risk', operatorAction: '判断券的摩擦前先导入脱敏券码/POS 汇总。', staffScript: '客人到店前确认券有效期、不可用菜品和核销步骤。' },
                 ]).slice(0, 3).map(item => (
                   <div className="border border-white/10 bg-stone-950/45 p-2" key={item.id}>
                     <div className="flex items-center justify-between gap-2">
@@ -9079,9 +9079,9 @@ export function RestaurantAgentRuntimeClient({ intake = {} }: { intake?: Restaur
               </div>
               <div className="mt-3 grid gap-2 lg:grid-cols-3">
                 {(dispatchState.reputationCloseoutPack?.responseDrafts || [
-                  { platform: 'Dianping/Meituan', status: 'staff-review', draft: 'Store manager reviews the final reply from public proof.', proofNeeded: 'public review/proof URL or screenshot id' },
-                  { platform: 'Xiaohongshu/Douyin', status: 'staff-review', draft: 'Use approved dish details, photos and visit scenes only.', proofNeeded: 'approved public note/video proof and photo rights' },
-                  { platform: 'WeChat community', status: 'provider-gated', draft: 'Generate staff talk track only; do not send automatically.', proofNeeded: 'staff approval and consent boundary' },
+                  { platform: 'Dianping/Meituan', status: 'staff-review', draft: '店长根据公开凭证复核最终回复。', proofNeeded: 'public review/proof URL or screenshot id' },
+                  { platform: 'Xiaohongshu/Douyin', status: 'staff-review', draft: '只用已审核的菜品信息、照片和到店场景。', proofNeeded: 'approved public note/video proof and photo rights' },
+                  { platform: 'WeChat community', status: 'provider-gated', draft: '只生成员工话术，不自动发送。', proofNeeded: 'staff approval and consent boundary' },
                 ]).slice(0, 3).map(item => (
                   <div className="border border-white/10 bg-white/[0.04] p-2" key={item.platform}>
                     <div className="flex items-center justify-between gap-2">
