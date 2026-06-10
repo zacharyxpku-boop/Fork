@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { buildAllContentPrompts, type RestaurantContentIntake, type RestaurantContentPrompt } from '@/lib/restaurant-content-prompts';
 import { buildRevisionUserPrompt } from '@/lib/restaurant-advisor-prompts';
 import { renderRestaurantStoreMemoryForPrompt } from '@/lib/restaurant-store-memory';
+import { parseLlmJson, toContentFields, type ContentField } from '@/lib/llm-output-parser';
 import { hasLlmKey, llmChat, LlmError } from '@/lib/llm-client';
 
 interface GeneratedContent {
   kind: RestaurantContentPrompt['kind'];
   label: string;
   output: string;
+  fields: ContentField[];
 }
 
 interface ContentRequestBody {
@@ -68,7 +70,13 @@ export async function POST(request: NextRequest) {
     try {
       const result = await llmChat({ system: prompt.system, user: prompt.user });
       if (result.mode === 'generated') {
-        results.push({ kind: prompt.kind, label: prompt.label, output: result.output });
+        const parsed = parseLlmJson(result.output);
+        results.push({
+          kind: prompt.kind,
+          label: prompt.label,
+          output: result.output,
+          fields: parsed.ok ? toContentFields(prompt.kind, parsed.data) : [],
+        });
       }
     } catch (error) {
       failures.push({ kind: prompt.kind, error: error instanceof LlmError ? error.kind : 'unknown' });

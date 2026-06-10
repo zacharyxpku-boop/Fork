@@ -8,6 +8,7 @@ import {
   type TrialMemoryNote,
   type TrialProofEntry,
 } from '@/lib/restaurant-trial-five-screen';
+import { buildFactChecklist } from '@/lib/llm-output-parser';
 import type { RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
 
 const STORAGE_KEYS = {
@@ -15,7 +16,13 @@ const STORAGE_KEYS = {
   proofs: 'wenai-trial-proofs',
   content: 'wenai-trial-content',
   step: 'wenai-trial-step',
+  advisor: 'wenai-trial-advisor',
 } as const;
+
+interface AdvisorTurn {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 interface ContentPromptPreview {
   kind: string;
@@ -28,6 +35,7 @@ interface ContentGenerated {
   kind: string;
   label: string;
   output: string;
+  fields?: { key: string; label: string; value: string }[];
 }
 
 interface ContentState {
@@ -85,6 +93,7 @@ export function TrialFiveScreenClient() {
   const [advisorQuestion, setAdvisorQuestion] = useState('');
   const [advisorResult, setAdvisorResult] = useState<{ mode: string; text: string } | null>(null);
   const [advisorBusy, setAdvisorBusy] = useState(false);
+  const [advisorTurns, setAdvisorTurns] = useState<AdvisorTurn[]>([]);
   const [memoryNotes, setMemoryNotes] = useState<TrialMemoryNote[]>([]);
 
   useEffect(() => {
@@ -92,6 +101,7 @@ export function TrialFiveScreenClient() {
     setProofs(readJson(STORAGE_KEYS.proofs, [] as TrialProofEntry[]));
     setContent(readJson<ContentState | null>(STORAGE_KEYS.content, null));
     setStep(readJson(STORAGE_KEYS.step, 1));
+    setAdvisorTurns(readJson(STORAGE_KEYS.advisor, [] as AdvisorTurn[]));
     setHydrated(true);
   }, []);
 
@@ -107,6 +117,9 @@ export function TrialFiveScreenClient() {
   useEffect(() => {
     if (hydrated) writeJson(STORAGE_KEYS.step, step);
   }, [hydrated, step]);
+  useEffect(() => {
+    if (hydrated) writeJson(STORAGE_KEYS.advisor, advisorTurns.slice(-12));
+  }, [hydrated, advisorTurns]);
 
   const intakeReady = Boolean(intake.restaurant && intake.offer);
   const todayActions = useMemo(() => (intakeReady ? deriveTodayActions(intake) : []), [intake, intakeReady]);
@@ -218,16 +231,19 @@ export function TrialFiveScreenClient() {
         body: JSON.stringify({
           intake,
           question,
+          history: advisorTurns.slice(-6),
           proofs: proofs.map(proof => ({ channel: proof.channel, note: proof.proofUrl || proof.note })),
         }),
       });
       const payload = await response.json();
       if (!payload?.ok) throw new Error(payload?.error || 'chat-failed');
-      setAdvisorResult(
-        payload.mode === 'prompt-preview'
-          ? { mode: 'prompt-preview', text: `${payload.prompt.system}\n\n${payload.prompt.user}` }
-          : { mode: 'generated', text: payload.reply },
-      );
+      if (payload.mode === 'prompt-preview') {
+        setAdvisorResult({ mode: 'prompt-preview', text: `${payload.prompt.system}\n\n${payload.prompt.user}` });
+      } else {
+        setAdvisorResult({ mode: 'generated', text: payload.reply });
+        setAdvisorTurns(previous => [...previous, { role: 'user', content: question }, { role: 'assistant', content: payload.reply }]);
+        setAdvisorQuestion('');
+      }
     } catch {
       setAdvisorResult({ mode: 'error', text: '顾问暂时没回上来，稍后再试。' });
     } finally {
@@ -310,6 +326,8 @@ export function TrialFiveScreenClient() {
     setProofs([]);
     setContent(null);
     setStep(1);
+    setAdvisorTurns([]);
+    setAdvisorResult(null);
   }
 
   function shareCurrentScreen() {
@@ -458,13 +476,33 @@ export function TrialFiveScreenClient() {
                 : (content.results || []).map(result => (
                     <article key={result.kind} className="border border-stone-300 bg-white p-4">
                       <h3 className="text-base font-bold text-stone-900">{result.label}</h3>
-                      <pre className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{result.output}</pre>
+                      {result.fields && result.fields.length > 0 ? (
+                        <div className="mt-2 space-y-3">
+                          {result.fields.map(fieldItem => (
+                            <div key={fieldItem.key}>
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-semibold text-stone-500">{fieldItem.label}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => void copyText(fieldItem.value, `${result.label}·${fieldItem.label}`)}
+                                  className="border border-stone-300 px-2 py-1 text-xs font-bold text-stone-600"
+                                >
+                                  复制
+                                </button>
+                              </div>
+                              <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{fieldItem.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <pre className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{result.output}</pre>
+                      )}
                       <button
                         type="button"
-                        onClick={() => void copyText(result.output, result.label)}
+                        onClick={() => void copyText(result.fields?.length ? result.fields.map(fieldItem => fieldItem.value).join('\n\n') : result.output, result.label)}
                         className="mt-3 w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
                       >
-                        复制这条内容
+                        复制整条内容
                       </button>
                       <div className="mt-3 border-t border-stone-200 pt-3">
                         <input
@@ -484,9 +522,14 @@ export function TrialFiveScreenClient() {
                       </div>
                     </article>
                   ))}
-              <p className="border border-stone-300 bg-stone-100 p-3 text-sm font-semibold leading-6 text-stone-800">
-                发布前店长逐条确认事实和价格：价格、限量、时段、赠品都要和店里实际一致，确认无误再发。
-              </p>
+              <div className="border border-stone-300 bg-stone-100 p-3">
+                <p className="text-sm font-semibold leading-6 text-stone-800">发布前店长逐条确认事实和价格，逐项过一遍：</p>
+                <ul className="mt-2 space-y-1">
+                  {buildFactChecklist(intake).map(item => (
+                    <li key={item} className="text-sm leading-6 text-stone-700">□ {item}</li>
+                  ))}
+                </ul>
+              </div>
               <details className="border border-stone-300 bg-white p-4">
                 <summary className="cursor-pointer text-base font-bold text-stone-900">收到顾客评价？粘贴进来生成店主回复</summary>
                 <div className="mt-3 space-y-3">
@@ -610,6 +653,15 @@ export function TrialFiveScreenClient() {
           <div className="mt-6 border border-stone-300 bg-white p-4">
             <h3 className="text-base font-bold text-stone-900">问顾问一句</h3>
             <p className="mt-1 text-sm text-stone-600">例：周三晚上没人来怎么办？顾问知道你的门店、边界和今天的凭证。</p>
+            {advisorTurns.length > 0 ? (
+              <div className="mt-3 max-h-48 space-y-2 overflow-y-auto border border-stone-200 bg-stone-50 p-2">
+                {advisorTurns.slice(-6).map((turn, index) => (
+                  <p key={`${turn.role}-${index}`} className={`whitespace-pre-wrap break-words text-sm leading-6 ${turn.role === 'user' ? 'font-semibold text-stone-900' : 'text-stone-700'}`}>
+                    {turn.role === 'user' ? '你：' : '顾问：'}{turn.content}
+                  </p>
+                ))}
+              </div>
+            ) : null}
             <input
               className="mt-3 w-full border border-stone-300 p-3 text-base"
               placeholder="输入你的问题"
