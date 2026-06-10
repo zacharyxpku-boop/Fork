@@ -1,0 +1,407 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import {
+  buildShareSummary,
+  deriveTodayActions,
+  deriveTomorrowPlan,
+  type TrialProofEntry,
+} from '@/lib/restaurant-trial-five-screen';
+import type { RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
+
+const STORAGE_KEYS = {
+  intake: 'wenai-trial-intake',
+  proofs: 'wenai-trial-proofs',
+  content: 'wenai-trial-content',
+  step: 'wenai-trial-step',
+} as const;
+
+interface ContentPromptPreview {
+  kind: string;
+  label: string;
+  system: string;
+  user: string;
+}
+
+interface ContentGenerated {
+  kind: string;
+  label: string;
+  output: string;
+}
+
+interface ContentState {
+  mode: 'prompt-preview' | 'generated';
+  message: string;
+  prompts?: ContentPromptPreview[];
+  results?: ContentGenerated[];
+}
+
+const EMPTY_INTAKE: RestaurantTrialIntake = {
+  restaurant: '',
+  offer: '',
+  audience: '',
+  channels: '',
+  visitReason: '',
+  constraints: '',
+  evidence: '',
+};
+
+function readJson<T>(key: string, fallback: T): T {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJson(key: string, value: unknown) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // storage unavailable (private mode); the flow still works in-memory
+  }
+}
+
+const STEP_TITLES = ['填门店', '今天三件事', '能直接发的内容', '回填凭证', '明日动作'] as const;
+
+export function TrialFiveScreenClient() {
+  const [hydrated, setHydrated] = useState(false);
+  const [step, setStep] = useState(1);
+  const [intake, setIntake] = useState<RestaurantTrialIntake>(EMPTY_INTAKE);
+  const [proofs, setProofs] = useState<TrialProofEntry[]>([]);
+  const [content, setContent] = useState<ContentState | null>(null);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentError, setContentError] = useState('');
+  const [copyFeedback, setCopyFeedback] = useState('');
+  const [proofDraft, setProofDraft] = useState({ channel: '', proofUrl: '', note: '' });
+
+  useEffect(() => {
+    setIntake(readJson(STORAGE_KEYS.intake, EMPTY_INTAKE));
+    setProofs(readJson(STORAGE_KEYS.proofs, [] as TrialProofEntry[]));
+    setContent(readJson<ContentState | null>(STORAGE_KEYS.content, null));
+    setStep(readJson(STORAGE_KEYS.step, 1));
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) writeJson(STORAGE_KEYS.intake, intake);
+  }, [hydrated, intake]);
+  useEffect(() => {
+    if (hydrated) writeJson(STORAGE_KEYS.proofs, proofs);
+  }, [hydrated, proofs]);
+  useEffect(() => {
+    if (hydrated && content) writeJson(STORAGE_KEYS.content, content);
+  }, [hydrated, content]);
+  useEffect(() => {
+    if (hydrated) writeJson(STORAGE_KEYS.step, step);
+  }, [hydrated, step]);
+
+  const intakeReady = Boolean(intake.restaurant && intake.offer);
+  const todayActions = useMemo(() => (intakeReady ? deriveTodayActions(intake) : []), [intake, intakeReady]);
+  const tomorrowPlan = useMemo(() => (intakeReady ? deriveTomorrowPlan(intake, proofs) : []), [intake, intakeReady, proofs]);
+
+  async function copyText(text: string, label: string) {
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch {
+      // 微信内置浏览器等环境没有 clipboard API，用隐藏 textarea 兜底
+      try {
+        const holder = document.createElement('textarea');
+        holder.value = text;
+        holder.style.position = 'fixed';
+        holder.style.opacity = '0';
+        document.body.appendChild(holder);
+        holder.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(holder);
+      } catch {
+        copied = false;
+      }
+    }
+    setCopyFeedback(copied ? `已复制：${label}` : '复制失败，请手动长按选择文本');
+    window.setTimeout(() => setCopyFeedback(''), 2500);
+  }
+
+  async function generateContent() {
+    setContentLoading(true);
+    setContentError('');
+    try {
+      const response = await fetch('/api/restaurant-agent/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intake }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error || `http-${response.status}`);
+      }
+      setContent({
+        mode: payload.mode,
+        message: payload.message,
+        prompts: payload.prompts,
+        results: payload.results,
+      });
+    } catch (error) {
+      setContentError(error instanceof Error ? error.message : '生成失败，请重试');
+    } finally {
+      setContentLoading(false);
+    }
+  }
+
+  function addProof() {
+    if (!proofDraft.channel || (!proofDraft.proofUrl && !proofDraft.note)) return;
+    const entry: TrialProofEntry = {
+      id: `proof-${proofs.length + 1}-${proofDraft.channel}`,
+      channel: proofDraft.channel,
+      proofUrl: proofDraft.proofUrl,
+      note: proofDraft.note,
+      recordedAt: new Date().toISOString(),
+    };
+    setProofs(previous => [...previous, entry]);
+    setProofDraft({ channel: '', proofUrl: '', note: '' });
+  }
+
+  function resetAll() {
+    for (const key of Object.values(STORAGE_KEYS)) {
+      try {
+        window.localStorage.removeItem(key);
+      } catch {
+        // ignore
+      }
+    }
+    setIntake(EMPTY_INTAKE);
+    setProofs([]);
+    setContent(null);
+    setStep(1);
+  }
+
+  function shareCurrentScreen() {
+    const text = buildShareSummary({
+      screen: step as 1 | 2 | 3 | 4 | 5,
+      intake,
+      todayActions,
+      proofs,
+      tomorrow: tomorrowPlan,
+    });
+    void copyText(text, '给店长的微信摘要');
+  }
+
+  const field = (label: string, key: keyof RestaurantTrialIntake, props: { textarea?: boolean; placeholder?: string } = {}) => (
+    <label className="block">
+      <span className="mb-1 block text-sm font-semibold text-stone-800">{label}</span>
+      {props.textarea ? (
+        <textarea
+          className="w-full border border-stone-300 bg-white p-3 text-base leading-6 text-stone-900"
+          rows={3}
+          placeholder={props.placeholder}
+          value={intake[key] || ''}
+          onChange={event => setIntake(previous => ({ ...previous, [key]: event.target.value }))}
+        />
+      ) : (
+        <input
+          className="w-full border border-stone-300 bg-white p-3 text-base text-stone-900"
+          placeholder={props.placeholder}
+          value={intake[key] || ''}
+          onChange={event => setIntake(previous => ({ ...previous, [key]: event.target.value }))}
+        />
+      )}
+    </label>
+  );
+
+  return (
+    <div className="mx-auto w-full max-w-md px-4 pb-24">
+      <nav aria-label="步骤" className="sticky top-0 z-10 -mx-4 mb-4 flex gap-1 overflow-x-auto bg-[#faf9f6] px-4 py-3">
+        {STEP_TITLES.map((title, index) => {
+          const number = index + 1;
+          const active = step === number;
+          return (
+            <button
+              key={title}
+              type="button"
+              onClick={() => setStep(number)}
+              className={`shrink-0 border px-2 py-1 text-xs font-semibold ${active ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 bg-white text-stone-600'}`}
+            >
+              {number} {title}
+            </button>
+          );
+        })}
+      </nav>
+
+      {copyFeedback ? <p className="mb-3 border border-emerald-300 bg-emerald-50 p-2 text-sm text-emerald-800">{copyFeedback}</p> : null}
+
+      {step === 1 ? (
+        <section aria-label="第一屏">
+          <div className="space-y-4">
+            {field('门店名称', 'restaurant', { placeholder: '例：椒香记·川味面馆（国贸店）' })}
+            {field('主推菜 / 套餐（带价格）', 'offer', { placeholder: '例：藤椒鸡丝拌面双人套餐 ¥59.9' })}
+            {field('目标客群', 'audience', { placeholder: '例：附近三公里写字楼晚餐白领' })}
+            {field('主推渠道', 'channels', { placeholder: '例：大众点评 / 小红书 / 微信社群' })}
+            {field('到店理由', 'visitReason', { textarea: true, placeholder: '例：工作日 17:30-20:00 到店免排队，套餐送酸梅汤' })}
+            {field('活动边界（必须遵守的限制）', 'constraints', { textarea: true, placeholder: '例：周末不适用；每桌限一张券；每天限量 40 份' })}
+            {field('已有素材', 'evidence', { textarea: true, placeholder: '例：菜单截图、菜品图、团购券规则截图' })}
+          </div>
+          <button
+            type="button"
+            disabled={!intakeReady}
+            onClick={() => setStep(2)}
+            className="mt-5 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            生成今天的三件事
+          </button>
+          {!intakeReady ? <p className="mt-2 text-sm text-stone-500">先填门店名称和主推套餐，其他可以稍后补。</p> : null}
+        </section>
+      ) : null}
+
+      {step === 2 ? (
+        <section aria-label="第二屏">
+          <div className="space-y-3">
+            {todayActions.map((action, index) => (
+              <article key={action.id} className="border border-stone-300 bg-white p-4">
+                <h3 className="text-base font-bold text-stone-900">{index + 1}. {action.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-stone-700">{action.doNow}</p>
+                <p className="mt-2 text-sm text-stone-600">负责人：{action.ownerLabel}</p>
+                <p className="mt-1 text-sm text-stone-600">要留的凭证：{action.evidenceRequired}</p>
+              </article>
+            ))}
+          </div>
+          <button type="button" onClick={() => setStep(3)} className="mt-5 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white">
+            看能直接发的内容
+          </button>
+        </section>
+      ) : null}
+
+      {step === 3 ? (
+        <section aria-label="第三屏">
+          {!content ? (
+            <div>
+              <p className="text-sm leading-6 text-stone-700">为「{intake.offer || '主推套餐'}」准备四类渠道内容：小红书探店、点评好评回复、差评挽回、社群话术。</p>
+              <button
+                type="button"
+                disabled={contentLoading}
+                onClick={() => void generateContent()}
+                className="mt-4 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:opacity-50"
+              >
+                {contentLoading ? '正在准备…' : '准备渠道内容'}
+              </button>
+              {contentError ? <p className="mt-2 text-sm text-rose-700">出错了：{contentError}</p> : null}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="border border-amber-300 bg-amber-50 p-3 text-sm leading-6 text-amber-900">{content.message}</p>
+              {content.mode === 'prompt-preview'
+                ? (content.prompts || []).map(prompt => (
+                    <article key={prompt.kind} className="border border-stone-300 bg-white p-4">
+                      <h3 className="text-base font-bold text-stone-900">{prompt.label}</h3>
+                      <p className="mt-1 text-sm text-stone-600">复制下面的指令到任意对话模型（如 DeepSeek 网页版）生成内容。</p>
+                      <button
+                        type="button"
+                        onClick={() => void copyText(`${prompt.system}\n\n${prompt.user}`, prompt.label)}
+                        className="mt-3 w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
+                      >
+                        一键复制生成指令
+                      </button>
+                    </article>
+                  ))
+                : (content.results || []).map(result => (
+                    <article key={result.kind} className="border border-stone-300 bg-white p-4">
+                      <h3 className="text-base font-bold text-stone-900">{result.label}</h3>
+                      <pre className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{result.output}</pre>
+                      <button
+                        type="button"
+                        onClick={() => void copyText(result.output, result.label)}
+                        className="mt-3 w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
+                      >
+                        复制这条内容
+                      </button>
+                    </article>
+                  ))}
+              <p className="border border-stone-300 bg-stone-100 p-3 text-sm font-semibold leading-6 text-stone-800">
+                发布前店长逐条确认事实和价格：价格、限量、时段、赠品都要和店里实际一致，确认无误再发。
+              </p>
+            </div>
+          )}
+          <button type="button" onClick={() => setStep(4)} className="mt-5 w-full border border-stone-400 bg-white p-3 text-base font-bold text-stone-800">
+            发完了，去回填凭证
+          </button>
+        </section>
+      ) : null}
+
+      {step === 4 ? (
+        <section aria-label="第四屏">
+          <div className="space-y-3 border border-stone-300 bg-white p-4">
+            <label className="block">
+              <span className="mb-1 block text-sm font-semibold text-stone-800">发布渠道</span>
+              <input
+                className="w-full border border-stone-300 p-3 text-base"
+                placeholder="例：小红书 / 大众点评 / 微信社群"
+                value={proofDraft.channel}
+                onChange={event => setProofDraft(previous => ({ ...previous, channel: event.target.value }))}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-semibold text-stone-800">公开链接（没有就留空）</span>
+              <input
+                className="w-full border border-stone-300 p-3 text-base"
+                placeholder="例：https://..."
+                value={proofDraft.proofUrl}
+                onChange={event => setProofDraft(previous => ({ ...previous, proofUrl: event.target.value }))}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-semibold text-stone-800">截图说明 / 备注</span>
+              <input
+                className="w-full border border-stone-300 p-3 text-base"
+                placeholder="例：已发小红书，截图存在店长手机相册"
+                value={proofDraft.note}
+                onChange={event => setProofDraft(previous => ({ ...previous, note: event.target.value }))}
+              />
+            </label>
+            <button type="button" onClick={addProof} className="w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white">
+              回填这条凭证
+            </button>
+          </div>
+          <div className="mt-4 space-y-2">
+            {proofs.length === 0 ? (
+              <p className="border border-stone-300 bg-stone-100 p-3 text-sm text-stone-700">还没有回填凭证。待补资料：发布后把链接或截图说明填回来，明天的复盘才有依据。</p>
+            ) : (
+              proofs.map(proof => (
+                <p key={proof.id} className="border border-stone-300 bg-white p-3 text-sm text-stone-800">
+                  <span className="font-semibold">{proof.channel}</span>：{proof.proofUrl || proof.note}
+                </p>
+              ))
+            )}
+          </div>
+          <button type="button" onClick={() => setStep(5)} className="mt-5 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white">
+            看明天怎么干
+          </button>
+        </section>
+      ) : null}
+
+      {step === 5 ? (
+        <section aria-label="第五屏">
+          <div className="space-y-3">
+            {tomorrowPlan.map(item => (
+              <article key={item.id} className={`border p-4 ${item.kind === 'missing-material' ? 'border-amber-400 bg-amber-50' : 'border-stone-300 bg-white'}`}>
+                <h3 className="text-base font-bold text-stone-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-stone-700">{item.detail}</p>
+              </article>
+            ))}
+          </div>
+          <button type="button" onClick={resetAll} className="mt-6 w-full border border-stone-400 bg-white p-3 text-base font-bold text-stone-700">
+            清空重来（换一家门店）
+          </button>
+        </section>
+      ) : null}
+
+      <div className="fixed inset-x-0 bottom-0 border-t border-stone-300 bg-white p-3">
+        <button type="button" onClick={shareCurrentScreen} className="mx-auto block w-full max-w-md border border-stone-900 p-3 text-base font-bold text-stone-900">
+          分享给店长（复制微信摘要）
+        </button>
+      </div>
+    </div>
+  );
+}

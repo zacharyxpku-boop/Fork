@@ -30,6 +30,7 @@ const PUBLIC_PAGE_PREFIXES = [
   '/invite',
   '/dashboard',
   '/factory',
+  '/trial',
   '/report',
   '/status',
   '/cases',
