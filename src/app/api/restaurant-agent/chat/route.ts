@@ -3,6 +3,34 @@ import { buildAdvisorSystemPrompt, buildAdvisorUserPrompt, buildRevisionUserProm
 import type { RestaurantContentIntake } from '@/lib/restaurant-content-prompts';
 import { llmChat, LlmError, type LlmChatMessage } from '@/lib/llm-client';
 
+/** 模型偶尔会用 JSON 数组回建议；这里转成老板能读的编号段落，转不动就原样返回。 */
+function humanizeAdvisorReply(raw: string): string {
+  const trimmed = (raw || '').trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = (fenced?.[1] || trimmed).trim();
+  if (!candidate.startsWith('[') && !candidate.startsWith('{')) return raw;
+  try {
+    const parsed = JSON.parse(candidate);
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+    const lines: string[] = [];
+    items.forEach((item, index) => {
+      if (typeof item !== 'object' || item === null) return;
+      const record = item as Record<string, unknown>;
+      const action = String(record['建议动作'] || record['建议'] || record['动作'] || record.action || '').trim();
+      const owner = String(record['负责人'] || record.owner || '').trim();
+      const evidence = String(record['需要留的凭证'] || record['凭证要求'] || record['凭证'] || record.evidence || '').trim();
+      if (!action) return;
+      let line = `${index + 1}. ${action}`;
+      if (owner && !action.includes(`负责人`)) line += `（负责人：${owner}）`;
+      if (evidence && !action.includes(evidence)) line += ` 要留的凭证：${evidence}。`;
+      lines.push(line);
+    });
+    return lines.length ? lines.join('\n\n') : raw;
+  } catch {
+    return raw;
+  }
+}
+
 interface ChatRequestBody {
   intake?: RestaurantContentIntake;
   question?: string;
@@ -44,7 +72,7 @@ export async function POST(request: NextRequest) {
         prompt: result.renderedPrompt,
       });
     }
-    return NextResponse.json({ ok: true, mode: 'generated', reply: result.output });
+    return NextResponse.json({ ok: true, mode: 'generated', reply: humanizeAdvisorReply(result.output) });
   } catch (error) {
     const kind = error instanceof LlmError ? error.kind : 'unknown';
     return NextResponse.json({ ok: false, error: `llm-${kind}`, message: '顾问暂时没回上来，稍后重试。' }, { status: 502 });

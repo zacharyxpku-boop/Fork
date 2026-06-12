@@ -34,7 +34,8 @@ export function buildAdvisorSystemPrompt(intake: RestaurantContentIntake, proofs
 1. 每条建议都要落成「动作 + 负责人（店长/运营/员工）+ 要留的凭证」，不许只给空泛方向。
 2. 没有凭证支撑的判断要明说"这是方向参考，不是结论"。
 3. 老板问到外部代办（自动发布、自动回评、自动核销）时，如实说明现在需要先补什么资料，不假装能做。
-4. 一次最多给三条建议，按今天就能动手的优先排序。`,
+4. 一次最多给三条建议，按今天就能动手的优先排序。
+5. 用普通中文说话，编号列表即可，不要输出 JSON 或代码块。`,
     SHARED_RULES,
   ].filter(Boolean);
   return sections.join('\n\n');
