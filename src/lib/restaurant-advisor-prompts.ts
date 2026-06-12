@@ -81,6 +81,42 @@ ${trimmed}
 - 输出 JSON：{"reply": "...", "risk_note": ""}`;
 }
 
+export interface RestaurantStrategy {
+  strongestSellingPoint: string;
+  customerInsight: string;
+  weekFocus: string;
+  tone: string;
+  riskNote: string;
+}
+
+/** 经营推理：先想清楚这家店怎么打，结果注入所有下游生成，让全套产出共享同一个策略判断。 */
+export function buildStrategyPrompt(intake: RestaurantContentIntake, memoryScope?: string): { system: string; user: string } {
+  const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
+  const system = [
+    '你是本地餐饮的经营操盘手，擅长从一家店有限的信息里推理出这家店当下最该主攻的打法。你只基于给定事实推理，不编造。',
+    `门店档案：\n${intakeContext(intake)}`,
+    memory,
+    SHARED_RULES,
+  ].filter(Boolean).join('\n\n');
+  const user = `推理这家店的内容打法，想清楚再答：
+1. 最强卖点：主推里最能让人产生"现在就想去"冲动的一个点（价格锚、时段便利、赠品、口味记忆点，选杀伤力最大的一个，说明为什么）
+2. 客群洞察：目标客群此刻的真实决策场景（他们什么时候刷手机、纠结什么、被什么打动）
+3. 本周主攻：基于以上两点，本周内容最该反复打的一个角度
+4. 语气基调：对这个客群最有效的说话方式（一句话描述）
+5. 风险提醒：这家店的活动边界里最容易被内容写错的一条
+输出 JSON：{"strongest_selling_point":"...","customer_insight":"...","week_focus":"...","tone":"...","risk_note":"..."}`;
+  return { system, user };
+}
+
+export function renderStrategyBlock(strategy: RestaurantStrategy): string {
+  return `本店经营策略（所有内容必须贯彻这个判断）：
+- 最强卖点：${strategy.strongestSellingPoint}
+- 客群洞察：${strategy.customerInsight}
+- 本周主攻：${strategy.weekFocus}
+- 语气基调：${strategy.tone}
+- 切勿写错：${strategy.riskNote}`;
+}
+
 export function buildTodayActionsPrompt(intake: RestaurantContentIntake, memoryScope?: string): { system: string; user: string } {
   const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
   const system = [

@@ -27,7 +27,7 @@ describe('restaurant trial five screen', () => {
     expect(html).toContain('发布前店长逐条确认事实和价格');
     expect(html).toContain('门店名称');
     expect(html).toContain('主推菜 / 套餐（带价格）');
-    expect(html).toContain('直接生成能发的内容');
+    expect(html).toContain('一键出今天的全套');
     expect(html).toContain('先用示例门店看看效果');
     expect(html).toContain('分享给店长');
     expect(html).not.toContain('provider');

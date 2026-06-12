@@ -109,6 +109,42 @@ export function TrialFiveScreenClient() {
   const [posterBusy, setPosterBusy] = useState('');
   const [videoPrompt, setVideoPrompt] = useState<{ videoPrompt: string; voiceover: string; duration: string } | null>(null);
   const [videoBusy, setVideoBusy] = useState(false);
+  const [strategy, setStrategy] = useState<{ strongestSellingPoint: string; customerInsight: string; weekFocus: string; tone: string; riskNote: string } | null>(null);
+
+  async function generateFullPack() {
+    setContentLoading(true);
+    setContentError('');
+    try {
+      const response = await fetch('/api/restaurant-agent/full-pack', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ intake }),
+      });
+      const payload = await response.json();
+      if (response.status === 503 && payload?.error === 'no-key') {
+        // 没配 AI 账号时回退到分步生成（prompt 预览模式）
+        await generateContent();
+        return;
+      }
+      if (!payload?.ok) throw new Error(payload?.message || payload?.error || 'full-pack-failed');
+      if (payload.strategy) setStrategy(payload.strategy);
+      if (payload.contents?.length) {
+        setContent({ mode: 'generated', message: payload.message || '', results: payload.contents });
+      }
+      if (payload.actions?.length === 3) setLlmActions(payload.actions);
+      if (payload.video?.videoPrompt) setVideoPrompt(payload.video);
+      if (payload.poster) {
+        setPosters(previous => ({
+          ...previous,
+          'dish-hero': { label: payload.poster.label, usage: '点评首图、外卖头图', prompt: payload.poster.prompt, url: payload.poster.url },
+        }));
+      }
+    } catch (error) {
+      setContentError(error instanceof Error ? error.message : '生成失败，请重试');
+    } finally {
+      setContentLoading(false);
+    }
+  }
 
   async function generatePoster(kind: string, label: string) {
     setPosterBusy(kind);
@@ -491,6 +527,7 @@ export function TrialFiveScreenClient() {
     setDayContents({});
     setPosters({});
     setVideoPrompt(null);
+    setStrategy(null);
   }
 
   function shareCurrentScreen() {
@@ -592,11 +629,11 @@ export function TrialFiveScreenClient() {
             disabled={!intakeReady || contentLoading}
             onClick={() => {
               setStep(3);
-              if (!content) void generateContent();
+              if (!content) void generateFullPack();
             }}
             className="mt-5 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
           >
-            直接生成能发的内容
+            一键出今天的全套（文案+三件事+视频稿+配图）
           </button>
           <button
             type="button"
@@ -638,7 +675,7 @@ export function TrialFiveScreenClient() {
               <p className="text-sm leading-6 text-stone-700">为「{intake.offer || '主推套餐'}」准备四类渠道内容：小红书探店、点评好评回复、差评挽回、社群话术。</p>
               {contentLoading ? (
                 <div className="mt-4 border border-stone-300 bg-white p-4">
-                  <p className="text-sm font-semibold text-stone-800">正在为「{intake.restaurant || '你的门店'}」写四条内容，大约 10-15 秒…</p>
+                  <p className="text-sm font-semibold text-stone-800">正在为「{intake.restaurant || '你的门店'}」出今天的全套，先想策略再动笔，大约 15-25 秒…</p>
                   <ul className="mt-2 space-y-1 text-sm text-stone-600">
                     <li>· 小红书探店笔记</li>
                     <li>· 点评好评感谢回复</li>
@@ -660,6 +697,16 @@ export function TrialFiveScreenClient() {
             </div>
           ) : (
             <div className="space-y-4">
+              {strategy ? (
+                <div className="border border-stone-900 bg-stone-900 p-4 text-white">
+                  <h3 className="text-sm font-bold tracking-wide">AI 的思路（全套内容都按这个打）</h3>
+                  <p className="mt-2 text-sm leading-6"><span className="text-stone-400">最强卖点：</span>{strategy.strongestSellingPoint}</p>
+                  <p className="mt-1 text-sm leading-6"><span className="text-stone-400">客群洞察：</span>{strategy.customerInsight}</p>
+                  <p className="mt-1 text-sm leading-6"><span className="text-stone-400">本周主攻：</span>{strategy.weekFocus}</p>
+                  <p className="mt-1 text-sm leading-6"><span className="text-stone-400">语气：</span>{strategy.tone}</p>
+                  <p className="mt-1 text-sm leading-6 text-amber-300"><span className="text-stone-400">切勿写错：</span>{strategy.riskNote}</p>
+                </div>
+              ) : null}
               <p className="border border-amber-300 bg-amber-50 p-3 text-sm leading-6 text-amber-900">{content.message}</p>
               {content.mode === 'prompt-preview'
                 ? (content.prompts || []).map(prompt => (
