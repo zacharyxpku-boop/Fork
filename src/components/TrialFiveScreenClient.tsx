@@ -98,6 +98,8 @@ export function TrialFiveScreenClient() {
   const [advisorTurns, setAdvisorTurns] = useState<AdvisorTurn[]>([]);
   const [memoryNotes, setMemoryNotes] = useState<TrialMemoryNote[]>([]);
   const [accessToken, setAccessToken] = useState('');
+  const [llmActions, setLlmActions] = useState<{ title: string; doNow: string; owner: string; evidence: string }[]>([]);
+  const [actionsLoading, setActionsLoading] = useState(false);
 
   function apiHeaders(): Record<string, string> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -135,7 +137,41 @@ export function TrialFiveScreenClient() {
   }, [hydrated, accessToken]);
 
   const intakeReady = Boolean(intake.restaurant && intake.offer);
-  const todayActions = useMemo(() => (intakeReady ? deriveTodayActions(intake) : []), [intake, intakeReady]);
+  const ruleActions = useMemo(() => (intakeReady ? deriveTodayActions(intake) : []), [intake, intakeReady]);
+  const todayActions = useMemo(
+    () =>
+      llmActions.length === 3
+        ? llmActions.map((action, index) => ({
+            id: `llm-action-${index}`,
+            title: action.title,
+            ownerLabel: action.owner,
+            doNow: action.doNow,
+            evidenceRequired: action.evidence,
+          }))
+        : ruleActions,
+    [llmActions, ruleActions],
+  );
+
+  useEffect(() => {
+    if (!hydrated || step !== 2 || !intakeReady || llmActions.length === 3 || actionsLoading) return;
+    setActionsLoading(true);
+    fetch('/api/restaurant-agent/today-actions', {
+      method: 'POST',
+      headers: apiHeaders(),
+      body: JSON.stringify({ intake }),
+    })
+      .then(response => response.json())
+      .then(payload => {
+        if (payload?.ok && payload.mode === 'generated' && payload.actions?.length === 3) {
+          setLlmActions(payload.actions);
+        }
+      })
+      .catch(() => {
+        // 失败保持规则版三件事，不打扰老板
+      })
+      .finally(() => setActionsLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apiHeaders 仅依赖 accessToken
+  }, [hydrated, step, intakeReady, accessToken]);
   const tomorrowPlan = useMemo(
     () => (intakeReady ? deriveTomorrowPlan(intake, proofs, memoryNotes) : []),
     [intake, intakeReady, proofs, memoryNotes],
@@ -342,6 +378,7 @@ export function TrialFiveScreenClient() {
     setStep(1);
     setAdvisorTurns([]);
     setAdvisorResult(null);
+    setLlmActions([]);
   }
 
   function shareCurrentScreen() {
@@ -463,6 +500,9 @@ export function TrialFiveScreenClient() {
 
       {step === 2 ? (
         <section aria-label="第二屏">
+          {actionsLoading && llmActions.length !== 3 ? (
+            <p className="mb-3 border border-stone-300 bg-white p-3 text-sm text-stone-600">正在按你的门店重新拟三件事，先看通用版，几秒后自动更新…</p>
+          ) : null}
           <div className="space-y-3">
             {todayActions.map((action, index) => (
               <article key={action.id} className="border border-stone-300 bg-white p-4">

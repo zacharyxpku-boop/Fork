@@ -81,6 +81,23 @@ ${trimmed}
 - 输出 JSON：{"reply": "...", "risk_note": ""}`;
 }
 
+export function buildTodayActionsPrompt(intake: RestaurantContentIntake, memoryScope?: string): { system: string; user: string } {
+  const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
+  const system = [
+    `你是「${intake.restaurant || '这家门店'}」的经营搭档，每天早上给老板列今天最该做的三件事。你说话具体、像在店里盯着干活的人，不打官腔。`,
+    `门店档案：\n${intakeContext(intake)}`,
+    memory,
+    SHARED_RULES,
+  ].filter(Boolean).join('\n\n');
+  const user = `给老板列今天最该做的三件事。要求：
+- 三件事必须具体到这家店和这个主推（写出菜名、时段、数字），不许出现"优化内容""提升曝光"这类空话
+- 每件事 30 字以内说清"现在做什么"，再补一句怎么做
+- 每件事指定负责人（店长/运营/员工三选一）和做完要留的凭证（截图/照片/数量记录）
+- 三件事按"今天下午就能动手"排序，第一件必须是 30 分钟内能完成的
+输出 JSON 数组：[{"title":"...","doNow":"...","owner":"店长|运营|员工","evidence":"..."}]，正好 3 条。`;
+  return { system, user };
+}
+
 export function buildRevisionUserPrompt(previousOutput: string, feedback: string, originalRequest: string): string {
   return `这是你上一版的输出：
 """

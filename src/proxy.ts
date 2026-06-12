@@ -22,6 +22,7 @@ const PUBLIC_EXACT_PATHS = new Set([
   '/api/restaurant-agent/review-reply',
   '/api/restaurant-agent/memory',
   '/api/restaurant-agent/llm-health',
+  '/api/restaurant-agent/today-actions',
 ]);
 
 const PUBLIC_PAGE_PREFIXES = [
