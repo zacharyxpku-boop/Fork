@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { buildWeeklyPlanPrompt } from '@/lib/restaurant-advisor-prompts';
+import { buildPlanDayContentPrompt, buildWeeklyPlanPrompt } from '@/lib/restaurant-advisor-prompts';
 import type { RestaurantContentIntake } from '@/lib/restaurant-content-prompts';
-import { parseLlmJsonArray } from '@/lib/llm-output-parser';
+import { parseLlmJson, parseLlmJsonArray, toContentFields } from '@/lib/llm-output-parser';
+import { checkContentFacts } from '@/lib/restaurant-content-fact-check';
 import { llmChat, LlmError } from '@/lib/llm-client';
 import { accessDeniedMessage, recordTrialLlmUsage, resolveTrialAccess, tenantScopedKey, TRIAL_TOKEN_HEADER } from '@/lib/trial-access-guard';
 
@@ -31,8 +32,16 @@ function parsePlan(output: string): WeeklyPlanDay[] {
     .slice(0, 7);
 }
 
+interface ExpandDayRequest {
+  day: string;
+  angle: string;
+  channel: string;
+  publishTime: string;
+  hook: string;
+}
+
 export async function POST(request: NextRequest) {
-  let body: { intake?: RestaurantContentIntake };
+  let body: { intake?: RestaurantContentIntake; expandDay?: ExpandDayRequest };
   try {
     body = await request.json();
   } catch {
@@ -48,7 +57,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: `access-${access.reason}`, message: accessDeniedMessage(access.reason) }, { status: 429 });
   }
 
-  const prompt = buildWeeklyPlanPrompt(intake, tenantScopedKey(access.tenant, intake.restaurant));
+  const memoryScope = tenantScopedKey(access.tenant, intake.restaurant);
+
+  if (body.expandDay?.day && body.expandDay?.angle) {
+    const dayPrompt = buildPlanDayContentPrompt(intake, body.expandDay, memoryScope);
+    try {
+      const result = await llmChat({ system: dayPrompt.system, user: dayPrompt.user, temperature: 0.8, maxTokens: 900 });
+      if (result.mode === 'no-key') {
+        return NextResponse.json({ ok: true, mode: 'prompt-preview', prompt: result.renderedPrompt });
+      }
+      recordTrialLlmUsage(access.tenant, 1);
+      const parsed = parseLlmJson(result.output);
+      return NextResponse.json({
+        ok: true,
+        mode: 'generated',
+        dayContent: {
+          day: body.expandDay.day,
+          output: result.output,
+          fields: parsed.ok ? toContentFields('xhs-note', parsed.data) : [],
+          warnings: checkContentFacts(result.output, intake),
+        },
+      });
+    } catch (error) {
+      const kind = error instanceof LlmError ? error.kind : 'unknown';
+      return NextResponse.json({ ok: false, error: `llm-${kind}` }, { status: 502 });
+    }
+  }
+
+  const prompt = buildWeeklyPlanPrompt(intake, memoryScope);
 
   try {
     const result = await llmChat({ system: prompt.system, user: prompt.user, temperature: 0.7, maxTokens: 1400 });

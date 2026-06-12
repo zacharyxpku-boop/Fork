@@ -103,6 +103,33 @@ export function TrialFiveScreenClient() {
   const [weeklyPlan, setWeeklyPlan] = useState<{ day: string; angle: string; channel: string; publishTime: string; why: string; hook: string }[]>([]);
   const [weeklyLoading, setWeeklyLoading] = useState(false);
   const [weeklyError, setWeeklyError] = useState('');
+  const [dayContents, setDayContents] = useState<Record<string, { fields: { key: string; label: string; value: string }[]; output: string; warnings: { code: string; message: string }[] }>>({});
+  const [dayBusy, setDayBusy] = useState('');
+
+  async function expandPlanDay(dayPlan: { day: string; angle: string; channel: string; publishTime: string; hook: string }) {
+    setDayBusy(dayPlan.day);
+    try {
+      const response = await fetch('/api/restaurant-agent/weekly-plan', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ intake, expandDay: dayPlan }),
+      });
+      const payload = await response.json();
+      if (payload?.ok && payload.mode === 'generated' && payload.dayContent) {
+        setDayContents(previous => ({ ...previous, [dayPlan.day]: payload.dayContent }));
+      } else if (payload?.mode === 'prompt-preview') {
+        setCopyFeedback('还没配置 AI 账号，先复制整周计划手动写');
+        window.setTimeout(() => setCopyFeedback(''), 2500);
+      } else {
+        throw new Error(payload?.error || 'expand-failed');
+      }
+    } catch {
+      setCopyFeedback('这条没写出来，稍后重试');
+      window.setTimeout(() => setCopyFeedback(''), 2500);
+    } finally {
+      setDayBusy('');
+    }
+  }
 
   function apiHeaders(): Record<string, string> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -406,6 +433,7 @@ export function TrialFiveScreenClient() {
     setAdvisorResult(null);
     setLlmActions([]);
     setWeeklyPlan([]);
+    setDayContents({});
   }
 
   function shareCurrentScreen() {
@@ -693,6 +721,45 @@ export function TrialFiveScreenClient() {
                         </div>
                         <p className="mt-1 text-sm leading-6 text-stone-800">开头钩子：{dayPlan.hook}</p>
                         <p className="mt-1 text-xs leading-5 text-stone-500">{dayPlan.why}</p>
+                        {dayContents[dayPlan.day] ? (
+                          <div className="mt-2 border border-stone-300 bg-white p-3">
+                            {dayContents[dayPlan.day].warnings?.length ? (
+                              <div className="mb-2 border border-rose-300 bg-rose-50 p-2">
+                                {dayContents[dayPlan.day].warnings.map(warning => (
+                                  <p key={warning.message} className="text-xs leading-5 text-rose-700">· {warning.message}</p>
+                                ))}
+                              </div>
+                            ) : null}
+                            {dayContents[dayPlan.day].fields.length > 0 ? (
+                              dayContents[dayPlan.day].fields.map(fieldItem => (
+                                <p key={fieldItem.key} className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">
+                                  <span className="text-xs font-semibold text-stone-500">{fieldItem.label}：</span>{fieldItem.value}
+                                </p>
+                              ))
+                            ) : (
+                              <pre className="whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{dayContents[dayPlan.day].output}</pre>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const dc = dayContents[dayPlan.day];
+                                void copyText(dc.fields.length ? dc.fields.map(fieldItem => fieldItem.value).join('\n\n') : dc.output, `${dayPlan.day}的内容`);
+                              }}
+                              className="mt-2 w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
+                            >
+                              复制{dayPlan.day}这条
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={dayBusy === dayPlan.day}
+                            onClick={() => void expandPlanDay(dayPlan)}
+                            className="mt-2 w-full border border-stone-400 bg-white p-2 text-sm font-bold text-stone-700 disabled:opacity-50"
+                          >
+                            {dayBusy === dayPlan.day ? '正在写…' : '把这条写出来'}
+                          </button>
+                        )}
                       </div>
                     ))}
                     <button

@@ -116,6 +116,32 @@ export function buildWeeklyPlanPrompt(intake: RestaurantContentIntake, memorySco
   return { system, user };
 }
 
+export function buildPlanDayContentPrompt(
+  intake: RestaurantContentIntake,
+  day: { day: string; angle: string; channel: string; publishTime: string; hook: string },
+  memoryScope?: string,
+): { system: string; user: string } {
+  const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
+  const system = [
+    `你是「${intake.restaurant || '这家门店'}」的内容写手，按本周计划把指定一天的内容写成可以直接发布的成稿。`,
+    `门店档案：\n${intakeContext(intake)}`,
+    memory,
+    SHARED_RULES,
+  ].filter(Boolean).join('\n\n');
+  const user = `把本周计划里${day.day}的这条内容写成可直接发布的成稿。
+计划要求：
+- 角度：${day.angle}
+- 渠道：${day.channel}
+- 开头钩子（围绕它展开，可微调措辞）：${day.hook}
+写作要求：
+- 按${day.channel}的平台习惯写（小红书带标题和标签；社群是短消息带行动指令；点评是从容的商家口吻；抖音给口播脚本，分镜一句一行）
+- 周末的内容如果门店活动写明周末不适用，绝不提该活动
+- 门店资料里没有的信息（原价、折扣力度、销量）连疑问句都不要提，直接绕开
+- 长度按渠道惯例，不灌水
+输出 JSON：{"title":"标题或开头（社群/点评可留空）","body":"正文或脚本全文","hashtags":["标签，没有就空数组"]}`;
+  return { system, user };
+}
+
 export function buildRevisionUserPrompt(previousOutput: string, feedback: string, originalRequest: string): string {
   return `这是你上一版的输出：
 """
