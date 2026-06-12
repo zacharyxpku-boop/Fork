@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { buildAllPosterSpecs, buildPosterSpec, buildVideoPromptRequest, type RestaurantPosterKind } from '@/lib/restaurant-visual-prompts';
+import { buildAllPosterSpecs, buildPosterSpec, buildVideoPromptRequest, POSTER_STYLES, type RestaurantPosterKind, type RestaurantPosterStyle } from '@/lib/restaurant-visual-prompts';
 import type { RestaurantContentIntake } from '@/lib/restaurant-content-prompts';
 import { generateWanxImage, hasWanxKey } from '@/lib/wanx-image';
 import { parseLlmJson } from '@/lib/llm-output-parser';
@@ -10,6 +10,7 @@ interface VisualRequestBody {
   intake?: RestaurantContentIntake;
   action?: 'poster' | 'video-prompt';
   posterKind?: RestaurantPosterKind;
+  posterStyle?: RestaurantPosterStyle;
   videoAngle?: { angle: string; hook: string };
 }
 
@@ -70,24 +71,25 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const spec = buildPosterSpec(intake, kind);
+  const style = body.posterStyle && POSTER_STYLES.includes(body.posterStyle) ? body.posterStyle : 'appetite';
+  const spec = buildPosterSpec(intake, kind, style);
   if (!hasWanxKey()) {
     return NextResponse.json({
       ok: true,
       mode: 'prompt-preview',
-      poster: { kind: spec.kind, label: spec.label, usage: spec.usage, prompt: spec.prompt },
+      poster: { kind: spec.kind, style: spec.style, styleLabel: spec.styleLabel, label: spec.label, usage: spec.usage, prompt: spec.prompt },
       message: '还没配置生图账号（AI_API_KEY）。复制这段画面描述到即梦或通义万相网页版即可生成；配置后这里直接出图。',
     });
   }
 
   const result = await generateWanxImage(spec.prompt);
   if (!result.ok) {
-    return NextResponse.json({ ok: false, error: result.error, poster: { kind: spec.kind, label: spec.label, prompt: spec.prompt } }, { status: 502 });
+    return NextResponse.json({ ok: false, error: result.error, poster: { kind: spec.kind, style: spec.style, styleLabel: spec.styleLabel, label: spec.label, prompt: spec.prompt } }, { status: 502 });
   }
   return NextResponse.json({
     ok: true,
     mode: 'generated',
-    poster: { kind: spec.kind, label: spec.label, usage: spec.usage, prompt: spec.prompt, url: result.url },
+    poster: { kind: spec.kind, style: spec.style, styleLabel: spec.styleLabel, label: spec.label, usage: spec.usage, prompt: spec.prompt, url: result.url },
     message: '图片链接 24 小时内有效，确认满意请立即保存到手机；AI 生成的菜品图与实物可能有差异，发布平台要求标注 AI 生成时记得勾选。',
   });
 }

@@ -106,6 +106,9 @@ export function toContentFields(kind: string, data: Record<string, unknown>): Co
       ].filter(field => field.value);
     case 'group-message':
       return [
+        { key: 'opening', label: '开市预告', value: text(data.opening) },
+        { key: 'midway', label: '过半提醒', value: text(data.midway) },
+        { key: 'closing', label: '收市预告', value: text(data.closing) },
         { key: 'message', label: '群消息', value: text(data.message) },
         { key: 'best_send_time', label: '建议发送时间', value: text(data.best_send_time) },
       ].filter(field => field.value);

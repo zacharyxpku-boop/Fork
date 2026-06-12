@@ -44,7 +44,7 @@ describe('restaurant content prompts', () => {
 
   it('omits optional lines instead of inventing placeholder facts', () => {
     const minimal = buildXhsNotePrompt({ restaurant: '小店', offer: '招牌面' });
-    expect(minimal.user).not.toContain('赠品');
+    expect(minimal.user).toContain('资料里有才写');
     expect(minimal.user).not.toContain('今日限量');
     expect(minimal.user).not.toContain('undefined');
   });

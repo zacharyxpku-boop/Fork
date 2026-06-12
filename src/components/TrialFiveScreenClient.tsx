@@ -105,7 +105,7 @@ export function TrialFiveScreenClient() {
   const [weeklyError, setWeeklyError] = useState('');
   const [dayContents, setDayContents] = useState<Record<string, { fields: { key: string; label: string; value: string }[]; output: string; warnings: { code: string; message: string }[] }>>({});
   const [dayBusy, setDayBusy] = useState('');
-  const [posters, setPosters] = useState<Record<string, { label: string; usage: string; prompt: string; url?: string }>>({});
+  const [posters, setPosters] = useState<Record<string, { label: string; usage: string; prompt: string; url?: string; style?: string; styleLabel?: string }>>({});
   const [posterBusy, setPosterBusy] = useState('');
   const [videoPrompt, setVideoPrompt] = useState<{ videoPrompt: string; voiceover: string; duration: string } | null>(null);
   const [videoBusy, setVideoBusy] = useState(false);
@@ -146,13 +146,13 @@ export function TrialFiveScreenClient() {
     }
   }
 
-  async function generatePoster(kind: string, label: string) {
+  async function generatePoster(kind: string, label: string, style?: string) {
     setPosterBusy(kind);
     try {
       const response = await fetch('/api/restaurant-agent/visual', {
         method: 'POST',
         headers: apiHeaders(),
-        body: JSON.stringify({ intake, action: 'poster', posterKind: kind }),
+        body: JSON.stringify({ intake, action: 'poster', posterKind: kind, posterStyle: style }),
       });
       const payload = await response.json();
       if (payload?.ok && payload.poster) {
@@ -826,7 +826,23 @@ export function TrialFiveScreenClient() {
                 </div>
                 {Object.entries(posters).map(([kind, poster]) => (
                   <div key={kind} className="mt-3 border border-stone-200 bg-stone-50 p-3">
-                    <p className="text-sm font-bold text-stone-900">{poster.label} <span className="font-normal text-stone-500">· {poster.usage}</span></p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-stone-900">{poster.label} <span className="font-normal text-stone-500">· {poster.styleLabel || ''}</span></p>
+                      <button
+                        type="button"
+                        disabled={posterBusy === kind}
+                        onClick={() => {
+                          const styles = ['appetite', 'mood', 'street'];
+                          const current = styles.indexOf(poster.style || 'appetite');
+                          const nextStyle = styles[(current + 1) % styles.length];
+                          void generatePoster(kind, poster.label, nextStyle);
+                        }}
+                        className="shrink-0 border border-stone-400 px-2 py-1 text-xs font-bold text-stone-600 disabled:opacity-50"
+                      >
+                        {posterBusy === kind ? '生成中…' : '换个风格'}
+                      </button>
+                    </div>
+                    <p className="text-xs text-stone-500">{poster.usage}</p>
                     {poster.url ? (
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element -- wanx 外链临时图，不走 next/image 优化 */}

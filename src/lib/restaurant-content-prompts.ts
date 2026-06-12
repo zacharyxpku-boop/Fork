@@ -46,7 +46,7 @@ export function buildXhsNotePrompt(intake: RestaurantContentIntake): RestaurantC
     kind: 'xhs-note',
     label: '小红书探店笔记',
     system: `你是一个常住附近、真实到店吃过的普通顾客，在小红书写探店笔记。你写东西口语、具体、有画面感，会提到自己什么时候去的、点了什么、值不值。你不是商家，不打广告腔。\n\n${SHARED_RULES}`,
-    user: `根据下面的门店资料写一篇小红书探店笔记。\n\n${intakeBlock(intake)}\n\n要求：\n- 标题不超过 20 字，有具体细节钩子，不用感叹号堆砌\n- 正文 150-250 字，第一人称，至少提到一个具体的就餐场景（什么时候去、和谁、点了什么）\n- 如果资料里给了到店理由，自然带出来，像顺嘴提到，不像广告；没给就不提\n- 结尾给一句行动暗示\n- 3 到 5 个话题标签，含一个地理位置标签\n\n输出 JSON：{"title": "...", "body": "...", "hashtags": ["...", "..."]}`,
+    user: `根据下面的门店资料写一篇小红书探店笔记。\n\n${intakeBlock(intake)}\n\n标题（不超过 20 字，从三种套路里选最适合这家店的一种）：数字具体型（用真实数字制造信息量）／场景代入型（直击客群此刻处境，如下班、加班、聚餐）／反差悬念型（用意外感勾人，但不许夸张失实）。不用感叹号堆砌。\n\n正文（150-250 字，按这个结构写但不要露出结构感）：\n1. 场景开头：什么时候、和谁、什么状态下去的，一两句真实感\n2. 细节证言：菜品的具体感官细节（口感、温度、分量），只写资料能支撑的\n3. 价值点：自然带出价格、时段、赠品（资料里有才写），像顺嘴提到，不像广告\n4. 行动暗示：结尾一句轻推（限量或时段提醒，不喊口号）\n\n其他要求：通篇像真人发帖，允许无伤大雅的真实感表达，但不许虚构具体缺点；3 到 5 个话题标签，含一个地理位置标签；资料里没有的信息一个字不许编。\n\n输出 JSON：{"title": "...", "body": "...", "hashtags": ["...", "..."]}`,
     outputSchema: '{"title": string, "body": string, "hashtags": string[]}',
   };
 }
@@ -69,8 +69,8 @@ export function buildGroupMessagePrompt(intake: RestaurantContentIntake): Restau
     kind: 'group-message',
     label: '微信社群今日话术',
     system: `你是「${intake.restaurant}」的店长，在自己门店的顾客微信群里发今天的消息。群里都是老顾客，你说话像熟人，短句，不刷屏，不发长篇。\n\n${SHARED_RULES}`,
-    user: `根据门店资料写一条今天发群里的消息。\n\n${intakeBlock(intake)}\n\n要求：\n- 不超过 80 字\n- 开头直接说今天有什么（套餐/限量/赠品），不要"亲爱的家人们"\n- 带一个明确的行动指令（如：要来的回复 1，给你留位）\n- 如果有限量数字一定要用上，制造真实的紧迫感而不是话术紧迫感\n\n输出 JSON：{"message": "...", "best_send_time": "建议发送时间和原因，一句话"}`,
-    outputSchema: '{"message": string, "best_send_time": string}',
+    user: `根据门店资料写今天发群里的消息，三个时机各写一条。\n\n${intakeBlock(intake)}\n\n三个时机的写法：\n1. 开市预告（饭点前 1-2 小时发）：说今天有什么、限量多少，带行动指令（如"要来的回复 1，给你留位"）\n2. 过半提醒（饭点中段发）：报真实进度感（如"40 份过半了"，只能用资料里的限量数字推算，不许编具体已售数），轻推犹豫的人\n3. 收市预告（打烊前 1-2 小时发）：给今天没来的人台阶（"今天没赶上的，明天同一时段还有"），不催不卑\n\n通用要求：\n- 每条不超过 80 字\n- 不要"亲爱的家人们"，像店长本人在群里说话\n- 一天最多发这三条，告诉老板别刷屏\n\n输出 JSON：{"opening": "开市预告", "midway": "过半提醒", "closing": "收市预告", "best_send_time": "三条各自的建议发送时间，一句话"}`,
+    outputSchema: '{"opening": string, "midway": string, "closing": string, "best_send_time": string}',
   };
 }
 
