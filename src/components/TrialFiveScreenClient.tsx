@@ -403,30 +403,61 @@ export function TrialFiveScreenClient() {
           <div className="space-y-4">
             {field('门店名称', 'restaurant', { placeholder: '例：椒香记·川味面馆（国贸店）' })}
             {field('主推菜 / 套餐（带价格）', 'offer', { placeholder: '例：藤椒鸡丝拌面双人套餐 ¥59.9' })}
-            {field('目标客群', 'audience', { placeholder: '例：附近三公里写字楼晚餐白领' })}
-            {field('主推渠道', 'channels', { placeholder: '例：大众点评 / 小红书 / 微信社群' })}
-            {field('到店理由', 'visitReason', { textarea: true, placeholder: '例：工作日 17:30-20:00 到店免排队，套餐送酸梅汤' })}
-            {field('活动边界（必须遵守的限制）', 'constraints', { textarea: true, placeholder: '例：周末不适用；每桌限一张券；每天限量 40 份' })}
-            {field('已有素材', 'evidence', { textarea: true, placeholder: '例：菜单截图、菜品图、团购券规则截图' })}
-            <label className="block">
-              <span className="mb-1 block text-sm font-semibold text-stone-800">试用口令（发起试用的人给你的）</span>
-              <input
-                className="w-full border border-stone-300 bg-white p-3 text-base text-stone-900"
-                placeholder="没有口令可先体验，AI 生成需要口令"
-                value={accessToken}
-                onChange={event => setAccessToken(event.target.value)}
-              />
-            </label>
+            <button
+              type="button"
+              onClick={() => setIntake({
+                restaurant: '椒香记·川味面馆（国贸店）',
+                offer: '藤椒鸡丝拌面双人套餐 ¥59.9',
+                audience: '附近三公里写字楼晚餐白领',
+                channels: '大众点评 / 小红书 / 微信社群',
+                visitReason: '工作日 17:30-20:00 到店免排队，套餐送两杯酸梅汤',
+                constraints: '周末不适用；每桌限用一张券；每天限量 40 份',
+                evidence: '菜单截图、菜品图、团购券规则截图',
+              })}
+              className="w-full border border-dashed border-stone-400 bg-white p-2 text-sm text-stone-600"
+            >
+              先用示例门店看看效果
+            </button>
+            <details className="border border-stone-200 bg-white p-3">
+              <summary className="cursor-pointer text-sm font-semibold text-stone-700">补充信息（选填，填得越细文案越准）</summary>
+              <div className="mt-3 space-y-4">
+                {field('目标客群', 'audience', { placeholder: '例：附近三公里写字楼晚餐白领' })}
+                {field('主推渠道', 'channels', { placeholder: '例：大众点评 / 小红书 / 微信社群' })}
+                {field('到店理由', 'visitReason', { textarea: true, placeholder: '例：工作日 17:30-20:00 到店免排队，套餐送酸梅汤' })}
+                {field('活动边界（必须遵守的限制）', 'constraints', { textarea: true, placeholder: '例：周末不适用；每桌限一张券；每天限量 40 份' })}
+                {field('已有素材', 'evidence', { textarea: true, placeholder: '例：菜单截图、菜品图、团购券规则截图' })}
+                <label className="block">
+                  <span className="mb-1 block text-sm font-semibold text-stone-800">试用口令（发起试用的人给你的）</span>
+                  <input
+                    className="w-full border border-stone-300 bg-white p-3 text-base text-stone-900"
+                    placeholder="没有口令可先体验，AI 生成需要口令"
+                    value={accessToken}
+                    onChange={event => setAccessToken(event.target.value)}
+                  />
+                </label>
+              </div>
+            </details>
           </div>
+          <button
+            type="button"
+            disabled={!intakeReady || contentLoading}
+            onClick={() => {
+              setStep(3);
+              if (!content) void generateContent();
+            }}
+            className="mt-5 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            直接生成能发的内容
+          </button>
           <button
             type="button"
             disabled={!intakeReady}
             onClick={() => setStep(2)}
-            className="mt-5 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-2 w-full border border-stone-400 bg-white p-3 text-base font-bold text-stone-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            生成今天的三件事
+            先看今天该做的三件事
           </button>
-          {!intakeReady ? <p className="mt-2 text-sm text-stone-500">先填门店名称和主推套餐，其他可以稍后补。</p> : null}
+          {!intakeReady ? <p className="mt-2 text-sm text-stone-500">填上门店名称和主推套餐就能开始。</p> : null}
         </section>
       ) : null}
 
@@ -453,14 +484,26 @@ export function TrialFiveScreenClient() {
           {!content ? (
             <div>
               <p className="text-sm leading-6 text-stone-700">为「{intake.offer || '主推套餐'}」准备四类渠道内容：小红书探店、点评好评回复、差评挽回、社群话术。</p>
-              <button
-                type="button"
-                disabled={contentLoading}
-                onClick={() => void generateContent()}
-                className="mt-4 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:opacity-50"
-              >
-                {contentLoading ? '正在准备…' : '准备渠道内容'}
-              </button>
+              {contentLoading ? (
+                <div className="mt-4 border border-stone-300 bg-white p-4">
+                  <p className="text-sm font-semibold text-stone-800">正在为「{intake.restaurant || '你的门店'}」写四条内容，大约 10-15 秒…</p>
+                  <ul className="mt-2 space-y-1 text-sm text-stone-600">
+                    <li>· 小红书探店笔记</li>
+                    <li>· 点评好评感谢回复</li>
+                    <li>· 点评差评挽回回复</li>
+                    <li>· 微信社群今日话术</li>
+                  </ul>
+                  <p className="mt-2 text-xs text-stone-500">写完会和你填的价格、限量逐项核对，有出入会标红提醒。</p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void generateContent()}
+                  className="mt-4 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white"
+                >
+                  生成渠道内容
+                </button>
+              )}
               {contentError ? <p className="mt-2 text-sm text-rose-700">出错了：{contentError}</p> : null}
             </div>
           ) : (
