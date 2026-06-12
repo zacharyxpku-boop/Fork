@@ -105,6 +105,61 @@ export function TrialFiveScreenClient() {
   const [weeklyError, setWeeklyError] = useState('');
   const [dayContents, setDayContents] = useState<Record<string, { fields: { key: string; label: string; value: string }[]; output: string; warnings: { code: string; message: string }[] }>>({});
   const [dayBusy, setDayBusy] = useState('');
+  const [posters, setPosters] = useState<Record<string, { label: string; usage: string; prompt: string; url?: string }>>({});
+  const [posterBusy, setPosterBusy] = useState('');
+  const [videoPrompt, setVideoPrompt] = useState<{ videoPrompt: string; voiceover: string; duration: string } | null>(null);
+  const [videoBusy, setVideoBusy] = useState(false);
+
+  async function generatePoster(kind: string, label: string) {
+    setPosterBusy(kind);
+    try {
+      const response = await fetch('/api/restaurant-agent/visual', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ intake, action: 'poster', posterKind: kind }),
+      });
+      const payload = await response.json();
+      if (payload?.ok && payload.poster) {
+        setPosters(previous => ({ ...previous, [kind]: payload.poster }));
+        if (payload.mode === 'generated') {
+          setCopyFeedback('图已生成，满意请立即保存（链接 24 小时有效）');
+          window.setTimeout(() => setCopyFeedback(''), 3500);
+        }
+      } else {
+        throw new Error(payload?.error || 'poster-failed');
+      }
+    } catch {
+      setCopyFeedback(`${label}没生成出来，稍后重试`);
+      window.setTimeout(() => setCopyFeedback(''), 2500);
+    } finally {
+      setPosterBusy('');
+    }
+  }
+
+  async function generateVideoPrompt() {
+    setVideoBusy(true);
+    try {
+      const response = await fetch('/api/restaurant-agent/visual', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ intake, action: 'video-prompt' }),
+      });
+      const payload = await response.json();
+      if (payload?.ok && payload.mode === 'generated' && payload.videoPrompt) {
+        setVideoPrompt(payload.videoPrompt);
+      } else if (payload?.mode === 'prompt-preview') {
+        setCopyFeedback('还没配置 AI 账号，无法写视频稿');
+        window.setTimeout(() => setCopyFeedback(''), 2500);
+      } else {
+        throw new Error(payload?.error || 'video-prompt-failed');
+      }
+    } catch {
+      setCopyFeedback('视频稿没写出来，稍后重试');
+      window.setTimeout(() => setCopyFeedback(''), 2500);
+    } finally {
+      setVideoBusy(false);
+    }
+  }
 
   async function expandPlanDay(dayPlan: { day: string; angle: string; channel: string; publishTime: string; hook: string }) {
     setDayBusy(dayPlan.day);
@@ -434,6 +489,8 @@ export function TrialFiveScreenClient() {
     setLlmActions([]);
     setWeeklyPlan([]);
     setDayContents({});
+    setPosters({});
+    setVideoPrompt(null);
   }
 
   function shareCurrentScreen() {
@@ -698,6 +755,76 @@ export function TrialFiveScreenClient() {
                     <li key={item} className="text-sm leading-6 text-stone-700">□ {item}</li>
                   ))}
                 </ul>
+              </div>
+              <div className="border border-stone-300 bg-white p-4">
+                <h3 className="text-base font-bold text-stone-900">宣传图和视频</h3>
+                <p className="mt-1 text-sm text-stone-600">给上面的文案配图：选一种用途生成，或让 AI 写一份能直接贴进即梦的视频拍摄稿。</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {[
+                    { kind: 'dish-hero', label: '菜品特写主图' },
+                    { kind: 'dining-scene', label: '就餐场景图' },
+                    { kind: 'promo-poster', label: '套餐氛围海报' },
+                    { kind: 'group-card', label: '社群分享卡' },
+                  ].map(item => (
+                    <button
+                      key={item.kind}
+                      type="button"
+                      disabled={posterBusy === item.kind}
+                      onClick={() => void generatePoster(item.kind, item.label)}
+                      className="border border-stone-400 bg-white p-2 text-sm font-bold text-stone-700 disabled:opacity-50"
+                    >
+                      {posterBusy === item.kind ? '生成中…' : item.label}
+                    </button>
+                  ))}
+                </div>
+                {Object.entries(posters).map(([kind, poster]) => (
+                  <div key={kind} className="mt-3 border border-stone-200 bg-stone-50 p-3">
+                    <p className="text-sm font-bold text-stone-900">{poster.label} <span className="font-normal text-stone-500">· {poster.usage}</span></p>
+                    {poster.url ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- wanx 外链临时图，不走 next/image 优化 */}
+                        <img src={poster.url} alt={poster.label} className="mt-2 w-full border border-stone-300" />
+                        <a href={poster.url} target="_blank" rel="noreferrer" className="mt-2 block w-full border border-stone-900 p-2 text-center text-sm font-bold text-stone-900">
+                          打开原图保存（24 小时内有效）
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-1 text-xs text-stone-500">还没配置生图账号，复制这段画面描述到即梦或通义万相网页版生成：</p>
+                        <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{poster.prompt}</p>
+                        <button
+                          type="button"
+                          onClick={() => void copyText(poster.prompt, poster.label)}
+                          className="mt-2 w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
+                        >
+                          复制画面描述
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  disabled={videoBusy}
+                  onClick={() => void generateVideoPrompt()}
+                  className="mt-3 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:opacity-50"
+                >
+                  {videoBusy ? 'AI 在写视频稿…' : '写一份宣传视频拍摄稿（贴进即梦可用）'}
+                </button>
+                {videoPrompt ? (
+                  <div className="mt-3 border border-stone-200 bg-stone-50 p-3">
+                    <p className="text-sm font-bold text-stone-900">视频生成稿 <span className="font-normal text-stone-500">· {videoPrompt.duration}</span></p>
+                    <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-stone-800">{videoPrompt.videoPrompt}</p>
+                    {videoPrompt.voiceover ? <p className="mt-2 text-sm text-stone-700">建议口播：{videoPrompt.voiceover}</p> : null}
+                    <button
+                      type="button"
+                      onClick={() => void copyText(videoPrompt.videoPrompt, '视频生成稿')}
+                      className="mt-2 w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
+                    >
+                      复制去即梦生成
+                    </button>
+                  </div>
+                ) : null}
               </div>
               <div className="border border-stone-300 bg-white p-4">
                 <h3 className="text-base font-bold text-stone-900">这周怎么打：7 天发布节奏</h3>
