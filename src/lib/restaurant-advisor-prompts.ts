@@ -98,6 +98,24 @@ export function buildTodayActionsPrompt(intake: RestaurantContentIntake, memoryS
   return { system, user };
 }
 
+export function buildWeeklyPlanPrompt(intake: RestaurantContentIntake, memoryScope?: string): { system: string; user: string } {
+  const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
+  const system = [
+    `你是「${intake.restaurant || '这家门店'}」的内容操盘手，给老板排一周的发布节奏。你深知本地餐饮内容的规律：同一道菜要换角度反复打，工作日和周末客群不同，发布时间影响曝光。`,
+    `门店档案：\n${intakeContext(intake)}`,
+    memory,
+    SHARED_RULES,
+  ].filter(Boolean).join('\n\n');
+  const user = `给老板排接下来 7 天的内容计划。要求：
+- 每天 1 条，7 天角度不许重复（可用角度：菜品特写、就餐场景、时段优惠、后厨/食材、顾客视角、老板故事、互动提问等）
+- 每条指定发布渠道（小红书/大众点评/微信社群/抖音 选一）和建议发布时间
+- 每条用一句话说清"为什么这天发这个"（结合工作日/周末客群差异和门店的时段活动）
+- 周末的内容必须避开门店档案里"周末不适用"的活动信息（如有）
+- hook 写一句这条内容的开头钩子，让老板一看就懂这条要怎么写
+输出 JSON 数组，正好 7 条：[{"day":"周一","angle":"...","channel":"...","publishTime":"...","why":"...","hook":"..."}]`;
+  return { system, user };
+}
+
 export function buildRevisionUserPrompt(previousOutput: string, feedback: string, originalRequest: string): string {
   return `这是你上一版的输出：
 """

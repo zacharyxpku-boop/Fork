@@ -100,6 +100,9 @@ export function TrialFiveScreenClient() {
   const [accessToken, setAccessToken] = useState('');
   const [llmActions, setLlmActions] = useState<{ title: string; doNow: string; owner: string; evidence: string }[]>([]);
   const [actionsLoading, setActionsLoading] = useState(false);
+  const [weeklyPlan, setWeeklyPlan] = useState<{ day: string; angle: string; channel: string; publishTime: string; why: string; hook: string }[]>([]);
+  const [weeklyLoading, setWeeklyLoading] = useState(false);
+  const [weeklyError, setWeeklyError] = useState('');
 
   function apiHeaders(): Record<string, string> {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -195,6 +198,29 @@ export function TrialFiveScreenClient() {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- apiHeaders 仅依赖 accessToken，已在依赖里
   }, [hydrated, intake.restaurant, accessToken]);
+
+  async function loadWeeklyPlan() {
+    setWeeklyLoading(true);
+    setWeeklyError('');
+    try {
+      const response = await fetch('/api/restaurant-agent/weekly-plan', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ intake }),
+      });
+      const payload = await response.json();
+      if (!payload?.ok) throw new Error(payload?.message || payload?.error || 'weekly-plan-failed');
+      if (payload.mode === 'generated' && payload.plan?.length) {
+        setWeeklyPlan(payload.plan);
+      } else if (payload.mode === 'prompt-preview') {
+        setWeeklyError('还没配置 AI 账号，一周计划需要 AI 生成。');
+      }
+    } catch (error) {
+      setWeeklyError(error instanceof Error ? error.message : '计划生成失败，稍后再试');
+    } finally {
+      setWeeklyLoading(false);
+    }
+  }
 
   function rememberRevisionPreference(feedback: string) {
     if (!intake.restaurant) return;
@@ -379,6 +405,7 @@ export function TrialFiveScreenClient() {
     setAdvisorTurns([]);
     setAdvisorResult(null);
     setLlmActions([]);
+    setWeeklyPlan([]);
   }
 
   function shareCurrentScreen() {
@@ -643,6 +670,41 @@ export function TrialFiveScreenClient() {
                     <li key={item} className="text-sm leading-6 text-stone-700">□ {item}</li>
                   ))}
                 </ul>
+              </div>
+              <div className="border border-stone-300 bg-white p-4">
+                <h3 className="text-base font-bold text-stone-900">这周怎么打：7 天发布节奏</h3>
+                <p className="mt-1 text-sm text-stone-600">同一道菜换七个角度连着打，比一天发五条有用。每天一条、角度不重、渠道和时间都排好。</p>
+                {weeklyPlan.length === 0 ? (
+                  <button
+                    type="button"
+                    disabled={weeklyLoading}
+                    onClick={() => void loadWeeklyPlan()}
+                    className="mt-3 w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:opacity-50"
+                  >
+                    {weeklyLoading ? '正在排这周的计划，约 15 秒…' : '生成一周作战计划'}
+                  </button>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {weeklyPlan.map(dayPlan => (
+                      <div key={dayPlan.day} className="border border-stone-200 bg-stone-50 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-bold text-stone-900">{dayPlan.day} · {dayPlan.angle}</span>
+                          <span className="shrink-0 text-xs text-stone-500">{dayPlan.channel} {dayPlan.publishTime}</span>
+                        </div>
+                        <p className="mt-1 text-sm leading-6 text-stone-800">开头钩子：{dayPlan.hook}</p>
+                        <p className="mt-1 text-xs leading-5 text-stone-500">{dayPlan.why}</p>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => void copyText(weeklyPlan.map(d => `${d.day}（${d.channel} ${d.publishTime}）${d.angle}：${d.hook}`).join('\n'), '一周计划')}
+                      className="w-full border border-stone-900 p-2 text-sm font-bold text-stone-900"
+                    >
+                      复制整周计划发给店长
+                    </button>
+                  </div>
+                )}
+                {weeklyError ? <p className="mt-2 text-sm text-rose-700">{weeklyError}</p> : null}
               </div>
               <details className="border border-stone-300 bg-white p-4">
                 <summary className="cursor-pointer text-base font-bold text-stone-900">收到顾客评价？粘贴进来生成店主回复</summary>

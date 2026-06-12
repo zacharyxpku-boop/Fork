@@ -1,30 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { buildTodayActionsPrompt } from '@/lib/restaurant-advisor-prompts';
+import { buildWeeklyPlanPrompt } from '@/lib/restaurant-advisor-prompts';
 import type { RestaurantContentIntake } from '@/lib/restaurant-content-prompts';
 import { parseLlmJsonArray } from '@/lib/llm-output-parser';
 import { llmChat, LlmError } from '@/lib/llm-client';
 import { accessDeniedMessage, recordTrialLlmUsage, resolveTrialAccess, tenantScopedKey, TRIAL_TOKEN_HEADER } from '@/lib/trial-access-guard';
 
-interface TodayActionItem {
-  title: string;
-  doNow: string;
-  owner: string;
-  evidence: string;
+interface WeeklyPlanDay {
+  day: string;
+  angle: string;
+  channel: string;
+  publishTime: string;
+  why: string;
+  hook: string;
 }
 
-function parseActions(output: string): TodayActionItem[] {
+function parsePlan(output: string): WeeklyPlanDay[] {
   const list = parseLlmJsonArray(output);
   if (!list) return [];
   return list
     .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
     .map(item => ({
-      title: String(item.title || '').trim(),
-      doNow: String(item.doNow || item.do_now || '').trim(),
-      owner: String(item.owner || '店长').trim(),
-      evidence: String(item.evidence || '').trim(),
+      day: String(item.day || '').trim(),
+      angle: String(item.angle || '').trim(),
+      channel: String(item.channel || '').trim(),
+      publishTime: String(item.publishTime || item.publish_time || '').trim(),
+      why: String(item.why || '').trim(),
+      hook: String(item.hook || '').trim(),
     }))
-    .filter(item => item.title && item.doNow)
-    .slice(0, 3);
+    .filter(item => item.day && item.angle)
+    .slice(0, 7);
 }
 
 export async function POST(request: NextRequest) {
@@ -44,19 +48,29 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: `access-${access.reason}`, message: accessDeniedMessage(access.reason) }, { status: 429 });
   }
 
-  const prompt = buildTodayActionsPrompt(intake, tenantScopedKey(access.tenant, intake.restaurant));
+  const prompt = buildWeeklyPlanPrompt(intake, tenantScopedKey(access.tenant, intake.restaurant));
 
   try {
-    const result = await llmChat({ system: prompt.system, user: prompt.user, temperature: 0.6, maxTokens: 600 });
+    const result = await llmChat({ system: prompt.system, user: prompt.user, temperature: 0.7, maxTokens: 1400 });
     if (result.mode === 'no-key') {
-      return NextResponse.json({ ok: true, mode: 'prompt-preview', actions: [] });
+      return NextResponse.json({
+        ok: true,
+        mode: 'prompt-preview',
+        message: '还没配置 AI 账号。复制下面的指令到任意对话模型，可以得到这家店的一周内容计划。',
+        prompt: result.renderedPrompt,
+      });
     }
     recordTrialLlmUsage(access.tenant, 1);
-    const actions = parseActions(result.output);
-    if (actions.length < 3) {
-      return NextResponse.json({ ok: false, error: 'parse-incomplete', raw: result.output.slice(0, 400) }, { status: 502 });
+    const plan = parsePlan(result.output);
+    if (plan.length < 5) {
+      return NextResponse.json({ ok: false, error: 'parse-incomplete' }, { status: 502 });
     }
-    return NextResponse.json({ ok: true, mode: 'generated', actions });
+    return NextResponse.json({
+      ok: true,
+      mode: 'generated',
+      plan,
+      message: '一周计划是节奏参考，老板按店里实际情况调整；涉及价格和活动的内容发布前逐条核对。',
+    });
   } catch (error) {
     const kind = error instanceof LlmError ? error.kind : 'unknown';
     return NextResponse.json({ ok: false, error: `llm-${kind}` }, { status: 502 });

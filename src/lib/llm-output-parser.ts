@@ -57,6 +57,30 @@ function extractFirstBalancedObject(text: string): string | null {
   return null;
 }
 
+/** 容错解析模型输出的 JSON 数组：剥代码块、截取首尾方括号；对象内含数组时也能取出。 */
+export function parseLlmJsonArray(text: string): unknown[] | null {
+  const raw = (text || '').trim();
+  if (!raw) return null;
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = (fenced?.[1] || raw).trim();
+  const start = candidate.indexOf('[');
+  const end = candidate.lastIndexOf(']');
+  if (start !== -1 && end > start) {
+    try {
+      const parsed = JSON.parse(candidate.slice(start, end + 1));
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // fall through
+    }
+  }
+  const asObject = parseLlmJson(raw);
+  if (asObject.ok) {
+    const nested = Object.values(asObject.data).find(Array.isArray);
+    if (nested) return nested as unknown[];
+  }
+  return null;
+}
+
 export interface ContentField {
   key: string;
   label: string;
