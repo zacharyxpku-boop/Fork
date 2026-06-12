@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { appendRestaurantStoreMemory, listRestaurantStoreMemory, type RestaurantStoreMemoryKind } from '@/lib/restaurant-store-memory';
+import { accessDeniedMessage, resolveTrialAccess, tenantScopedKey, TRIAL_TOKEN_HEADER } from '@/lib/trial-access-guard';
 
 interface MemoryRequestBody {
   action?: 'append' | 'list';
@@ -21,12 +22,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'missing-restaurant' }, { status: 400 });
   }
 
+  const access = resolveTrialAccess(request.headers.get(TRIAL_TOKEN_HEADER));
+  // 记忆读写不消耗 LLM 限额，只验口令身份；当日限额用完仍可读写记忆。
+  if (!access.allowed && access.reason !== 'daily-limit-reached') {
+    return NextResponse.json({ ok: false, error: `access-${access.reason}`, message: accessDeniedMessage(access.reason) }, { status: 401 });
+  }
+  const scopedRestaurant = tenantScopedKey(access.tenant, restaurant);
+
   if (body.action === 'list') {
-    return NextResponse.json({ ok: true, entries: listRestaurantStoreMemory(restaurant) });
+    return NextResponse.json({ ok: true, entries: listRestaurantStoreMemory(scopedRestaurant) });
   }
 
   const result = appendRestaurantStoreMemory({
-    restaurant,
+    restaurant: scopedRestaurant,
     kind: body.kind || 'campaign-note',
     note: body.note || '',
     source: body.source,

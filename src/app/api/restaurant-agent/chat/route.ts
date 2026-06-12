@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { buildAdvisorSystemPrompt, buildAdvisorUserPrompt, buildRevisionUserPrompt, type AdvisorProofSummary } from '@/lib/restaurant-advisor-prompts';
 import type { RestaurantContentIntake } from '@/lib/restaurant-content-prompts';
 import { llmChat, LlmError, type LlmChatMessage } from '@/lib/llm-client';
+import { accessDeniedMessage, recordTrialLlmUsage, resolveTrialAccess, tenantScopedKey, TRIAL_TOKEN_HEADER } from '@/lib/trial-access-guard';
 
 /** 模型偶尔会用 JSON 数组回建议；这里转成老板能读的编号段落，转不动就原样返回。 */
 function humanizeAdvisorReply(raw: string): string {
@@ -55,7 +56,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'missing-question' }, { status: 400 });
   }
 
-  const system = buildAdvisorSystemPrompt(intake, body.proofs || []);
+  const access = resolveTrialAccess(request.headers.get(TRIAL_TOKEN_HEADER));
+  if (!access.allowed) {
+    return NextResponse.json({ ok: false, error: `access-${access.reason}`, message: accessDeniedMessage(access.reason) }, { status: 429 });
+  }
+
+  const system = buildAdvisorSystemPrompt(intake, body.proofs || [], tenantScopedKey(access.tenant, intake.restaurant));
   const baseUser = buildAdvisorUserPrompt(question);
   const user = body.revision?.previousOutput && body.revision?.feedback
     ? buildRevisionUserPrompt(body.revision.previousOutput, body.revision.feedback, baseUser)
@@ -72,6 +78,7 @@ export async function POST(request: NextRequest) {
         prompt: result.renderedPrompt,
       });
     }
+    recordTrialLlmUsage(access.tenant, 1);
     return NextResponse.json({ ok: true, mode: 'generated', reply: humanizeAdvisorReply(result.output) });
   } catch (error) {
     const kind = error instanceof LlmError ? error.kind : 'unknown';

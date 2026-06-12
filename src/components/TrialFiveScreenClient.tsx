@@ -17,6 +17,7 @@ const STORAGE_KEYS = {
   content: 'wenai-trial-content',
   step: 'wenai-trial-step',
   advisor: 'wenai-trial-advisor',
+  token: 'wenai-trial-token',
 } as const;
 
 interface AdvisorTurn {
@@ -96,6 +97,13 @@ export function TrialFiveScreenClient() {
   const [advisorBusy, setAdvisorBusy] = useState(false);
   const [advisorTurns, setAdvisorTurns] = useState<AdvisorTurn[]>([]);
   const [memoryNotes, setMemoryNotes] = useState<TrialMemoryNote[]>([]);
+  const [accessToken, setAccessToken] = useState('');
+
+  function apiHeaders(): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (accessToken.trim()) headers['x-trial-token'] = accessToken.trim();
+    return headers;
+  }
 
   useEffect(() => {
     setIntake(readJson(STORAGE_KEYS.intake, EMPTY_INTAKE));
@@ -103,6 +111,7 @@ export function TrialFiveScreenClient() {
     setContent(readJson<ContentState | null>(STORAGE_KEYS.content, null));
     setStep(readJson(STORAGE_KEYS.step, 1));
     setAdvisorTurns(readJson(STORAGE_KEYS.advisor, [] as AdvisorTurn[]));
+    try { setAccessToken(window.localStorage.getItem(STORAGE_KEYS.token) || ''); } catch { /* ignore */ }
     setHydrated(true);
   }, []);
 
@@ -121,6 +130,9 @@ export function TrialFiveScreenClient() {
   useEffect(() => {
     if (hydrated) writeJson(STORAGE_KEYS.advisor, advisorTurns.slice(-12));
   }, [hydrated, advisorTurns]);
+  useEffect(() => {
+    if (hydrated) { try { window.localStorage.setItem(STORAGE_KEYS.token, accessToken); } catch { /* ignore */ } }
+  }, [hydrated, accessToken]);
 
   const intakeReady = Boolean(intake.restaurant && intake.offer);
   const todayActions = useMemo(() => (intakeReady ? deriveTodayActions(intake) : []), [intake, intakeReady]);
@@ -133,7 +145,7 @@ export function TrialFiveScreenClient() {
     if (!hydrated || !intake.restaurant) return;
     fetch('/api/restaurant-agent/memory', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: apiHeaders(),
       body: JSON.stringify({ action: 'list', restaurant: intake.restaurant }),
     })
       .then(response => response.json())
@@ -145,13 +157,14 @@ export function TrialFiveScreenClient() {
       .catch(() => {
         // 记忆读不到不阻塞主流程
       });
-  }, [hydrated, intake.restaurant]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apiHeaders 仅依赖 accessToken，已在依赖里
+  }, [hydrated, intake.restaurant, accessToken]);
 
   function rememberRevisionPreference(feedback: string) {
     if (!intake.restaurant) return;
     void fetch('/api/restaurant-agent/memory', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: apiHeaders(),
       body: JSON.stringify({ restaurant: intake.restaurant, kind: 'revision-preference', note: feedback, source: 'revision' }),
     }).catch(() => undefined);
   }
@@ -163,7 +176,7 @@ export function TrialFiveScreenClient() {
     try {
       const response = await fetch('/api/restaurant-agent/content', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiHeaders(),
         body: JSON.stringify({ intake, revision: { kind, previousOutput, feedback } }),
       });
       const payload = await response.json();
@@ -203,7 +216,7 @@ export function TrialFiveScreenClient() {
     try {
       const response = await fetch('/api/restaurant-agent/review-reply', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiHeaders(),
         body: JSON.stringify({ intake, reviewText: reviewDraft.text, sentiment: reviewDraft.sentiment }),
       });
       const payload = await response.json();
@@ -228,7 +241,7 @@ export function TrialFiveScreenClient() {
     try {
       const response = await fetch('/api/restaurant-agent/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiHeaders(),
         body: JSON.stringify({
           intake,
           question,
@@ -282,7 +295,7 @@ export function TrialFiveScreenClient() {
     try {
       const response = await fetch('/api/restaurant-agent/content', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: apiHeaders(),
         body: JSON.stringify({ intake }),
       });
       const payload = await response.json();
@@ -395,6 +408,15 @@ export function TrialFiveScreenClient() {
             {field('到店理由', 'visitReason', { textarea: true, placeholder: '例：工作日 17:30-20:00 到店免排队，套餐送酸梅汤' })}
             {field('活动边界（必须遵守的限制）', 'constraints', { textarea: true, placeholder: '例：周末不适用；每桌限一张券；每天限量 40 份' })}
             {field('已有素材', 'evidence', { textarea: true, placeholder: '例：菜单截图、菜品图、团购券规则截图' })}
+            <label className="block">
+              <span className="mb-1 block text-sm font-semibold text-stone-800">试用口令（发起试用的人给你的）</span>
+              <input
+                className="w-full border border-stone-300 bg-white p-3 text-base text-stone-900"
+                placeholder="没有口令可先体验，AI 生成需要口令"
+                value={accessToken}
+                onChange={event => setAccessToken(event.target.value)}
+              />
+            </label>
           </div>
           <button
             type="button"

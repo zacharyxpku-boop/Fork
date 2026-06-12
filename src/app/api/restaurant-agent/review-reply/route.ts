@@ -3,6 +3,7 @@ import { buildReviewReplySystemPrompt, buildReviewReplyUserPrompt } from '@/lib/
 import type { RestaurantContentIntake } from '@/lib/restaurant-content-prompts';
 import { llmChat, LlmError } from '@/lib/llm-client';
 import { checkContentFacts } from '@/lib/restaurant-content-fact-check';
+import { accessDeniedMessage, recordTrialLlmUsage, resolveTrialAccess, tenantScopedKey, TRIAL_TOKEN_HEADER } from '@/lib/trial-access-guard';
 
 interface ReviewReplyRequestBody {
   intake?: RestaurantContentIntake;
@@ -27,7 +28,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'missing-review-text' }, { status: 400 });
   }
 
-  const system = buildReviewReplySystemPrompt(intake);
+  const access = resolveTrialAccess(request.headers.get(TRIAL_TOKEN_HEADER));
+  if (!access.allowed) {
+    return NextResponse.json({ ok: false, error: `access-${access.reason}`, message: accessDeniedMessage(access.reason) }, { status: 429 });
+  }
+
+  const system = buildReviewReplySystemPrompt(intake, tenantScopedKey(access.tenant, intake.restaurant));
   const user = buildReviewReplyUserPrompt(reviewText, sentiment);
 
   try {
@@ -40,6 +46,7 @@ export async function POST(request: NextRequest) {
         prompt: result.renderedPrompt,
       });
     }
+    recordTrialLlmUsage(access.tenant, 1);
     return NextResponse.json({
       ok: true,
       mode: 'generated',

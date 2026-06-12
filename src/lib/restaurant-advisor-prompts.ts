@@ -23,8 +23,8 @@ function proofContext(proofs: AdvisorProofSummary[]): string {
   return `已回填凭证（只有这些算数）：\n${lines.join('\n')}`;
 }
 
-export function buildAdvisorSystemPrompt(intake: RestaurantContentIntake, proofs: AdvisorProofSummary[] = []): string {
-  const memory = renderRestaurantStoreMemoryForPrompt(intake.restaurant || '');
+export function buildAdvisorSystemPrompt(intake: RestaurantContentIntake, proofs: AdvisorProofSummary[] = [], memoryScope?: string): string {
+  const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
   const sections = [
     `你是「${intake.restaurant || '这家门店'}」的经营顾问，说话像一个常年在店里待着的搭档：直接、具体、不打官腔。`,
     `门店档案：\n${intakeContext(intake)}`,
@@ -45,8 +45,8 @@ export function buildAdvisorUserPrompt(question: string): string {
   return `老板的问题：${question.trim()}`;
 }
 
-export function buildReviewReplySystemPrompt(intake: RestaurantContentIntake): string {
-  const memory = renderRestaurantStoreMemoryForPrompt(intake.restaurant || '');
+export function buildReviewReplySystemPrompt(intake: RestaurantContentIntake, memoryScope?: string): string {
+  const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
   const sections = [
     `你是「${intake.restaurant || '这家门店'}」的店主，在平台上亲自回复顾客的真实评价。你的回复像真人老板：具体、诚恳、没有客服模板腔。`,
     `门店档案：\n${intakeContext(intake)}`,
