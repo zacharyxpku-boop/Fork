@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buildAllPosterSpecs, buildPosterSpec, buildVideoPromptRequest, POSTER_STYLES, type RestaurantPosterKind, type RestaurantPosterStyle } from '@/lib/restaurant-visual-prompts';
 import type { RestaurantContentIntake } from '@/lib/restaurant-content-prompts';
-import { generateWanxImage, hasWanxKey } from '@/lib/wanx-image';
+import { generateWanxImage, hasWanxKey, persistWanxImage } from '@/lib/wanx-image';
 import { parseLlmJson } from '@/lib/llm-output-parser';
 import { llmChat, LlmError } from '@/lib/llm-client';
 import { accessDeniedMessage, recordTrialLlmUsage, resolveTrialAccess, TRIAL_TOKEN_HEADER } from '@/lib/trial-access-guard';
@@ -86,10 +86,13 @@ export async function POST(request: NextRequest) {
   if (!result.ok) {
     return NextResponse.json({ ok: false, error: result.error, poster: { kind: spec.kind, style: spec.style, styleLabel: spec.styleLabel, label: spec.label, prompt: spec.prompt } }, { status: 502 });
   }
+  const persistedUrl = await persistWanxImage(result.url);
   return NextResponse.json({
     ok: true,
     mode: 'generated',
-    poster: { kind: spec.kind, style: spec.style, styleLabel: spec.styleLabel, label: spec.label, usage: spec.usage, prompt: spec.prompt, url: result.url },
-    message: '图片链接 24 小时内有效，确认满意请立即保存到手机；AI 生成的菜品图与实物可能有差异，发布平台要求标注 AI 生成时记得勾选。',
+    poster: { kind: spec.kind, style: spec.style, styleLabel: spec.styleLabel, label: spec.label, usage: spec.usage, prompt: spec.prompt, url: persistedUrl || result.url, persisted: Boolean(persistedUrl) },
+    message: persistedUrl
+      ? '图已保存到工作台，链接长期有效；AI 生成的菜品图与实物可能有差异，发布平台要求标注 AI 生成时记得勾选。'
+      : '图片转存失败，当前链接 24 小时内有效，请立即保存到手机。',
   });
 }

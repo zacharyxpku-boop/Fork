@@ -698,14 +698,16 @@ export function TrialFiveScreenClient() {
           ) : (
             <div className="space-y-4">
               {strategy ? (
-                <div className="border border-stone-900 bg-stone-900 p-4 text-white">
-                  <h3 className="text-sm font-bold tracking-wide">AI 的思路（全套内容都按这个打）</h3>
-                  <p className="mt-2 text-sm leading-6"><span className="text-stone-400">最强卖点：</span>{strategy.strongestSellingPoint}</p>
+                <details className="border border-stone-900 bg-stone-900 p-4 text-white">
+                  <summary className="cursor-pointer text-sm font-bold leading-6">
+                    本周主打：{strategy.weekFocus}
+                    <span className="ml-2 font-normal text-stone-400">（点开看完整思路）</span>
+                  </summary>
+                  <p className="mt-3 text-sm leading-6"><span className="text-stone-400">最强卖点：</span>{strategy.strongestSellingPoint}</p>
                   <p className="mt-1 text-sm leading-6"><span className="text-stone-400">客群洞察：</span>{strategy.customerInsight}</p>
-                  <p className="mt-1 text-sm leading-6"><span className="text-stone-400">本周主攻：</span>{strategy.weekFocus}</p>
                   <p className="mt-1 text-sm leading-6"><span className="text-stone-400">语气：</span>{strategy.tone}</p>
                   <p className="mt-1 text-sm leading-6 text-amber-300"><span className="text-stone-400">切勿写错：</span>{strategy.riskNote}</p>
-                </div>
+                </details>
               ) : null}
               <p className="border border-amber-300 bg-amber-50 p-3 text-sm leading-6 text-amber-900">{content.message}</p>
               {content.mode === 'prompt-preview'
@@ -806,6 +808,17 @@ export function TrialFiveScreenClient() {
               <div className="border border-stone-300 bg-white p-4">
                 <h3 className="text-base font-bold text-stone-900">宣传图和视频</h3>
                 <p className="mt-1 text-sm text-stone-600">给上面的文案配图：选一种用途生成，或让 AI 写一份能直接贴进即梦的视频拍摄稿。</p>
+                <p className="mt-2 border border-amber-300 bg-amber-50 p-2 text-xs leading-5 text-amber-900">
+                  真心话：菜品特写最好用你自己拍的真实照片（顾客最反感照骗），AI 图更适合做海报底图、氛围图和社群卡。
+                </p>
+                <details className="mt-2 border border-stone-200 bg-stone-50 p-3">
+                  <summary className="cursor-pointer text-sm font-semibold text-stone-700">手机拍菜 3 步（拍出来比 AI 图强）</summary>
+                  <ol className="mt-2 space-y-1 text-sm leading-6 text-stone-700">
+                    <li>1. 靠窗自然光，关掉店里顶灯的黄光直射，别开闪光灯</li>
+                    <li>2. 镜头 45 度俯角贴近，菜占画面三分之二，背景只留桌面</li>
+                    <li>3. 拍刚出锅的：热气、油亮、汤汁流动的瞬间最馋人，凉了再摆也没用</li>
+                  </ol>
+                </details>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {[
                     { kind: 'dish-hero', label: '菜品特写主图' },
@@ -1024,7 +1037,37 @@ export function TrialFiveScreenClient() {
 
       {step === 4 ? (
         <section aria-label="第四屏">
-          <div className="space-y-3 border border-stone-300 bg-white p-4">
+          <div className="border border-stone-300 bg-white p-4">
+            <h3 className="text-base font-bold text-stone-900">发完点一下就行</h3>
+            <p className="mt-1 text-sm text-stone-600">哪个平台发出去了点哪个，时间自动记下；链接有空再补，不补也算数。</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {['小红书', '大众点评', '微信社群', '抖音'].map(channel => {
+                const checked = proofs.some(proof => proof.channel === channel);
+                return (
+                  <button
+                    key={channel}
+                    type="button"
+                    disabled={checked}
+                    onClick={() => {
+                      setProofs(previous => [...previous, {
+                        id: `proof-${previous.length + 1}-${channel}`,
+                        channel,
+                        proofUrl: '',
+                        note: '已发打卡（链接待补）',
+                        recordedAt: new Date().toISOString(),
+                      }]);
+                    }}
+                    className={`border p-3 text-sm font-bold ${checked ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-stone-400 bg-white text-stone-700'}`}
+                  >
+                    {checked ? `✓ ${channel}已发` : `${channel}已发`}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <details className="mt-3 border border-stone-300 bg-white p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-stone-700">补链接或备注（选填，复盘更准）</summary>
+            <div className="mt-3 space-y-3">
             <label className="block">
               <span className="mb-1 block text-sm font-semibold text-stone-800">发布渠道</span>
               <input
@@ -1055,7 +1098,8 @@ export function TrialFiveScreenClient() {
             <button type="button" onClick={addProof} className="w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white">
               回填这条凭证
             </button>
-          </div>
+            </div>
+          </details>
           <div className="mt-4 space-y-2">
             {proofs.length === 0 ? (
               <p className="border border-stone-300 bg-stone-100 p-3 text-sm text-stone-700">还没有回填凭证。待补资料：发布后把链接或截图说明填回来，明天的复盘才有依据。</p>

@@ -1,3 +1,7 @@
+import { createHash } from 'node:crypto';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 /**
  * 阿里通义万相 wanx 文生图通用封装（从电商 image-gen 链路提取）。
  * 复用 AI_API_KEY（DashScope），中文 prompt 原生支持。
@@ -16,6 +20,29 @@ export function hasWanxKey(): boolean {
 export type WanxImageResult =
   | { ok: true; url: string }
   | { ok: false; error: string };
+
+const PERSIST_DIR = join('public', 'generated-posters');
+
+/**
+ * wanx 返回的 OSS 链接 24 小时过期——百人模拟里高价值用户的第一抱怨。
+ * 这里把图下载落盘到 public/generated-posters/，返回站内永久路径。
+ * 注意：单机/自部署有效；上 Vercel 等只读文件系统时需换对象存储（届时改这一个函数即可）。
+ */
+export async function persistWanxImage(remoteUrl: string): Promise<string | null> {
+  try {
+    const response = await fetch(remoteUrl);
+    if (!response.ok) return null;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (buffer.length < 1024) return null;
+    const hash = createHash('sha1').update(buffer).digest('hex').slice(0, 16);
+    const fileName = `poster-${hash}.png`;
+    mkdirSync(PERSIST_DIR, { recursive: true });
+    writeFileSync(join(PERSIST_DIR, fileName), buffer);
+    return `/generated-posters/${fileName}`;
+  } catch {
+    return null;
+  }
+}
 
 export async function generateWanxImage(prompt: string, size = '1024*1024'): Promise<WanxImageResult> {
   const apiKey = process.env.AI_API_KEY;

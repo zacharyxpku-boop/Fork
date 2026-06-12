@@ -10,7 +10,7 @@ import { buildAllContentPrompts, type RestaurantContentIntake } from '@/lib/rest
 import { renderRestaurantStoreMemoryForPrompt } from '@/lib/restaurant-store-memory';
 import { parseLlmJson, parseLlmJsonArray, toContentFields } from '@/lib/llm-output-parser';
 import { checkContentFacts } from '@/lib/restaurant-content-fact-check';
-import { generateWanxImage, hasWanxKey } from '@/lib/wanx-image';
+import { generateWanxImage, hasWanxKey, persistWanxImage } from '@/lib/wanx-image';
 import { hasLlmKey, llmChat, LlmError } from '@/lib/llm-client';
 import { accessDeniedMessage, recordTrialLlmUsage, resolveTrialAccess, tenantScopedKey, TRIAL_TOKEN_HEADER } from '@/lib/trial-access-guard';
 
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
       actions,
       video,
       poster: posterResult && posterResult.ok
-        ? { label: posterSpec.label, url: posterResult.url, prompt: posterSpec.prompt }
+        ? { label: posterSpec.label, url: (await persistWanxImage(posterResult.url)) || posterResult.url, prompt: posterSpec.prompt }
         : { label: posterSpec.label, prompt: posterSpec.prompt },
       posterLive: Boolean(posterResult && posterResult.ok),
       message: '全套已生成。发布前店长逐条确认事实和价格；图片如已生成请尽快保存。',
