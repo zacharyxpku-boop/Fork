@@ -27,6 +27,7 @@ function parseStrategy(output: string): RestaurantStrategy | null {
   const strategy: RestaurantStrategy = {
     strongestSellingPoint: text('strongest_selling_point'),
     customerInsight: text('customer_insight'),
+    hiddenOpportunity: text('hidden_opportunity'),
     weekFocus: text('week_focus'),
     tone: text('tone'),
     riskNote: text('risk_note'),

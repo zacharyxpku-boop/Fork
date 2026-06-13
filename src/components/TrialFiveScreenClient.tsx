@@ -109,7 +109,7 @@ export function TrialFiveScreenClient() {
   const [posterBusy, setPosterBusy] = useState('');
   const [videoPrompt, setVideoPrompt] = useState<{ videoPrompt: string; voiceover: string; duration: string } | null>(null);
   const [videoBusy, setVideoBusy] = useState(false);
-  const [strategy, setStrategy] = useState<{ strongestSellingPoint: string; customerInsight: string; weekFocus: string; tone: string; riskNote: string } | null>(null);
+  const [strategy, setStrategy] = useState<{ strongestSellingPoint: string; customerInsight: string; hiddenOpportunity: string; weekFocus: string; tone: string; riskNote: string } | null>(null);
 
   async function generateFullPack() {
     setContentLoading(true);
@@ -530,6 +530,28 @@ export function TrialFiveScreenClient() {
     setStrategy(null);
   }
 
+  function buildStaffHandoff(): string {
+    const store = intake.restaurant || '门店';
+    const lines: string[] = [`【${store} 今天发这些，照着复制就行】`, ''];
+    const results = content?.results || [];
+    const labelMap: Record<string, { platform: string; how: string }> = {
+      'xhs-note': { platform: '小红书', how: '配一张菜品实拍图发出去' },
+      'group-message': { platform: '微信群', how: '按下面三个时间点分别发群里' },
+      'review-reply-positive': { platform: '点评', how: '有好评时复制回复' },
+      'review-reply-negative': { platform: '点评', how: '有差评时复制回复（先确认补救能做到）' },
+    };
+    let index = 1;
+    for (const r of results) {
+      const meta = labelMap[r.kind];
+      if (!meta) continue;
+      const body = r.fields?.length ? r.fields.map(f => `${f.label}：${f.value}`).join('\n') : r.output;
+      lines.push(`${index}. 【${meta.platform}】${meta.how}`, body, '');
+      index += 1;
+    }
+    lines.push('—— 发完在群里回一句"发了"，截图存手机相册 ——');
+    return lines.join('\n');
+  }
+
   function shareCurrentScreen() {
     const text = buildShareSummary({
       screen: step as 1 | 2 | 3 | 4 | 5,
@@ -698,16 +720,21 @@ export function TrialFiveScreenClient() {
           ) : (
             <div className="space-y-4">
               {strategy ? (
-                <details className="border border-stone-900 bg-stone-900 p-4 text-white">
-                  <summary className="cursor-pointer text-sm font-bold leading-6">
-                    本周主打：{strategy.weekFocus}
-                    <span className="ml-2 font-normal text-stone-400">（点开看完整思路）</span>
-                  </summary>
-                  <p className="mt-3 text-sm leading-6"><span className="text-stone-400">最强卖点：</span>{strategy.strongestSellingPoint}</p>
-                  <p className="mt-1 text-sm leading-6"><span className="text-stone-400">客群洞察：</span>{strategy.customerInsight}</p>
-                  <p className="mt-1 text-sm leading-6"><span className="text-stone-400">语气：</span>{strategy.tone}</p>
-                  <p className="mt-1 text-sm leading-6 text-amber-300"><span className="text-stone-400">切勿写错：</span>{strategy.riskNote}</p>
-                </details>
+                <div className="border border-stone-900 bg-stone-900 p-4 text-white">
+                  <p className="text-sm font-bold leading-6">本周主打：{strategy.weekFocus}</p>
+                  {strategy.hiddenOpportunity ? (
+                    <p className="mt-2 border-l-2 border-amber-400 pl-3 text-sm leading-6 text-amber-200">
+                      💡 你可能没注意到：{strategy.hiddenOpportunity}
+                    </p>
+                  ) : null}
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-xs text-stone-400">为什么这么定（点开看完整思路）</summary>
+                    <p className="mt-2 text-sm leading-6"><span className="text-stone-400">最强卖点：</span>{strategy.strongestSellingPoint}</p>
+                    <p className="mt-1 text-sm leading-6"><span className="text-stone-400">客群洞察：</span>{strategy.customerInsight}</p>
+                    <p className="mt-1 text-sm leading-6"><span className="text-stone-400">语气：</span>{strategy.tone}</p>
+                    <p className="mt-1 text-sm leading-6 text-amber-300"><span className="text-stone-400">切勿写错：</span>{strategy.riskNote}</p>
+                  </details>
+                </div>
               ) : null}
               <p className="border border-amber-300 bg-amber-50 p-3 text-sm leading-6 text-amber-900">{content.message}</p>
               {content.mode === 'prompt-preview'
@@ -805,6 +832,15 @@ export function TrialFiveScreenClient() {
                   ))}
                 </ul>
               </div>
+              {(content.results || []).length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => void copyText(buildStaffHandoff(), '给店员的发布清单')}
+                  className="w-full border border-emerald-600 bg-emerald-600 p-3 text-base font-bold text-white"
+                >
+                  打包发给店员（含发哪个平台、怎么发）
+                </button>
+              ) : null}
               <div className="border border-stone-300 bg-white p-4">
                 <h3 className="text-base font-bold text-stone-900">宣传图和视频</h3>
                 <p className="mt-1 text-sm text-stone-600">给上面的文案配图：选一种用途生成，或让 AI 写一份能直接贴进即梦的视频拍摄稿。</p>

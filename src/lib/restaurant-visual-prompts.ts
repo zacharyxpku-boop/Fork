@@ -170,7 +170,7 @@ const POSTER_TEMPLATES: Record<RestaurantPosterKind, PosterTemplate> = {
   },
 };
 
-const NEGATIVE_RULES = '画面中不出现任何文字、价格、水印、logo，不出现清晰人脸';
+const NEGATIVE_RULES = '真实餐厅实拍质感，食材带自然瑕疵和油渍水痕，避免塑料感、避免过度光滑完美、避免 CG 渲染感、避免假模型质感；画面中不出现任何文字、价格、水印、logo，不出现清晰人脸';
 
 function dishDescription(intake: RestaurantContentIntake): string {
   const offer = (intake.offer || '招牌菜品').replace(/[¥￥]\s?\d+(?:\.\d+)?/g, '').trim();

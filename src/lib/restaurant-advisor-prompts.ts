@@ -84,6 +84,7 @@ ${trimmed}
 export interface RestaurantStrategy {
   strongestSellingPoint: string;
   customerInsight: string;
+  hiddenOpportunity: string;
   weekFocus: string;
   tone: string;
   riskNote: string;
@@ -101,10 +102,11 @@ export function buildStrategyPrompt(intake: RestaurantContentIntake, memoryScope
   const user = `推理这家店的内容打法，想清楚再答：
 1. 最强卖点：主推里最能让人产生"现在就想去"冲动的一个点（价格锚、时段便利、赠品、口味记忆点，选杀伤力最大的一个，说明为什么）
 2. 客群洞察：目标客群此刻的真实决策场景（他们什么时候刷手机、纠结什么、被什么打动）
-3. 本周主攻：基于以上两点，本周内容最该反复打的一个角度
-4. 语气基调：对这个客群最有效的说话方式（一句话描述）
-5. 风险提醒：这家店的活动边界里最容易被内容写错的一条
-输出 JSON：{"strongest_selling_point":"...","customer_insight":"...","week_focus":"...","tone":"...","risk_note":"..."}`;
+3. 隐藏机会：这家店自己可能没注意到、但能立刻用上的一个具体机会（比如某个时段的空档、某类客人的复购点、一个没被讲出来的卖点）。要具体到能马上做，让老板看了觉得"对哦我怎么没想到"
+4. 本周主攻：基于以上几点，本周内容最该反复打的一个角度
+5. 语气基调：对这个客群最有效的说话方式（一句话描述）
+6. 风险提醒：这家店的活动边界里最容易被内容写错的一条
+输出 JSON：{"strongest_selling_point":"...","customer_insight":"...","hidden_opportunity":"...","week_focus":"...","tone":"...","risk_note":"..."}`;
   return { system, user };
 }
 
@@ -112,6 +114,7 @@ export function renderStrategyBlock(strategy: RestaurantStrategy): string {
   return `本店经营策略（所有内容必须贯彻这个判断）：
 - 最强卖点：${strategy.strongestSellingPoint}
 - 客群洞察：${strategy.customerInsight}
+- 隐藏机会：${strategy.hiddenOpportunity}
 - 本周主攻：${strategy.weekFocus}
 - 语气基调：${strategy.tone}
 - 切勿写错：${strategy.riskNote}`;
