@@ -110,6 +110,62 @@ export function TrialFiveScreenClient() {
   const [videoPrompt, setVideoPrompt] = useState<{ videoPrompt: string; voiceover: string; duration: string } | null>(null);
   const [videoBusy, setVideoBusy] = useState(false);
   const [strategy, setStrategy] = useState<{ strongestSellingPoint: string; customerInsight: string; hiddenOpportunity: string; weekFocus: string; tone: string; riskNote: string } | null>(null);
+  const [batchReviews, setBatchReviews] = useState('');
+  const [batchReplies, setBatchReplies] = useState<{ sentiment: string; reply: string; needsOffline: boolean; offlineNote: string }[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
+  const [faqs, setFaqs] = useState<{ q: string; a: string }[]>([]);
+  const [faqBusy, setFaqBusy] = useState(false);
+
+  async function runBatchReviews() {
+    if (!batchReviews.trim()) return;
+    setBatchBusy(true);
+    try {
+      const response = await fetch('/api/restaurant-agent/review-batch', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ intake, reviews: batchReviews }),
+      });
+      const payload = await response.json();
+      if (payload?.ok && payload.mode === 'generated' && payload.replies?.length) {
+        setBatchReplies(payload.replies);
+      } else if (payload?.mode === 'prompt-preview') {
+        setCopyFeedback('还没配置 AI 账号，无法批量回复');
+        window.setTimeout(() => setCopyFeedback(''), 2500);
+      } else {
+        throw new Error(payload?.error || 'batch-failed');
+      }
+    } catch {
+      setCopyFeedback('批量回复失败，稍后再试');
+      window.setTimeout(() => setCopyFeedback(''), 2500);
+    } finally {
+      setBatchBusy(false);
+    }
+  }
+
+  async function loadFaqs() {
+    setFaqBusy(true);
+    try {
+      const response = await fetch('/api/restaurant-agent/faq', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ intake }),
+      });
+      const payload = await response.json();
+      if (payload?.ok && payload.mode === 'generated' && payload.faqs?.length) {
+        setFaqs(payload.faqs);
+      } else if (payload?.mode === 'prompt-preview') {
+        setCopyFeedback('还没配置 AI 账号，无法生成快答');
+        window.setTimeout(() => setCopyFeedback(''), 2500);
+      } else {
+        throw new Error(payload?.error || 'faq-failed');
+      }
+    } catch {
+      setCopyFeedback('快答生成失败，稍后再试');
+      window.setTimeout(() => setCopyFeedback(''), 2500);
+    } finally {
+      setFaqBusy(false);
+    }
+  }
 
   async function generateFullPack() {
     setContentLoading(true);
@@ -1013,7 +1069,61 @@ export function TrialFiveScreenClient() {
                 {weeklyError ? <p className="mt-2 text-sm text-rose-700">{weeklyError}</p> : null}
               </div>
               <details className="border border-stone-300 bg-white p-4">
-                <summary className="cursor-pointer text-base font-bold text-stone-900">收到顾客评价？粘贴进来生成店主回复</summary>
+                <summary className="cursor-pointer text-base font-bold text-stone-900">评价管家：一次贴多条评价，自动分类逐条回复</summary>
+                <div className="mt-3 space-y-3">
+                  <p className="text-sm text-stone-600">把今天的好评差评一起贴进来（一行一条或直接整段粘），AI 自动判好评差评、逐条写回复，恶性差评会标红提醒你先线下处理。</p>
+                  <textarea
+                    className="w-full border border-stone-300 p-3 text-sm leading-6"
+                    rows={5}
+                    placeholder="把今天的评价一行一条贴进来，好评差评混着也行"
+                    value={batchReviews}
+                    onChange={event => setBatchReviews(event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    disabled={batchBusy || !batchReviews.trim()}
+                    onClick={() => void runBatchReviews()}
+                    className="w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:opacity-40"
+                  >
+                    {batchBusy ? '正在逐条回复…' : '一次回完所有评价'}
+                  </button>
+                  {batchReplies.map((r, i) => (
+                    <div key={i} className={`border p-3 ${r.needsOffline ? 'border-rose-400 bg-rose-50' : r.sentiment === 'positive' ? 'border-emerald-300 bg-emerald-50' : 'border-stone-200 bg-stone-50'}`}>
+                      <p className="text-xs font-bold text-stone-500">{r.sentiment === 'positive' ? '好评' : r.sentiment === 'negative' ? '差评' : '中评'}{r.needsOffline ? ' · ⚠ 先线下处理' : ''}</p>
+                      <p className="mt-1 text-sm leading-6 text-stone-800">{r.reply}</p>
+                      {r.offlineNote ? <p className="mt-1 text-xs leading-5 text-rose-700">提醒店长：{r.offlineNote}</p> : null}
+                      <button type="button" onClick={() => void copyText(r.reply, '回复')} className="mt-2 w-full border border-stone-900 p-1.5 text-xs font-bold text-stone-900">复制这条回复</button>
+                    </div>
+                  ))}
+                </div>
+              </details>
+              <details className="border border-stone-300 bg-white p-4">
+                <summary className="cursor-pointer text-base font-bold text-stone-900">顾客咨询快答：常见问题标准答复，店员照着回</summary>
+                <div className="mt-3 space-y-3">
+                  <p className="text-sm text-stone-600">生成顾客最常私信问的 8 个问题和标准回答（营业时间、能否预订、有无包间等），存手机或发店员群，问到直接复制。</p>
+                  <button
+                    type="button"
+                    disabled={faqBusy}
+                    onClick={() => void loadFaqs()}
+                    className="w-full border border-stone-900 bg-stone-900 p-3 text-base font-bold text-white disabled:opacity-40"
+                  >
+                    {faqBusy ? '正在准备…' : faqs.length ? '重新生成快答' : '生成顾客咨询快答'}
+                  </button>
+                  {faqs.length ? (
+                    <>
+                      {faqs.map((f, i) => (
+                        <div key={i} className="border border-stone-200 bg-stone-50 p-3">
+                          <p className="text-sm font-bold text-stone-900">{f.q}</p>
+                          <p className="mt-1 text-sm leading-6 text-stone-700">{f.a}</p>
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => void copyText(faqs.map(f => `Q：${f.q}\nA：${f.a}`).join('\n\n'), '顾客咨询快答')} className="w-full border border-stone-900 p-2 text-sm font-bold text-stone-900">复制全部存手机</button>
+                    </>
+                  ) : null}
+                </div>
+              </details>
+              <details className="border border-stone-300 bg-white p-4">
+                <summary className="cursor-pointer text-base font-bold text-stone-900">单条评价精修（一条一条来）</summary>
                 <div className="mt-3 space-y-3">
                   <textarea
                     className="w-full border border-stone-300 p-3 text-sm leading-6"

@@ -26,6 +26,8 @@ const PUBLIC_EXACT_PATHS = new Set([
   '/api/restaurant-agent/weekly-plan',
   '/api/restaurant-agent/visual',
   '/api/restaurant-agent/full-pack',
+  '/api/restaurant-agent/review-batch',
+  '/api/restaurant-agent/faq',
 ]);
 
 const PUBLIC_PAGE_PREFIXES = [

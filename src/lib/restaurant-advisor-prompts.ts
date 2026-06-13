@@ -181,6 +181,47 @@ export function buildPlanDayContentPrompt(
   return { system, user };
 }
 
+/** 评价管家：一次粘入多条评价，AI 自动切分、判好评差评、逐条出店主回复。对标勺子"自动回评"的半自动版。 */
+export function buildBatchReviewPrompt(intake: RestaurantContentIntake, reviewsBlob: string, memoryScope?: string): { system: string; user: string } {
+  const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
+  const system = [
+    `你是「${intake.restaurant || '这家门店'}」的店主，亲自处理平台上的顾客评价。回复像真人老板：具体、诚恳、不甩锅、不用客服模板腔。`,
+    `门店档案：\n${intakeContext(intake)}`,
+    memory,
+    SHARED_RULES,
+  ].filter(Boolean).join('\n\n');
+  const user = `下面是顾客评价（可能多条，按行或空行分隔），逐条处理：
+"""
+${reviewsBlob.trim().slice(0, 2000)}
+"""
+对每一条：
+1. 判断情绪：好评 positive / 差评 negative / 中评 neutral
+2. 写一条店主回复：好评不超过 80 字呼应具体内容并轻引导复购；差评不超过 120 字先认问题给具体补救不甩锅；中评点出可改进处并邀请再来
+3. 差评里如果涉及食品安全、异物、卫生等需线下立刻处理的，needs_offline 设为 true 并一句话提醒店长
+回复里只用门店档案里有的事实，补偿只能承诺店里真能给的。
+输出 JSON 数组，每条评价一个对象：[{"sentiment":"negative","reply":"...","needs_offline":false,"offline_note":""}]`;
+  return { system, user };
+}
+
+/** 顾客咨询快答：基于门店信息预生成常见问题标准答复，老板/店员收到私信直接复制。对标勺子"智能客服"。 */
+export function buildFaqPrompt(intake: RestaurantContentIntake, memoryScope?: string): { system: string; user: string } {
+  const memory = renderRestaurantStoreMemoryForPrompt(memoryScope || intake.restaurant || '');
+  const system = [
+    `你是「${intake.restaurant || '这家门店'}」的店主，在为门店准备一套应对顾客常见私信和电话咨询的标准回答，给店员照着回。`,
+    `门店档案：\n${intakeContext(intake)}`,
+    memory,
+    SHARED_RULES,
+  ].filter(Boolean).join('\n\n');
+  const user = `准备 8 条这家店最可能被顾客问到的问题和标准回答（私信/电话场景）。
+覆盖：营业时间、是否需要预订/排队情况、有没有包间或大桌、停车、是否适合带小孩、能否调整辣度或忌口、套餐具体含什么、能否打包外带等（按这家店的实际情况选最相关的 8 个）。
+回答要求：
+- 像店员在微信里回顾客，亲切、简短、直接给答案
+- 门店档案里明确的（时段、套餐内容、活动边界）照实答；档案里没有的（如具体地址、电话、停车位数）用"【店长补充：xxx】"占位，提示老板填真实信息，绝不编造
+- 不承诺做不到的事
+输出 JSON 数组 8 条：[{"q":"顾客问题","a":"标准回答"}]`;
+  return { system, user };
+}
+
 export function buildRevisionUserPrompt(previousOutput: string, feedback: string, originalRequest: string): string {
   return `这是你上一版的输出：
 """
