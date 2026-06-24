@@ -171,7 +171,7 @@ export const RESTAURANT_COMPETITOR_CAPABILITIES: RestaurantCompetitorCapability[
     competitorPattern: 'Restaurant SaaS',
     status: 'internal-ready',
     productMeaning: '把客户最在意的发布执行、线索承接、核销、真实经营分析变成可解释的 ready/blocked/forbidden，而不是含糊承诺。',
-    internalImplementation: 'activation-gates API 已基于 grant checklist 输出每项能力的内部可跑动作、外部必补条件、证据要求和安全边界。',
+    internalImplementation: 'activation-gates API 已基于 grant checklist 输出每项能力的内部可先准备动作、外部必补条件、证据要求和安全边界。',
     missingExternal: '真实平台授权、发布回执、线索聚合、POS/API/CSV 合同、runtime/browser/callback。',
     safetyBoundary: '不编造增长结果，不把草稿或样例数据当真实经营；私信原文读取永久 forbidden。',
   },
@@ -330,7 +330,7 @@ export function buildRestaurantAgentCapabilityPlan(): RestaurantAgentCapabilityP
         },
       ],
       toolPolicy: [
-        { tool: 'queue_task', allowed: true, reason: '内部任务队列可跑。' },
+        { tool: 'queue_task', allowed: true, reason: '内部任务队列可先准备。' },
         { tool: 'write_structured_memory', allowed: true, reason: '只写业务摘要和聚合指标。' },
         { tool: 'browser_open_click_type', allowed: false, reason: '需要外部浏览器 runtime 和商家登录授权。' },
         { tool: 'platform_publish', allowed: false, reason: '需要平台账号授权和审核/频控策略。' },

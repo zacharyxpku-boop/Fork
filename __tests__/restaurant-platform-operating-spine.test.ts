@@ -70,8 +70,8 @@ describe('restaurant platform operating spine', () => {
       'pos-redemption-data',
     ]));
     expect(spine.auditBoundary.canDoInternallyNow.join(' ')).toContain('evidence ledger');
-    expect(spine.auditBoundary.mustHaveExternalBeforeClaiming.join(' ')).toContain('automatic publishing');
-    expect(spine.safetyBoundary).toContain('auto-publish');
+    expect(spine.auditBoundary.mustHaveExternalBeforeClaiming.join(' ')).toContain('platform publishing');
+    expect(spine.safetyBoundary).toContain('platform publishing');
     expect(JSON.stringify(spine)).not.toContain('api_key');
     expect(JSON.stringify(spine)).not.toContain('cookie');
     expect(JSON.stringify(spine)).not.toContain('token=');

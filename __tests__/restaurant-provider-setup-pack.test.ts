@@ -34,8 +34,8 @@ describe('restaurant provider setup pack', () => {
       'Staff notification delivery provider',
     ]));
     expect(pack.internalFallbacks.map(item => item.capability)).toEqual(expect.arrayContaining([
-      '自动发布',
-      '自动核销',
+      '发布执行',
+      '核销承接',
     ]));
     expect(JSON.stringify(pack)).not.toContain('secret-value');
     expect(JSON.stringify(pack)).not.toContain('profile-a');

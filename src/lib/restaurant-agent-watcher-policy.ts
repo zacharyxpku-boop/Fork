@@ -106,7 +106,7 @@ function laneSet(): RestaurantWatcherLane[] {
       internalAction: '只在授权数据导入后做核销、客单、库存压力和下轮活动建议。',
       externalRequirement: 'POS API、CSV/sheet 导出、字段字典、核销来源。',
       memoryWrite: 'Offer 的核销表现、库存风险和复盘建议。',
-      safetyBoundary: '没有真实 POS 数据前不声称自动核销或实时经营分析。',
+      safetyBoundary: '没有真实 POS 数据前不声称核销已完成或实时经营分析。',
     },
     {
       id: 'browser-session-watcher',
@@ -254,6 +254,6 @@ export function buildRestaurantAgentWatcherPolicy(input: {
       highPriority: wakeups.filter(wakeup => wakeup.priority === 'high').length,
       memoryUpserts: memoryUpserts.length,
     },
-    safetyBoundary: 'Watcher policy 只处理本地 run、签名回执、手工导入和脱敏摘要；没有 runtime/账号/POS/商家授权时不自动发布、不自动核销、不读取私信或后台明细。',
+    safetyBoundary: 'Watcher policy 只处理本地 run、签名回执、手工导入和脱敏摘要；没有 runtime/账号/POS/商家授权时不代发、不写核销、不读取私信或后台明细。',
   };
 }

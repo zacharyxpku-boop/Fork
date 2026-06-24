@@ -205,7 +205,7 @@ export function buildRestaurantOperatingDataContract(input: {
     {
       provider: 'Merchant platform auth',
       unlocks: ['auto proof capture', 'authorized publish/read-only receipts', 'reservation and lead summary'],
-      evidenceRequired: 'OAuth/API authorization or merchant-approved browser profile plus action policy.',
+      evidenceRequired: 'Platform/API authorization or merchant-approved browser profile plus action policy.',
     },
     {
       provider: 'POS/redemption data source',

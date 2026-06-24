@@ -245,11 +245,11 @@ export function buildRestaurantPlatformOperatingSpine(input: {
         'manual public proof import, signed receipt validation, run health, recovery queue, aggregated business signals',
       ],
       mustHaveExternalBeforeClaiming: [
-        'automatic publishing or platform operations need merchant OAuth/account authorization and governed browser/runtime setup',
+        'platform publishing or platform operations need merchant platform/account authorization and governed browser/runtime setup',
         'automatic acquisition or private-message handling needs platform API/grant plus privacy-safe aggregation rules',
         'automatic redemption and real operating analysis need POS/redemption/member/inventory/finance data contract or API',
       ],
     },
-    safetyBoundary: 'Platform spine is an operating control layer. It can coordinate tasks, training, receipts, recovery, and aggregated signals; it must not claim auto-publish, auto-acquisition, auto-redemption, private-message access, or real POS analytics until the matching external provider, merchant authorization, callback, and data contract are configured.',
+    safetyBoundary: 'Platform spine is an operating control layer. It can coordinate tasks, training, receipts, recovery, and aggregated signals; it must not claim platform publishing, lead capture, redemption, private-message access, or real POS analytics until the matching external provider, merchant authorization, callback, and data contract are configured.',
   };
 }

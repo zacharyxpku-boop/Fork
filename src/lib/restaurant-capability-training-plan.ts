@@ -82,22 +82,22 @@ const CAPABILITY_TRAINING_DEFINITIONS: CapabilityTrainingDefinition[] = [
     internal: '把菜单、活动、证据和手工数据转成待确认建议。',
     trainingMaterials: ['门店资料', '菜单价格', '昨日经营表', '平台链接', '评论摘录'],
     externalProviders: ['POS 导出或 API', '会员系统导出', '点评/外卖平台数据授权'],
-    acceptance: '每条回答标明来源、缺口、负责人和禁止自动化动作。',
+    acceptance: '每条回答标明来源、缺口、负责人和禁止代执行动作。',
     firstRun: '先上传一张菜单和一份昨日经营表。',
   },
   {
     id: 'auto-publish-receipts',
-    capability: '自动发布与回执',
+    capability: '发布执行与回执',
     competitorPattern: 'OpenClaw',
-    internal: '生成平台发布任务、runbook、callback contract 和 event ledger。',
+    internal: '生成平台发布任务、操作清单、回执约定和证据台账。',
     trainingMaterials: ['发布模板', '平台禁用词', '门店审批规则', '素材授权记录'],
-    externalProviders: ['隔离浏览器 profile', '平台 OAuth', 'Runner URL', 'callback secret'],
-    acceptance: '必须回写发布链接、截图、externalRunId 和失败原因。',
+    externalProviders: ['隔离浏览器 profile', '平台授权', 'Runner URL', 'callback secret'],
+    acceptance: '必须回写发布链接、截图、试跑回执编号和失败原因。',
     firstRun: '先跑大众点评/小红书手工回执包。',
   },
   {
     id: 'auto-acquisition-followup',
-    capability: '自动获客与社群跟进',
+    capability: '线索承接与社群跟进',
     competitorPattern: 'Restaurant SaaS',
     internal: '把预约、券领取、咨询截图和社群反馈转为跟进任务。',
     trainingMaterials: ['会员标签', '券领取记录', '咨询分类', '社群 SOP', '黑名单规则'],
@@ -190,9 +190,9 @@ export function buildRestaurantCapabilityTrainingPlan(input: RestaurantCapabilit
       .flatMap(item => item.missingExternalProviders.slice(0, 2).map(provider => ({
         capabilityId: item.id,
         provider,
-        owner: provider.includes('OAuth') || provider.includes('Runner') || provider.includes('API') || provider.includes('数据库') ? '技术' : '商家/运营',
+        owner: provider.includes('平台授权') || provider.includes('Runner') || provider.includes('API') || provider.includes('数据库') ? '技术' : '商家/运营',
       })))
       .slice(0, 8),
-    safetyBoundary: '训练计划只暴露材料缺口、Provider 缺口和验收标准；未授权前不自动发布、不自动触达、不写核销、不读取咨询原文、不输出无来源经营结论。',
+    safetyBoundary: '训练计划只暴露材料缺口、Provider 缺口和验收标准；未授权前不代发、不自动触达、不写核销、不读取咨询原文、不输出无来源经营结论。',
   };
 }

@@ -30,7 +30,7 @@ describe('restaurant benchmark strategy', () => {
       'agent-runtime-control',
       'restaurant-data-contracts',
     ]);
-    expect(strategy.nextBuildOrder[0].externalGate).toContain('OAuth');
+    expect(strategy.nextBuildOrder[0].externalGate).toContain('平台授权');
     expect(strategy.nextBuildOrder[1].externalGate).toContain('OpenClaw');
     expect(strategy.nextBuildOrder[2].externalGate).toContain('POS');
     expect(strategy.safetyBoundary).toContain('不代表外部平台');

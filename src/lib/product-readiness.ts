@@ -587,7 +587,7 @@ function buildProductBlueprint(input: ReadinessServiceInput, platformAutomationR
     },
     {
       id: 'Create',
-      target: 'SKU brief、图文素材、生产 handoff、客户交付包、资产权限和审计。',
+      target: '门店/菜品 brief、图文素材、生产 handoff、客户交付包、资产权限和审计。',
       currentStatus: input.industrialChainAvailable ? 'implemented' : 'partial',
       internalCapability: '资产库、production handoff、客户交付、review 写回和 RBAC 账本已经可跑，适合先做商业化 POC 生产管理。',
       externalGate: '需要真实图片/视频 provider、对象存储、签名 URL 和团队空间后，才能承接规模化云资产生产。',
@@ -605,18 +605,18 @@ function buildProductBlueprint(input: ReadinessServiceInput, platformAutomationR
     },
     {
       id: 'Cast',
-      target: '多平台分发、PubPal/矩阵分发、广告投放、发布证据、平台数据同步和复盘决策。',
+      target: '多平台同城发布、渠道矩阵、门店活动发布、发布凭证、平台/社群反馈回流和复盘决策。',
       currentStatus: platformAutomationReady ? 'implemented' : 'partial',
-      internalCapability: '已有分发计划、dispatch、账号矩阵、广告 campaign ledger、预算/证据门禁和表现回流。',
-      externalGate: '需要平台 OAuth、广告账户授权、自动发布权限、analytics sync 和平台回执，才能进入真实矩阵投放。',
-      stopLine: '外部授权未完成前，只能说 manual/provider-gated dispatch，不能说自动发布、自动投放或自动优化。',
+      internalCapability: '已有分发计划、dispatch、渠道矩阵、门店活动发布账本、预算/证据门禁和反馈回流。',
+      externalGate: '需要平台授权、商户授权、发布执行权限、平台/社群反馈回流和平台回执，才能进入真实矩阵发布。',
+      stopLine: '外部授权未完成前，只能说 manual/provider-gated dispatch，不能说外部发布已完成、自动拉客或自动优化。',
       evidence: `platformAutomationReady=${platformAutomationReady ? 1 : 0}; channelAccounts=${project?.channelAccountCount || 0}; readyAdCampaigns=${project?.channelReadyAdCampaignCount || 0}`,
     },
     {
       id: 'Manage',
-      target: 'readiness、CRM handoff、客户 review、资产权限/RBAC/audit、表现回流和规模数字审计。',
+      target: 'readiness、店长/运营 handoff、客户 review、资产权限/RBAC/audit、反馈回流和规模数字审计。',
       currentStatus: assetCloudReady ? 'implemented' : 'partial',
-      internalCapability: '已有 readiness API、CRM/生产交接、review 写回、资产权限、DLP/watermark、审计和品牌学习闭环。',
+      internalCapability: '已有 readiness API、负责人/生产交接、review 写回、资产权限、DLP/watermark、审计和品牌学习闭环。',
       externalGate: '需要真实企业云资产、签名访问、团队权限、留存策略和审计后的规模计数，才能支撑企业级交付。',
       stopLine: '91M+ creative output、42M+ video distribution 只能作为竞品 benchmark；没有 Wenai 自有审计台账前不能对外展示为自身数据。',
       evidence: `assetCloudReady=${assetCloudReady ? 1 : 0}; accessAudits=${project?.assetPermissionAccessAuditEventCount || 0}; performanceReturns=${project?.performanceReturnCount || 0}`,
@@ -640,9 +640,9 @@ function buildAlternativeReferences(): AlternativeCompetitorReference[] {
     },
     {
       name: 'Omneky',
-      pattern: '把创意生成、广告投放和表现回流连成 campaign learning loop。',
-      wenaiDecision: 'Cast/Manage 必须把 campaign ledger、预算、素材绑定、回流指标和下一轮规则放在同一条链路。',
-      boundary: '广告账户和转化事件未授权前，只能做手动导入与 provider-gated 编排。',
+      pattern: '把创意生成、活动发布和反馈回流连成 learning loop。',
+      wenaiDecision: 'Cast/Manage 必须把活动发布账本、预算、素材绑定、回流指标和下一轮规则放在同一条链路。',
+      boundary: '平台和商户授权未完成前，只能做手动导入与 provider-gated 编排。',
     },
     {
       name: 'AdHawk / AI Media Buyer',
@@ -652,15 +652,15 @@ function buildAlternativeReferences(): AlternativeCompetitorReference[] {
     },
     {
       name: 'Creatify / UGC video ads',
-      pattern: '把商品链接、素材和脚本结构快速转成 UGC 风格短视频广告变体。',
-      wenaiDecision: 'Create/Cut 要把商品素材、avatar/voice/scene 选择、版本矩阵、成片 URL 和客户审核写进同一条视频任务，而不是只生成一段孤立视频。',
+      pattern: '把门店链接、菜品/菜单素材和脚本结构快速转成探店/团购短视频变体。',
+      wenaiDecision: 'Create/Cut 要把菜品素材、avatar/voice/scene 选择、版本矩阵、成片 URL 和客户审核写进同一条视频任务，而不是只生成一段孤立视频。',
       boundary: '没有素材授权、肖像/声音授权和 provider 回调前，只能生成生产交接包与审核任务，不能宣称自动 UGC 成片。',
     },
     {
       name: 'Marpipe / catalog creative testing',
-      pattern: '用商品 feed、设计变量和广告实验矩阵批量测试创意组合。',
-      wenaiDecision: 'Cast/Manage 要把 SKU feed、offer、版式变量、受众、预算和表现回流绑定到可复盘实验，而不是只做单条内容分发。',
-      boundary: '没有广告账户、catalog 权限和转化回流前，只能保留实验设计与手工导入结果。',
+      pattern: '用菜品/套餐 feed、设计变量和门店活动实验矩阵批量测试内容组合。',
+      wenaiDecision: 'Cast/Manage 要把菜品/套餐 feed、offer、版式变量、受众、预算和反馈回流绑定到可复盘实验，而不是只做单条内容分发。',
+      boundary: '没有商户授权、平台活动权限和转化/到店反馈回流前，只能保留实验设计与手工导入结果。',
     },
     {
       name: 'Pencil / generative ad creative',
@@ -671,8 +671,8 @@ function buildAlternativeReferences(): AlternativeCompetitorReference[] {
     {
       name: 'Smartly.io / creative-media-intelligence',
       pattern: '把 creative、media、intelligence 统一到一个跨平台广告运营系统里：创意交付、投放管理、实时优化和报告必须同屏协作。',
-      wenaiDecision: 'Wenai 的 Cast/Manage 不能只停留在分发计划，要把素材版本、账号、预算、campaign、平台回执、表现回流和下一轮 action queue 合并成一个可审计运营面板。',
-      boundary: '没有平台 OAuth、广告账户、analytics sync 和预算止损规则前，只能展示 readiness 和人工执行建议，不能宣称自动跨平台优化。',
+      wenaiDecision: 'Wenai 的 Cast/Manage 不能只停留在分发计划，要把素材版本、账号、预算、门店活动、平台回执、反馈回流和下一轮 action queue 合并成一个可审计运营面板。',
+      boundary: '没有平台授权、商户授权、反馈回流和预算止损规则前，只能展示 readiness 和人工执行建议，不能宣称自动跨平台优化。',
     },
     {
       name: 'VidMob / creative analytics',
@@ -690,7 +690,7 @@ function buildAlternativeReferences(): AlternativeCompetitorReference[] {
       name: 'Superads / creative insights',
       pattern: '把 Meta / TikTok / Google / LinkedIn 等平台的 creative performance 统一分析，识别 fatigue、hook、format 和 cross-channel patterns。',
       wenaiDecision: 'Wenai 的创意洞察必须接到跨平台性能信号和疲劳识别，而不是只停留在竞品拆解和手工复盘。',
-      boundary: '没有 analytics sync 和跨平台数据接入前，只能保留洞察假设和手工导入，不宣称自动创意分析。',
+      boundary: '没有反馈回流和跨平台数据接入前，只能保留洞察假设和手工导入，不宣称自动创意分析。',
     },
   ];
 }
@@ -717,8 +717,8 @@ function buildUiVariants(): ProductUiVariantGuide[] {
       id: 'friend_trial',
       label: '朋友试用版',
       audience: '第一次使用、没有技术背景的真实用户。',
-      firstScreen: '只保留项目入口、样例链路、客户审核和下一步，不暴露 provider、ledger、env 等工程概念。',
-      primaryAction: '按“看洞察 -> 生成 brief -> 查看视频任务 -> 客户审核 -> 看回流”完成一次零解释试跑。',
+      firstScreen: '只保留门店任务入口、五段试跑主链路、发布凭证、店长跟进和下一步，不暴露 provider、ledger、env 等工程概念。',
+      primaryAction: '按 restaurant-trial-orchestrator-v1 完成“试跑输入 -> 标准交付包 -> 内容/素材生产 -> 发布凭证 -> 线索/店长跟进”的零解释试跑。',
       stopLine: '任何需要解释环境变量、后端任务或平台授权的步骤，都不能算朋友可独立完成。',
     },
   ];
@@ -969,7 +969,7 @@ function evaluateProjectReadiness(project?: ProjectReadinessFacts): ProductReadi
       ...creativeMissingLinks.map(item => `Close creative gap: ${item}`),
       ...creativeMonitoringMissingLinks.map(item => `Close creative monitoring gap: ${item}`),
       ...channelMissingLinks.map(item => `Close channel gap: ${item}`),
-      ...channelAdMissingLinks.map(item => `Close ad campaign gap: ${item}`),
+      ...channelAdMissingLinks.map(item => `Close activity publish gap: ${item}`),
       ...assetPermissionMissingLinks.map(item => `Close asset permission gap: ${item}`),
       ...brandLearningMissingLinks.map(item => `Close brand learning gap: ${item}`),
     ],
@@ -991,16 +991,23 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
     : 'platform connector ledger is missing from readiness input.';
   const features: ReadinessFeature[] = [
     makeFeature(
-      '10 SKU POC intake and standard-pack routing',
+      'Restaurant trial orchestrator spine',
       'implemented',
-      '/poc、/inquire、/api/sales/inquiry、/modules/standard-pack 已形成提交、标准包、报告、CRM 入口。',
+      '/factory?variant=friend_trial、/api/restaurant-agent/runtime action=trial-orchestrator-pack 和 restaurant-trial-orchestrator-v1 已统一输出试跑输入、标准交付包、内容/素材生产、发布凭证、线索/店长跟进。',
+      'low',
+      '继续用 restaurant-friend-trial-surface 和 restaurant-trial-orchestrator 测试防止主链路退回电商/广告语义。',
+    ),
+    makeFeature(
+      'Restaurant trial intake and standard-pack routing',
+      'implemented',
+      '/factory?variant=friend_trial、/poc、/inquire、/api/sales/inquiry、/modules/standard-pack 已形成门店试跑、标准包、报告和负责人承接入口。',
       'low',
       '继续用 E2E 覆盖主链路。',
     ),
     makeFeature(
-      'CRM-lite commercial loop',
+      'Owner handoff commercial loop',
       'implemented',
-      '询盘 API 支持 Redis 持久化，并在无 Redis 时内存降级；后台可维护状态、合同阶段、付款状态和外部 CRM 映射。',
+      '询盘 API 支持 Redis 持久化，并在无 Redis 时内存降级；后台可维护状态、合同阶段、付款状态和外部负责人/CRM 映射。',
       'low',
       '生产环境配置 Redis，避免进程重启丢失试用询盘。',
     ),
@@ -1023,7 +1030,7 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
       'implemented',
       '/api/brand-learning-profile merges competitor insight, performance returns, and client-approved deliverables into reusable hook, pacing, approved-pattern, avoid-pattern, and next distribution rules.',
       'low',
-      'Materialize one brand learning profile after every measured campaign and approved delivery batch.',
+      'Materialize one brand learning profile after every measured store activity and approved delivery batch.',
     ),
     makeFeature(
       'Creative monitoring watchlist',
@@ -1089,10 +1096,10 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
       'Full-chain commerce orchestration',
       input.commerceChainAvailable ? 'implemented' : 'partial',
       input.commerceChainAvailable
-        ? '/api/commerce-chain 可串联 intake、asset、production、distribution、performance、CRM 下一步。'
+        ? '/api/commerce-chain 可串联 intake、asset、production、distribution、feedback、负责人下一步。'
         : '各模块存在，但缺少统一全链路编排报告。',
       input.commerceChainAvailable ? 'low' : 'medium',
-      '把 POC、生产、分发计划、数据回流和 CRM action 汇总到同一报告。',
+      '把试跑输入、生产、分发计划、数据回流和负责人 action 汇总到同一报告。',
     ),
     makeFeature(
       'Performance feedback import',
@@ -1101,7 +1108,7 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
         ? '/api/performance-import 可把平台 CSV 回流为 scale / iterate / pause 复盘决策。'
         : '可人工记录复盘，但缺少统一 CSV 回流入口。',
       input.performanceImportAvailable ? 'low' : 'medium',
-      '接入平台 CSV 或 UTM 回流，确保每条素材能追溯 SKU、asset、platform。',
+      '接入平台 CSV 或 UTM 回流，确保每条素材能追溯菜品/套餐、asset、platform。',
     ),
     makeFeature(
       'Distribution and ad authorization',
@@ -1117,7 +1124,7 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
       platformAutomationReady ? 'implemented' : 'partial',
       platformConnectorEvidence,
       platformAutomationReady ? 'low' : 'medium',
-      'Wire real platform OAuth, ad accounts, auto-publish, analytics sync, and enterprise asset RBAC env/config without exposing secret values.',
+      'Wire real platform authorization, merchant grants, publish receipts, feedback sync, and enterprise asset RBAC env/config without exposing secret values.',
     ),
     makeFeature(
       'Enterprise cloud asset management',
@@ -1137,12 +1144,17 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
 
   const workflows: ReadinessWorkflowCheck[] = [
     {
-      name: 'Visitor -> POC -> report -> inquiry -> CRM',
+      name: 'Restaurant trial input -> standard pack -> inquiry -> owner handoff',
       ok: Boolean(input.commerceChainAvailable),
       evidence: input.commerceChainAvailable
-        ? 'POC、标准包、报告、询盘、CRM-lite 和 /api/commerce-chain 已能汇总成端到端交付报告。'
-        : 'POC、标准包、报告、询盘、CRM-lite 都有真实路由/API，但缺少统一编排报告。',
+        ? '餐饮试跑、标准包、报告、询盘、负责人承接和 /api/commerce-chain 已能汇总成端到端交付报告。'
+        : '餐饮试跑、标准包、报告、询盘、负责人承接都有真实路由/API，但缺少统一编排报告。',
       fix: input.commerceChainAvailable ? undefined : '补全链路编排 API。',
+    },
+    {
+      name: 'Restaurant intake -> standard pack -> content -> publish proof -> manager follow-up',
+      ok: true,
+      evidence: 'restaurant-trial-orchestrator-v1 已把 /factory?variant=friend_trial、标准交付包、内容交付包、发布凭证槽和店长任务队列串成一条可测试主链路。',
     },
     {
       name: 'Assets -> distribution plan -> measurable UTM',
@@ -1163,7 +1175,7 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
       evidence: input.performanceImportAvailable
         ? '/api/performance-import 已支持平台 CSV -> scale / iterate / pause 复盘决策。'
         : 'Listing Factory 有表现记录与复盘结构，但真实平台数据回流仍依赖人工导入或 provider 配置。',
-      fix: input.performanceImportAvailable ? undefined : '补统一数据回流入口：CSV/广告平台导入 -> report -> CRM 下一步。',
+      fix: input.performanceImportAvailable ? undefined : '补统一数据回流入口：CSV/平台导入 -> report -> 负责人下一步。',
     },
     {
       name: 'Distribution -> ad account -> platform analytics',
@@ -1178,14 +1190,14 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
   ];
 
   workflows.push({
-    name: 'Platform OAuth -> ad account -> auto publish -> analytics sync',
+    name: 'Platform authorization -> merchant grant -> publish receipt -> feedback sync',
     ok: platformAutomationReady,
     evidence: platformAutomationReady
-      ? `OAuth, ad account, auto-publish, analytics sync, and enterprise asset permissions are configured. ${platformConnectorEvidence}`
+      ? `Platform authorization, merchant grant, publish receipt, feedback sync, and enterprise asset permissions are configured. ${platformConnectorEvidence}`
       : `Manual dispatch ledger is available=${Boolean(input.distributionExecutionAvailable)}; platform automation is incomplete. ${platformConnectorEvidence}`,
     fix: platformAutomationReady
       ? undefined
-      : 'Complete platform connector config, then verify one OAuth grant, one ad account, one publish action, and one analytics sync.',
+      : 'Complete platform connector config, then verify one platform grant, one merchant grant, one publish receipt, and one feedback sync.',
   });
 
   const competitor: CompetitorDimension[] = [
@@ -1197,7 +1209,7 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
     {
       name: '工作流闭环',
       gap: 'medium',
-      evidence: 'Wenai 的 POC/CRM 闭环可跑；真实生产、分发、数据回流仍非一站式。',
+      evidence: 'Wenai 的餐饮试跑/负责人承接闭环可跑；真实生产、分发、数据回流仍非一站式。',
     },
     {
       name: '技术稳定性',
@@ -1214,7 +1226,7 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
     name: 'Platform automation depth',
     gap: platformAutomationReady ? 'minor' : 'severe',
     evidence: platformAutomationReady
-      ? 'The platform connector ledger reports OAuth, ad account, publish, analytics, and enterprise asset permissions ready.'
+      ? 'The platform connector ledger reports platform authorization, merchant grants, publish receipts, feedback sync, and enterprise asset permissions ready.'
       : `External platform automation is still gated: ${platformConnectorEvidence}.`,
   });
 
@@ -1248,14 +1260,14 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
       priority: 'P1',
       title: '平台表现数据缺少统一回流入口',
       evidence: '没有 CSV/UTM 回流时，复盘依赖人工描述，难以持续迭代素材。',
-      fix: '补平台 CSV 导入 -> report -> CRM 下一步。',
+      fix: '补平台 CSV 导入 -> report -> 负责人下一步。',
     });
   }
   if (!input.commerceChainAvailable) {
     issues.push({
       priority: 'P1',
       title: '全链路能力缺少统一编排入口',
-      evidence: '单点功能可用，但用户无法看到从 POC 到 CRM 的完整链路验收结果。',
+      evidence: '单点功能可用，但用户无法看到从餐饮试跑到负责人承接的完整链路验收结果。',
       fix: '补 /api/commerce-chain，把阶段状态、交付包和下一步动作统一输出。',
     });
   }
@@ -1282,7 +1294,7 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
       priority: 'P1',
       title: 'Kuaizi-level platform automation is not fully configured',
       evidence: platformConnectorEvidence,
-      fix: 'Configure OAuth, ad account authorization, auto-publish, analytics sync, and enterprise asset permissions; verify with sandbox accounts before claiming parity.',
+      fix: 'Configure platform authorization, merchant grants, publish receipts, feedback sync, and enterprise asset permissions; verify with sandbox accounts before claiming parity.',
     });
   }
   issues.push({
@@ -1293,7 +1305,7 @@ export function evaluateProductReadiness(input: ReadinessServiceInput): ProductR
       : '没有多平台 OAuth、矩阵发布计划、广告账号授权、榜单追踪。',
     fix: input.distributionExecutionAvailable
       ? '保留 provider-gated 标注，等真实账号授权后再接平台 adapter。'
-      : '作为后续阶段，不阻断 10 SKU POC 试用。',
+      : '作为后续阶段，不阻断餐饮试跑和标准包试用。',
   });
 
   const p0 = issues.filter(issue => issue.priority === 'P0');

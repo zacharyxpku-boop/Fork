@@ -82,7 +82,7 @@ describe('listing factory demo data', () => {
       stopLine: expect.stringContaining('未审计规模数字'),
     });
     expect(buildFactoryOperatingLayers(report).map(layer => layer.name)).toEqual(['Compose', 'Create', 'Cut', 'Cast', 'Manage']);
-    expect(buildFactoryOperatingLayers(report).find(layer => layer.name === 'Cast')?.state).toContain('不能说自动发布');
+    expect(buildFactoryOperatingLayers(report).find(layer => layer.name === 'Cast')?.state).toContain('不能说外部发布已完成');
     expect(buildFactoryReadinessSlices(report).find(slice => slice.title === '外部接入后做')?.items.join('\n')).toContain('Multi-platform OAuth');
     expect(buildFactoryReadinessSlices(report).find(slice => slice.title === '现在不能宣称')?.items.join('\n')).toContain('91M+ creative output');
     expect(buildFactoryMobileCapabilities(report).map(item => item.title)).toEqual([
@@ -90,7 +90,7 @@ describe('listing factory demo data', () => {
       '热门视频解析',
       '批量混剪',
       '矩阵宝 / PubPal',
-      '广告投放',
+      '活动发布',
       '企业数据安全',
     ]);
   });
@@ -428,7 +428,7 @@ describe('listing factory demo data', () => {
     expect(source).toContain('正式生产方案');
     expect(source).toContain('类目灵感');
     expect(source).toContain('内容工厂控制台');
-    expect(source).toContain('Wenai 电商增长作战台');
+    expect(source).toContain('Wenai 餐饮门店增长作战台');
     expect(source).toContain('增长工厂');
     expect(source).toContain('进入 Compose / Create / Cut / Cast / Manage 工作台');
     expect(source).toContain('内容工厂');
@@ -445,7 +445,7 @@ describe('listing factory demo data', () => {
     expect(source).toContain('热门视频解析');
     expect(source).toContain('批量混剪');
     expect(source).toContain('矩阵宝 / PubPal');
-    expect(source).toContain('广告投放');
+    expect(source).toContain('活动发布');
     expect(source).toContain('企业数据安全');
     expect(source).toContain('内部可用');
     expect(source).toContain('外部门禁');
@@ -455,7 +455,7 @@ describe('listing factory demo data', () => {
     expect(source).toContain('现在不能宣称');
     expect(source).toContain('91M+ creative output');
     expect(source).toContain('42M+ video distribution');
-    expect(source).toContain('从 SKU 上新到创意、视频、分发、审核和回流的一张工作台');
+    expect(source).toContain('从门店活动到内容、视频、发布凭证、店长审核和到店回流的一张工作台');
     expect(source).toContain('Hookshot / Hookly');
     expect(source).toContain('Compose');
     expect(source).toContain('Create');

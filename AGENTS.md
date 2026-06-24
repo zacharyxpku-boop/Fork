@@ -26,14 +26,13 @@ The verification script covers focused tests, TypeScript, ESLint, and Next build
 
 ## Product Direction
 
-Wenai is a 10-SKU POC delivery system for ecommerce AI workflows. Keep product work aligned to:
+Wenai is a restaurant AI trial workbench for store growth workflows. Keep product work aligned to:
 
-- qualified inquiry intake
-- standard package generation
-- pipeline execution
-- delivery review
-- CRM/admin follow-up
-- contract or payment handoff
+- restaurant/store trial intake
+- standard delivery package generation
+- content and material production
+- publish proof and evidence receipts
+- reservation, coupon, private-message, community and store-manager follow-up
+- operating review, next dish/package loop, membership or contract handoff
 
-Do not drift back into a generic AI tool directory.
-
+Do not drift back into a generic AI tool directory or the old product-catalog workflow.

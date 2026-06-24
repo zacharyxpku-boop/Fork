@@ -19,7 +19,7 @@ import { buildRestaurantOperatingDataContract } from '@/lib/restaurant-operating
 import { buildRestaurantBrowserGatewayPack } from '@/lib/restaurant-browser-gateway-pack';
 import { buildRestaurantRuntimeRunnerLoopPack } from '@/lib/restaurant-runtime-runner-loop-pack';
 import { buildRestaurantRuntimeProbe } from '@/lib/restaurant-agent-runtime-probe';
-import { buildRestaurantStoreManagerTaskQueue } from '@/lib/restaurant-store-manager-task-store';
+import { buildRestaurantStoreManagerTaskQueue, clearRestaurantStoreManagerTasksForTest, recordRestaurantStoreManagerTasks } from '@/lib/restaurant-store-manager-task-store';
 import { buildRestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
 import type { RestaurantAgentReceiptRecord } from '@/lib/restaurant-agent-receipt-store';
 import { clearRestaurantAgentRunsForTest, recordRestaurantAgentRun, type RestaurantAgentRunRecord } from '@/lib/restaurant-agent-run-store';
@@ -125,7 +125,24 @@ describe('restaurant provider sandbox submit workbench', () => {
 
   it('builds a controlled submit attempt audit without claiming automation', async () => {
     clearRestaurantAgentRunsForTest();
+    clearRestaurantStoreManagerTasksForTest();
     const now = new Date('2026-05-26T15:30:00.000Z');
+    // The submit attempt needs at least one open store-manager task so the
+    // provider handoff can produce a sanitized safePayload; seed it here
+    // instead of relying on leftover ledger state from other tests.
+    recordRestaurantStoreManagerTasks([{
+      id: 'sandbox-submit-proof',
+      owner: 'store-manager',
+      priority: 'today',
+      restaurant: 'Attempt Bistro',
+      offer: 'Dinner set',
+      signal: 'setup-gap',
+      action: 'Capture the public publish proof for the trial offer.',
+      talkTrack: 'Internal task only.',
+      evidenceRequired: 'public proof link',
+      dueWindow: 'today',
+      stopLine: 'No external execution without merchant authorization.',
+    }], now);
     const env = {};
     const runs: RestaurantAgentRunRecord[] = [];
     const receipts: RestaurantAgentReceiptRecord[] = [];
@@ -230,6 +247,7 @@ describe('restaurant provider sandbox submit workbench', () => {
     expect(serialized).not.toContain('cookie-value');
     expect(serialized).not.toMatch(/1[3-9]\d{9}/);
     clearRestaurantAgentRunsForTest();
+    clearRestaurantStoreManagerTasksForTest();
   });
 
   it('exposes submit attempt through the runtime API as a blocked audited run when provider keys are missing', async () => {

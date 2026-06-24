@@ -76,7 +76,7 @@ describe('restaurant public data samples', () => {
         status: 'requires-merchant-account',
       }),
       expect.objectContaining({
-        name: 'POS / 收银 / 会员 / 库存',
+        name: '收银汇总 / 会员 / 库存',
         canUseNow: false,
         status: 'manual-import-only',
       }),

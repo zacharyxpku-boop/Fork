@@ -26,8 +26,8 @@ describe('restaurant claw skill catalog', () => {
       '平台授权或 Browser Runner',
       'POS/核销/会员导出或 API',
     ]));
-    expect(catalog.safetyBoundary).toContain('未配置 Provider');
-    expect(catalog.safetyBoundary).toContain('不宣称自动发布');
+    expect(catalog.safetyBoundary).toContain('未配置外部服务接入');
+    expect(catalog.safetyBoundary).toContain('不宣称发布执行');
   });
 
   it('identifies internal training work without needing merchant credentials', () => {
@@ -66,7 +66,7 @@ describe('restaurant claw skill catalog', () => {
       evidenceRequired: expect.stringContaining('configured'),
     }));
     expect(batch.dispatchPreview.map(item => item.lane)).toEqual(['training', 'provider']);
-    expect(batch.safetyBoundary).toContain('不会自动发布');
+    expect(batch.safetyBoundary).toContain('不会代发');
     expect(JSON.stringify(batch)).not.toContain('api_key');
     expect(JSON.stringify(batch)).not.toContain('cookie');
     expect(JSON.stringify(batch)).not.toContain('token');

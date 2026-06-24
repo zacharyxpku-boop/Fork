@@ -237,7 +237,7 @@ export function buildRestaurantClawSkillCatalog(): RestaurantClawSkillCatalog {
         provider: tool.externalGate,
         unlocks: tool.name,
       })),
-    safetyBoundary: '能力库是可训练目录和受控工具目录；未配置 Provider、平台授权、POS/会员/核销数据前，不宣称自动发布、自动获客、自动核销或实时经营分析已经完成。',
+    safetyBoundary: '能力库是可训练目录和受控工具目录；未配置外部服务接入、平台授权、POS/会员/核销数据前，不宣称发布执行、线索承接、核销或实时经营分析已经完成。',
   };
 }
 
@@ -307,6 +307,6 @@ export function buildRestaurantClawTrainingBatch(input: {
     internalTrainingTasks,
     providerUnlockTasks,
     dispatchPreview,
-    safetyBoundary: '训练批次只能生成内部训练任务和外部解锁任务；未取得 Provider、平台授权、POS/会员/核销数据前，不会自动发布、触达顾客、写核销或宣称实时经营结论。',
+    safetyBoundary: '训练批次只能生成内部训练任务和外部解锁任务；未取得 Provider、平台授权、POS/会员/核销数据前，不会代发、触达顾客、写核销或宣称实时经营结论。',
   };
 }

@@ -102,6 +102,6 @@ export function buildRestaurantBusinessSignals(
     items,
     blockers,
     nextActions,
-    safetyBoundary: 'Business signals 只汇总预约、领券、核销、咨询和到店意向数量；没有商家授权、POS 导出或平台 API 前，不宣称自动获客、自动核销或真实经营同步。',
+    safetyBoundary: 'Business signals 只汇总预约、领券、核销、咨询和到店意向数量；没有商家授权、POS 导出或平台 API 前，不宣称线索已承接、核销已完成或真实经营同步。',
   };
 }

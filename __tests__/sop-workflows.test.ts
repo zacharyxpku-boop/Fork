@@ -26,8 +26,8 @@ describe('sop workflow engine', () => {
     });
 
     expect(pack.workflow.id).toBe('benchmark');
-    expect(pack.missingInputs).toContain('品牌 / 店铺上下文');
-    expect(pack.missingInputs).toContain('benchmark URL / 竞品账号 / 评论证据');
+    expect(pack.missingInputs).toContain('餐厅 / 门店上下文');
+    expect(pack.missingInputs).toContain('benchmark URL / 竞品门店账号 / 评论或截图证据');
     expect(pack.readiness.decision).toBe('needs-info');
     expect(pack.readiness.acceptanceScore).toBeLessThan(80);
     expect(pack.sections.some(section => section.title.includes('验收标准'))).toBe(true);
@@ -35,10 +35,10 @@ describe('sop workflow engine', () => {
 
   it('scores POC readiness for contract-grade standard packs', () => {
     const readiness = scoreStandardPackReadiness({
-      goal: '10 SKU POC for TikTok Shop, review acceptance, CTR and 7 day test recap before contract',
-      brand: 'US home organization Shopify brand, clean reliable tone, compliance review needed',
-      sku: '10 SKU batch: drawer organizer, pantry bins, cabinet rack, with price band and selling points',
-      links: 'https://example.com/tiktok-video https://example.com/amazon-listing',
+      goal: '10 dish restaurant POC for 大众点评 and 小红书, review acceptance, coupon claims and 7 day test recap before contract',
+      brand: '南城川味小馆 with 店长 review, compliance and 核销 rules needed',
+      sku: '10 个菜品/套餐 batch: 酸菜鱼套餐, 毛血旺套餐, 工作日晚餐券, with price band and 到店 reasons',
+      links: 'https://example.com/dianping https://example.com/xiaohongshu',
       workflowId: 'slideshow-batch',
     }, []);
 
@@ -46,16 +46,16 @@ describe('sop workflow engine', () => {
     expect(readiness.leadScore).toBeGreaterThanOrEqual(80);
     expect(readiness.acceptanceScore).toBeGreaterThanOrEqual(80);
     expect(readiness.contractReadiness).toBeGreaterThanOrEqual(70);
-    expect(readiness.nextStepLabel).toContain('POC');
-    expect(readiness.strengths.join(' ')).toContain('benchmark');
+    expect(readiness.nextStepLabel).toContain('运营合同');
+    expect(readiness.strengths.join(' ')).toContain('门店活动测试包');
     expect(readiness.reviewChecklist.length).toBeGreaterThanOrEqual(4);
   });
 
   it('formats markdown as a stable deliverable', () => {
     const pack = buildStandardPack({
       goal: '做 7 天内容测试',
-      brand: '美区家居独立站',
-      sku: '伸缩抽屉收纳盒',
+      brand: '南城川味小馆',
+      sku: '双人酸菜鱼套餐',
       links: 'https://example.com/video',
       workflowId: 'slideshow-batch',
     });
@@ -72,10 +72,10 @@ describe('sop workflow engine', () => {
 
   it('formats customer-ready report, ops brief, and followup assets', () => {
     const pack = buildStandardPack({
-      goal: '10 SKU POC for TikTok Shop, review acceptance and contract decision',
-      brand: 'US home organization Shopify brand with owner review',
-      sku: '10 SKU batch: drawer organizer, pantry bins, cabinet rack',
-      links: 'https://example.com/tiktok-video https://example.com/amazon-listing',
+      goal: '10 dish restaurant POC for 大众点评, review acceptance and contract decision',
+      brand: '南城川味小馆 with 店长 review',
+      sku: '10 个菜品/套餐 batch: 酸菜鱼套餐, 毛血旺套餐, 工作日晚餐券',
+      links: 'https://example.com/dianping https://example.com/xiaohongshu',
       workflowId: 'slideshow-batch',
     });
 
@@ -97,9 +97,9 @@ describe('sop workflow engine', () => {
 
   it('routes standard packs to the right customer execution pipeline', () => {
     const pack = buildStandardPack({
-      goal: '做 slideshow reels 批量测试, 7 天后复盘 CTR 和合同判断',
-      brand: 'TikTok Shop home brand with owner review',
-      sku: '10 SKU batch with product images and selling points',
+      goal: '做 slideshow reels 批量测试, 7 天后复盘券领取和合同判断',
+      brand: '南城川味小馆 with 店长 review',
+      sku: '10 个菜品/套餐 batch with 菜品图 and 到店理由',
       links: 'https://example.com/tiktok-video',
       workflowId: 'slideshow-batch',
     });
@@ -113,15 +113,15 @@ describe('sop workflow engine', () => {
 
   it('keeps hypothesis packs away from contract push when benchmark is missing', () => {
     const pack = buildStandardPack({
-      goal: '10 SKU TikTok Shop launch POC, 7 天测试后做验收复盘并评估主站合同',
-      brand: '美区家居独立站, founder 亲自审核, 有商品图和详情页素材',
-      sku: '10 SKU batch: drawer organizer, pantry bins, cabinet rack, hooks, clips, shelf divider',
+      goal: '10 个菜品门店 POC, 7 天测试后做验收复盘并评估门店运营合同',
+      brand: '南城川味小馆, 店长亲自审核, 有菜品图和点评截图素材',
+      sku: '10 个菜品/套餐 batch: 酸菜鱼套餐, 毛血旺套餐, 工作日晚餐券',
       links: '',
       workflowId: 'benchmark',
     });
 
     expect(pack.readiness.decision).toBe('hypothesis-only');
-    expect(pack.readiness.contractBlockers.join(' ')).not.toContain('10 SKU');
+    expect(pack.readiness.contractBlockers.join(' ')).toContain('缺少 benchmark 证据');
     expect(pack.sections.some(section => section.title.includes('商业推进动作'))).toBe(true);
     expect(formatStandardPackMarkdown(pack)).toContain('补 benchmark 证据');
   });

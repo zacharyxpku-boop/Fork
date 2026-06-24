@@ -135,17 +135,17 @@ export function buildRestaurantDecision(input: RestaurantDecisionInput): Restaur
     ],
     blockedAutomation: [
       {
-        capability: '自动发布',
+        capability: '发布执行',
         missing: '平台账号授权、内容 ID、审核结果和发布回执。',
         whyCompetitorsCan: '平台或生态工具拿到了商家后台/开放平台权限，我们没有你的账号授权就不能代发。',
       },
       {
-        capability: '自动获客',
+        capability: '线索承接',
         missing: '流量平台账户权限、线索回调、用户授权和预算账户。',
         whyCompetitorsCan: '美团/点评掌握交易和流量入口，POS/营销套件掌握会员触达；我们现在没有这些通道。',
       },
       {
-        capability: '自动核销',
+        capability: '核销承接',
         missing: '团购券核销接口、收银/POS 对账字段、核销码权限。',
         whyCompetitorsCan: '核销发生在平台或收银系统里，必须接入商户后台或 POS。',
       },

@@ -26,7 +26,7 @@ describe('restaurant agent watcher policy', () => {
       'browser-session-watcher',
     ]);
     expect(policy.blockedExternal).toContain('private message raw text remains forbidden');
-    expect(policy.safetyBoundary).toContain('不自动发布');
+    expect(policy.safetyBoundary).toContain('不代发');
   });
 
   it('turns accepted rejected blocked and forwarded events into active wakeups and memory upserts', () => {

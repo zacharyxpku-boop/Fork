@@ -182,6 +182,6 @@ export function buildRestaurantAgentOpsConsole(input: {
       ...businessSignals.blockers,
       ...readiness.groups.filter(group => group.status === 'blocked').map(group => group.nextAction),
     ])).slice(0, 10),
-    safetyBoundary: 'Agent Ops Console 只聚合本地 run、授权状态、浏览器 session 摘要、签名/手工回执和脱敏经营信号；不登录平台、不自动发布、不读取私信、不展示 API key/cookie/token/POS 明细或个人联系方式。',
+    safetyBoundary: 'Agent Ops Console 只聚合本地 run、授权状态、浏览器 session 摘要、签名/手工回执和脱敏经营信号；不登录平台、不代发、不读取私信、不展示 API key/cookie/token/POS 明细或个人联系方式。',
   };
 }

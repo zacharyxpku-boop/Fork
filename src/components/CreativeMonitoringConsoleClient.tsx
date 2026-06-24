@@ -118,8 +118,8 @@ const HOOKSHOT_STYLE_PLAYBOOK = [
   {
     title: 'Offer Test Matrix',
     signal: '折扣、套装、赠品、信任背书、稀缺性和平台活动节点',
-    output: '把创意机会转成投放假设：受众、平台、预算、指标和停止条件',
-    guardrail: '没有广告账户和 analytics sync 前，只能生成投放方案，不能宣称自动优化',
+    output: '把创意机会转成门店活动假设：到店人群、平台、负责人、反馈指标和停止条件',
+    guardrail: '没有平台授权、商户授权和反馈回流前，只能生成门店活动发布方案，不能宣称自动优化',
   },
 ];
 
@@ -143,14 +143,14 @@ const COMPOSE_INTELLIGENCE_STACK = [
     input: '前三秒钩子、反差句、痛点开场、结果承诺、价格锚点和信任背书',
     output: '生成可 A/B 测的中文脚本开头，并写入品牌学习档案',
     internal: '内部可做：结构复用、禁用表达、胜出模式沉淀、下一轮 Brief 约束',
-    external: '外部需要：投放回流和真实转化数据，验证哪个 hook 真正胜出',
+    external: '外部需要：平台/社群反馈回流和真实到店信号，验证哪个 hook 真正带来到店意向',
   },
   {
     stage: 'Offer Test Matrix',
     input: '折扣、套装、赠品、稀缺性、达人背书、节日节点和平台活动',
-    output: '变成分发计划、广告假设、预算门槛、停止条件和复盘口径',
-    internal: '内部可做：广告 campaign ledger、dispatch gate、表现 CSV 回流',
-    external: '外部需要：广告账户授权、自动建计划、平台 analytics sync',
+    output: '变成发布安排、门店活动假设、负责人门槛、停止条件和复盘口径',
+    internal: '内部可做：门店活动发布账本、dispatch gate、平台/社群反馈回流',
+    external: '外部需要：平台授权、商户授权、发布回执和平台/社群反馈回流',
   },
 ];
 
@@ -339,7 +339,7 @@ export function buildCreativeHarvestAcceptanceChecks(
       ready: moatScore >= 75 && sourceDepthScore >= 75,
       evidence: `护城河分 ${moatScore} / 来源深度 ${sourceDepthScore}`,
       internalMove: '把胜出的 hook、节奏、offer 和禁用表达沉淀为下一轮生产约束。',
-      externalGate: '外部还需要广告账户、平台 analytics sync 和转化数据，才能证明哪个创意真正胜出。',
+      externalGate: '外部还需要平台授权、商户授权、发布回执和到店反馈，才能证明哪个创意真正带来到店意向。',
     },
   ];
 }
@@ -625,7 +625,7 @@ export function CreativeMonitoringConsoleClient({
       pacing: 'fast',
       reusableAngle: '前三秒先给结果对比，再展示使用场景，最后落到可购买理由。',
       proofPoint: '公开视频中评论区集中追问材质、尺寸和购买入口，说明需求已被验证。',
-      cta: '引导用户查看同类 SKU 的组合方案。',
+      cta: '引导用户查看同类菜品/套餐的组合方案。',
       visualPattern: '近景痛点画面 + 手部演示 + 结果前后对比',
       sceneBeats: ['痛点开场', '产品进入', '前后对比', '购买理由'],
       transcriptSummary: '用真实使用前后差异证明收纳效率提升。',
@@ -800,12 +800,12 @@ export function CreativeMonitoringConsoleClient({
       },
       {
         title: '表现回流',
-        detail: '没有广告账户和 analytics sync 前，只能做结构假设。',
+        detail: '没有平台授权、商户授权和反馈回流前，只能做门店活动结构假设。',
         status: '外部门禁',
       },
       {
         title: '生产交接',
-        detail: '机会地图可以写入生产链，但最终投放仍受授权和 provider 限制。',
+        detail: '机会地图可以写入生产链，但最终发布仍受授权和 provider 限制。',
         status: (creative?.opportunityCount || 0) > 0 ? '内部可走' : '等洞察',
       },
     ];
@@ -815,7 +815,7 @@ export function CreativeMonitoringConsoleClient({
       `opportunities=${creative?.opportunityCount ?? 0} pattern_clusters=${creative?.patternClusterCount ?? 0} moat_score=${creative?.creativeMoatScore ?? 0}`,
       `collector=${collectorPlan?.providerReady ? 'provider_ready' : 'manual_ops'} targets=${snapshot?.collectorTargetCount ?? 0}`,
       `sources=${snapshot?.sourceCount ?? 0} provider_ready=${snapshot?.providerReadySourceCount ?? 0} multimodal=${snapshot?.sourceSyncMultimodalParsedCount ?? 0}`,
-      `guardrail=no unauthorized scraping, no fake OAuth, no fake analytics sync`,
+      `guardrail=no unauthorized scraping, no fake platform auth, no fake feedback sync`,
     ];
 
     const readinessRows = [
@@ -879,7 +879,7 @@ export function CreativeMonitoringConsoleClient({
             </nav>
             <div className="m-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
               <div className="text-sm font-semibold text-neutral-900">朋友试用 Creative 路径</div>
-              <div className="mt-1 text-xs leading-5 text-neutral-500">只展示内部可验证能力；外部授权、采集和投放门禁独立标注。</div>
+              <div className="mt-1 text-xs leading-5 text-neutral-500">只展示内部可验证能力；外部授权、采集和发布门禁独立标注。</div>
             </div>
           </aside>
 
@@ -1138,10 +1138,10 @@ export function CreativeMonitoringConsoleClient({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-amber-200">Hookshot / Hookly 参考层</p>
-              <h2 className="mt-2 text-xl font-semibold">从单条灵感升级为可复用广告结构库</h2>
+              <h2 className="mt-2 text-xl font-semibold">从单条灵感升级为可复用到店内容结构库</h2>
             </div>
             <div className="max-w-sm text-xs leading-5 text-amber-100/80">
-              终局不是“看见一个爆款就仿一个”，而是把 hook、UGC 脚本骨架和 offer 测试矩阵持续沉淀，反哺视频生产和投放回流。
+              终局不是“看见一个爆款就仿一个”，而是把 hook、UGC 脚本骨架和 offer 测试矩阵持续沉淀，反哺视频生产和门店活动发布复盘。
             </div>
           </div>
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
@@ -1160,7 +1160,7 @@ export function CreativeMonitoringConsoleClient({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-emerald-200">Compose Intelligence Stack</p>
-              <h2 className="mt-2 text-xl font-semibold">把灵感、视频、Hook 和投放假设串成一条生产约束链</h2>
+              <h2 className="mt-2 text-xl font-semibold">把灵感、视频、Hook 和到店内容假设串成一条生产约束链</h2>
             </div>
             <p className="max-w-md text-xs leading-5 text-white/55">
               这层是 Wenai 的护城河入口：不是只保存素材，而是把每个外部信号转成可复用结构、品牌记忆和下一轮视频/分发动作。没有真实 provider 的部分继续标成外部门禁。

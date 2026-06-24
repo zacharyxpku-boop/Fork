@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       ? [body.campaign]
       : [];
   if (rawAccounts.length === 0 && rawCampaigns.length === 0) {
-    return NextResponse.json({ error: 'channel_account_required', message: '请提供一个或多个平台账号，或广告投放活动，才能写入矩阵账号池。' }, { status: 400 });
+    return NextResponse.json({ error: 'channel_account_required', message: '请提供一个或多个发布渠道，或门店活动发布安排，才能写入同城发布账本。' }, { status: 400 });
   }
 
   const accounts = await Promise.all(rawAccounts.slice(0, 50).map(item => upsertChannelAccount(orgId, {

@@ -151,7 +151,7 @@ describe('product readiness against Kuaizi benchmark', () => {
 
     expect(readiness.platformAutomationReady).toBe(true);
     expect(report.features.find(feature => feature.name === 'Platform connector automation ledger')?.status).toBe('implemented');
-    expect(report.workflows.find(workflow => workflow.name.includes('Platform OAuth'))?.ok).toBe(true);
+    expect(report.workflows.find(workflow => workflow.name.includes('Platform authorization'))?.ok).toBe(true);
     expect(JSON.stringify(report)).not.toContain('oauth-secret-should-not-leak');
     expect(JSON.stringify(report)).not.toContain('ad-token-should-not-leak');
     expect(JSON.stringify(report)).not.toContain('publish-secret-should-not-leak');
@@ -326,6 +326,16 @@ describe('product readiness against Kuaizi benchmark', () => {
       currentStatus: 'partial',
     });
     expect(report.productBlueprint.find(layer => layer.id === 'Manage')?.stopLine).toContain('91M+ creative output');
+    expect(report.features.find(feature => feature.name === 'Restaurant trial orchestrator spine')).toMatchObject({
+      status: 'implemented',
+      risk: 'low',
+    });
+    expect(report.features.find(feature => feature.name === 'Restaurant trial orchestrator spine')?.evidence).toContain('restaurant-trial-orchestrator-v1');
+    expect(report.features.find(feature => feature.name === 'Restaurant trial orchestrator spine')?.evidence).toContain('试跑输入、标准交付包、内容/素材生产、发布凭证、线索/店长跟进');
+    expect(report.workflows.find(workflow => workflow.name.includes('Restaurant intake'))).toMatchObject({
+      ok: true,
+    });
+    expect(report.workflows.find(workflow => workflow.name.includes('Restaurant intake'))?.evidence).toContain('发布凭证槽和店长任务队列');
     expect(report.alternativeReferences.map(reference => reference.name)).toEqual(expect.arrayContaining([
       'Hookshot / Hookly',
       'Hooksy / Hooked',
@@ -339,15 +349,28 @@ describe('product readiness against Kuaizi benchmark', () => {
       'Creatopy / brand-safe ad generation',
       'Superads / creative insights',
     ]));
-    expect(report.alternativeReferences.find(reference => reference.name === 'Omneky')?.wenaiDecision).toContain('campaign ledger');
+    expect(report.alternativeReferences.find(reference => reference.name === 'Omneky')?.wenaiDecision).toContain('活动发布账本');
     expect(report.alternativeReferences.find(reference => reference.name === 'Creatify / UGC video ads')?.boundary).toContain('provider 回调');
-    expect(report.alternativeReferences.find(reference => reference.name === 'Marpipe / catalog creative testing')?.wenaiDecision).toContain('SKU feed');
+    expect(report.alternativeReferences.find(reference => reference.name === 'Marpipe / catalog creative testing')?.wenaiDecision).toContain('菜品/套餐 feed');
     expect(report.alternativeReferences.find(reference => reference.name === 'Pencil / generative ad creative')?.wenaiDecision).toContain('品牌学习档案');
     expect(report.alternativeReferences.find(reference => reference.name === 'VidMob / creative analytics')?.wenaiDecision).toContain('AI 视频分析');
     expect(report.alternativeReferences.find(reference => reference.name === 'Creatopy / brand-safe ad generation')?.wenaiDecision).toContain('品牌资产');
     expect(report.alternativeReferences.find(reference => reference.name === 'Superads / creative insights')?.wenaiDecision).toContain('跨平台性能信号');
     expect(report.uiVariants.map(variant => variant.id)).toEqual(['partner', 'operator', 'friend_trial']);
+    expect(report.uiVariants.find(variant => variant.id === 'friend_trial')?.firstScreen).toContain('五段试跑主链路');
+    expect(report.uiVariants.find(variant => variant.id === 'friend_trial')?.primaryAction).toContain('restaurant-trial-orchestrator-v1');
+    expect(report.uiVariants.find(variant => variant.id === 'friend_trial')?.primaryAction).toContain('试跑输入 -> 标准交付包 -> 内容/素材生产 -> 发布凭证 -> 线索/店长跟进');
     expect(report.uiVariants.find(variant => variant.id === 'friend_trial')?.stopLine).toContain('环境变量');
+    const readinessOutputCopy = JSON.stringify({
+      features: report.features,
+      workflows: report.workflows,
+      productBlueprint: report.productBlueprint,
+      uiVariants: report.uiVariants,
+    });
+    expect(readinessOutputCopy).not.toContain('10 SKU POC');
+    expect(readinessOutputCopy).not.toContain('Visitor -> POC');
+    expect(readinessOutputCopy).not.toContain('auto publish -> analytics sync');
+    expect(readinessOutputCopy).not.toContain('SKU brief');
     expect(JSON.stringify(report)).not.toContain('client-secret');
   });
 

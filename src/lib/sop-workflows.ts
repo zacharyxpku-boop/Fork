@@ -55,10 +55,10 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     id: 'benchmark',
     label: '内容拆解 / benchmark',
     shortLabel: 'Benchmark',
-    whenToUse: '还没有确定创意方向, 需要先从竞品内容、评论和平台语境里找证据。',
-    requiredInputs: ['SKU 卖点', '目标平台', '参考链接或竞品账号'],
-    outputs: ['搜索地图', 'benchmark 拆解表', 'Hook 方向', '7 天测试假设'],
-    acceptanceCriteria: ['至少 3 个参考来源', '每条 Hook 有对应场景', '未补链接时标注为假设'],
+    whenToUse: '还没有确定门店内容方向, 需要先从同城竞品内容、点评评论和平台语境里找证据。',
+    requiredInputs: ['菜品/套餐卖点', '目标渠道', '参考链接、截图或竞品门店账号'],
+    outputs: ['本地搜索地图', 'benchmark 拆解表', '到店理由/Hook 方向', '7 天内容测试假设'],
+    acceptanceCriteria: ['至少 3 个参考来源', '每条 Hook 有对应用餐场景', '未补链接或截图时标注为假设'],
     redlines: ['不能伪装成已完成真实调研', '不能承诺 GMV 或爆款', '不能直接复刻他人素材'],
     keywords: ['benchmark', '竞品', '拆解', '参考', '评论', 'insight'],
   },
@@ -66,8 +66,8 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     id: 'podcast-ugc',
     label: 'Podcast UGC',
     shortLabel: 'Podcast',
-    whenToUse: '产品需要被解释、讨论、种草, 适合做轻访谈或双人口播。',
-    requiredInputs: ['SKU 卖点', '目标用户', '品牌语气', '参考账号'],
+    whenToUse: '菜品、套餐或门店故事需要被解释、讨论、种草, 适合做轻访谈或双人口播。',
+    requiredInputs: ['菜品/套餐卖点', '目标客群', '门店语气', '参考账号'],
     outputs: ['双人口播脚本', '片头 Hook', '问题清单', '剪辑点位'],
     acceptanceCriteria: ['开头 3 秒说清痛点', '每 20 秒有一个信息推进', 'CTA 不硬插'],
     redlines: ['不能编造用户评价', '不能做医疗/功效暗示', '不能使用未授权名人背书'],
@@ -77,8 +77,8 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     id: 'street-interview',
     label: '街采 UGC',
     shortLabel: 'Street',
-    whenToUse: '需要用路人视角验证痛点和第一反应, 适合低门槛消费品。',
-    requiredInputs: ['SKU 卖点', '采访场景', '目标人群', '禁用表述'],
+    whenToUse: '需要用附近顾客视角验证到店理由和第一反应, 适合门店活动、团购套餐或新品菜。',
+    requiredInputs: ['菜品/套餐卖点', '采访场景', '目标客群', '禁用表述'],
     outputs: ['街采问题', '路人回答方向', '镜头脚本', '授权提醒'],
     acceptanceCriteria: ['问题不诱导虚假评价', '镜头能展示产品使用', '授权口径明确'],
     redlines: ['不能伪造真实路人反馈', '不能侵犯肖像权', '不能引导夸大效果'],
@@ -88,9 +88,9 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     id: 'slideshow-batch',
     label: 'Slideshow / Reels 批量测试',
     shortLabel: 'Slideshow',
-    whenToUse: '需要低成本快速测试多个 Hook、首帧、卖点顺序。',
-    requiredInputs: ['SKU 卖点', '商品图', '目标平台', '测试周期'],
-    outputs: ['5 条 slideshow 版本', '首帧文案', '素材顺序', '测试命名规则'],
+    whenToUse: '需要低成本快速测试多个到店 Hook、首帧、菜品卖点顺序。',
+    requiredInputs: ['菜品/套餐卖点', '菜品图/门店图', '目标渠道', '测试周期'],
+    outputs: ['5 条 slideshow 版本', '首帧文案', '素材顺序', '发布/截图命名规则'],
     acceptanceCriteria: ['每版只测试一个核心变量', '首帧可在 1 秒内读懂', '命名可追踪'],
     redlines: ['不能多个变量混测', '不能用模糊标题', '不能缺少复盘指标'],
     keywords: ['slideshow', 'reels', '轮播', '批量', '首帧'],
@@ -99,8 +99,8 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
     id: 'batch-ugc',
     label: '批量 UGC 短视频',
     shortLabel: 'UGC',
-    whenToUse: '已有产品卖点和基础素材, 需要批量生产可测试短视频脚本。',
-    requiredInputs: ['SKU 卖点', '目标平台', '参考视频', '素材清单'],
+    whenToUse: '已有菜品/套餐卖点和基础素材, 需要批量生产可测试探店或本地短视频脚本。',
+    requiredInputs: ['菜品/套餐卖点', '目标渠道', '参考视频', '素材清单'],
     outputs: ['10 条短视频脚本', '镜头表', '口播文案', '素材 manifest'],
     acceptanceCriteria: ['每条脚本有明确 Hook', '镜头时长可拍', '素材缺口明确'],
     redlines: ['不能承诺真实用户体验', '不能搬运参考视频', '不能缺少人工审核'],
@@ -108,12 +108,12 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
   },
   {
     id: 'animated-ads',
-    label: 'Animated Ads',
-    shortLabel: 'Animated',
-    whenToUse: '产品卖点偏功能或结构, 需要用动效解释使用前后或工作原理。',
-    requiredInputs: ['SKU 结构', '核心功能', '使用场景', '品牌视觉'],
+    label: '活动动效视频',
+    shortLabel: '动效',
+    whenToUse: '门店活动、套餐结构或会员权益需要用动效解释价格、核销和到店路径。',
+    requiredInputs: ['套餐/活动结构', '核心权益', '用餐场景', '门店视觉'],
     outputs: ['动效脚本', '画面分镜', '字幕节奏', '设计资产清单'],
-    acceptanceCriteria: ['功能解释准确', '字幕不遮挡产品', 'CTA 清楚'],
+    acceptanceCriteria: ['活动解释准确', '字幕不遮挡菜品/门店信息', 'CTA 清楚'],
     redlines: ['不能夸大功能', '不能隐藏限制条件', '不能用无法交付的复杂镜头'],
     keywords: ['animated', '动画', '动效', '解释', '功能'],
   },
@@ -155,14 +155,14 @@ export function scoreStandardPackReadiness(input: StandardPackInput, missingInpu
   const hasBrand = input.brand.trim().length >= 12;
   const hasSku = input.sku.trim().length >= 12;
   const hasBenchmark = input.links.trim().length > 0;
-  const hasPlatform = hasAny(fullText, [/tiktok|instagram|amazon|shopify|shopee|etsy|reels|小红书|抖音|淘宝|天猫|拼多多|独立站/i]);
-  const hasAcceptanceIntent = hasAny(fullText, [/验收|复盘|review|acceptance|ctr|转化|合同|poc|测试|test/i]);
-  const hasRiskContext = hasAny(fullText, [/合规|商标|禁用|restricted|claim|法务|功效|敏感|risk/i]);
-  const hasTenSkuSignal = hasAny(fullText, [/10\s*sku|10个|10 个|十个|批量|batch/i]);
-  const hasOwnerSignal = hasAny(fullText, [/负责人|审核人|owner|reviewer|founder|team|团队/i]);
-  const hasTimelineSignal = hasAny(fullText, [/7天|7 天|14天|14 天|30天|30 天|本周|下周|timeline|deadline|launch/i]);
-  const hasAssetSignal = hasAny(fullText, [/素材|商品图|video|image|listing|详情页|脚本|口播|主图/i]);
-  const hasExpansionSignal = hasAny(fullText, [/扩sku|扩品|放量|scale|签约|主站|retainer|续约|monthly/i]);
+  const hasPlatform = hasAny(fullText, [/tiktok|instagram|reels|小红书|抖音|大众点评|美团|点评|微信|社群|视频号|本地生活|团购/i]);
+  const hasAcceptanceIntent = hasAny(fullText, [/验收|复盘|review|acceptance|ctr|转化|合同|poc|测试|test|预约|券领取|核销|私信|到店/i]);
+  const hasRiskContext = hasAny(fullText, [/合规|商标|禁用|restricted|claim|法务|功效|敏感|risk|食品安全|最低价|限量|毛利|库存|核销/i]);
+  const hasOfferBatchSignal = hasAny(fullText, [/10\s*sku|10个|10 个|十个|5-10|5 到 10|五到十|菜品|套餐|门店活动|团购|批量|batch/i]);
+  const hasOwnerSignal = hasAny(fullText, [/负责人|审核人|owner|reviewer|founder|team|团队|店长|社群|运营/i]);
+  const hasTimelineSignal = hasAny(fullText, [/7天|7 天|14天|14 天|30天|30 天|本周|下周|timeline|deadline|launch|工作日|周末|饭点|晚餐|午餐/i]);
+  const hasAssetSignal = hasAny(fullText, [/素材|菜品图|菜单|团购券|门店图|点评截图|video|image|活动页|脚本|口播|海报/i]);
+  const hasExpansionSignal = hasAny(fullText, [/扩品|放量|scale|签约|运营合同|retainer|续约|monthly|复购|会员|下一轮菜品|下一轮套餐|门店活动/i]);
 
   const leadScore = Math.min(100,
     (hasGoal ? 18 : 0) +
@@ -171,7 +171,7 @@ export function scoreStandardPackReadiness(input: StandardPackInput, missingInpu
     (hasPlatform ? 12 : 0) +
     (hasBenchmark ? 14 : 0) +
     (hasAcceptanceIntent ? 8 : 0) +
-    (hasTenSkuSignal ? 6 : 0)
+    (hasOfferBatchSignal ? 6 : 0)
   );
   const acceptanceScore = Math.max(0, Math.min(100,
     100 -
@@ -182,7 +182,7 @@ export function scoreStandardPackReadiness(input: StandardPackInput, missingInpu
   ));
   const contractReadiness = Math.min(100,
     (hasAcceptanceIntent ? 24 : 0) +
-    (hasTenSkuSignal ? 18 : 0) +
+    (hasOfferBatchSignal ? 18 : 0) +
     (hasBenchmark ? 15 : 0) +
     (hasPlatform ? 12 : 0) +
     (hasRiskContext ? 10 : 0) +
@@ -193,36 +193,36 @@ export function scoreStandardPackReadiness(input: StandardPackInput, missingInpu
 
   const blockers = [
     !hasGoal ? '增长目标不清晰, 不能判断交付是否有效' : '',
-    !hasBrand ? '缺少品牌/店铺上下文, 输出容易偏离语气和平台定位' : '',
-    !hasSku ? '缺少 SKU 卖点, 不能进入真实 POC 交付' : '',
-    !hasPlatform ? '缺少目标平台, 无法判断内容形态和验收指标' : '',
-    !hasBenchmark ? '缺少 benchmark 链接或竞品账号, 当前只能产出假设' : '',
-    !hasAcceptanceIntent ? '缺少验收/复盘口径, 后续难以推进合同判断' : '',
+    !hasBrand ? '缺少餐厅/门店上下文, 输出容易偏离门店语气和渠道定位' : '',
+    !hasSku ? '缺少菜品/套餐/活动卖点, 不能进入真实 POC 交付' : '',
+    !hasPlatform ? '缺少目标渠道, 无法判断内容形态和验收指标' : '',
+    !hasBenchmark ? '缺少 benchmark 链接、截图或竞品门店账号, 当前只能产出假设' : '',
+    !hasAcceptanceIntent ? '缺少验收/复盘口径, 后续难以推进门店运营合同判断' : '',
   ].filter(Boolean);
 
   const strengths = [
-    hasSku ? '已有 SKU/卖点, 可以进入交付结构化' : '',
-    hasPlatform ? '已有目标平台, 可以约束内容形态' : '',
-    hasBenchmark ? '已有参考证据, 可以进入 benchmark-to-campaign' : '',
-    hasAcceptanceIntent ? '已有验收意图, 便于复盘和合同推进' : '',
+    hasSku ? '已有菜品/套餐/活动卖点, 可以进入交付结构化' : '',
+    hasPlatform ? '已有目标渠道, 可以约束内容形态' : '',
+    hasBenchmark ? '已有参考证据, 可以进入门店活动测试包' : '',
+    hasAcceptanceIntent ? '已有验收意图, 便于复盘和门店运营合同推进' : '',
     hasRiskContext ? '已有风险上下文, 便于人工终审' : '',
-    hasTenSkuSignal ? '已有 10 SKU/批量信号, 接近正式 POC 场景' : '',
+    hasOfferBatchSignal ? '已有菜品/套餐/活动批量信号, 接近正式 POC 场景' : '',
   ].filter(Boolean);
   const contractBlockers = [
     !hasBenchmark ? '缺少 benchmark 证据, 复盘时无法解释内容假设来源' : '',
     !hasAcceptanceIntent ? '没有明确验收或复盘口径, 即使交付也难以进入下一轮签约讨论' : '',
-    !hasTenSkuSignal ? '缺少 10 SKU/批量范围, 更像一次性工具试用而不是标准 POC' : '',
-    !hasOwnerSignal ? '没有看到审核人/负责人信号, 复盘会容易失焦' : '',
+    !hasOfferBatchSignal ? '缺少菜品/套餐/活动范围, 更像一次性工具试用而不是标准 POC' : '',
+    !hasOwnerSignal ? '没有看到店长/审核人/负责人信号, 复盘会容易失焦' : '',
     !hasTimelineSignal ? '没有启动和复盘时间窗, 难形成成交节奏' : '',
-    !hasRiskContext ? '没有提前定义合规和红线, 后面容易返工' : '',
+    !hasRiskContext ? '没有提前定义活动边界、核销、库存或食品安全红线, 后面容易返工' : '',
   ].filter(Boolean);
   const contractSignals = [
     hasAcceptanceIntent ? '有验收语言, 可以把结果拉到复盘会' : '',
-    hasTenSkuSignal ? '范围接近 10 SKU 标准包, 符合正式 POC 形态' : '',
+    hasOfferBatchSignal ? '范围接近门店菜品/活动标准包, 符合正式 POC 形态' : '',
     hasBenchmark ? '证据链存在, 复盘时更容易解释为什么继续投' : '',
-    hasOwnerSignal ? '存在审核/负责人信号, 便于会后推进' : '',
+    hasOwnerSignal ? '存在店长/审核/负责人信号, 便于会后推进' : '',
     hasTimelineSignal ? '有明确时间窗, 适合安排启动和复盘节点' : '',
-    hasExpansionSignal ? '出现扩 SKU / 签约 / 主站信号, 有转合同机会' : '',
+    hasExpansionSignal ? '出现复购 / 会员 / 下一轮活动 / 签约信号, 有转合同机会' : '',
   ].filter(Boolean);
 
   const decision = !hasSku || !hasBrand || !hasPlatform
@@ -250,8 +250,8 @@ export function scoreStandardPackReadiness(input: StandardPackInput, missingInpu
     : decision === 'hypothesis-only'
       ? '先补 benchmark, 再决定是否进入 POC'
       : contractReadiness >= 75
-        ? '锁复盘会并准备扩 SKU / 主站合同'
-        : '先跑 10 SKU POC, 同时补齐复盘与审核机制';
+        ? '锁复盘会并准备下一轮门店活动 / 运营合同'
+        : '先跑门店菜品/活动 POC, 同时补齐复盘与审核机制';
 
   return {
     leadScore,
@@ -266,11 +266,11 @@ export function scoreStandardPackReadiness(input: StandardPackInput, missingInpu
     contractBlockers,
     contractSignals,
     reviewChecklist: [
-      '确认是否有 5-10 个真实 SKU, 而不是单次试图',
-      '确认 benchmark 是否真实可访问, 不把假设包装成调研结论',
+      '确认是否有 5-10 个真实菜品/套餐/门店活动, 而不是单次试图',
+      '确认 benchmark 链接或截图是否真实可访问, 不把假设包装成调研结论',
       '确认是否有最终审核人和验收口径',
-      '确认高风险品类、功效词、商标词是否需要人工终审',
-      '确认下一步是补资料、进入 POC、扩 SKU, 还是转主站合同',
+      '确认最低价、限量、库存、核销、食品安全或门店承诺是否需要人工终审',
+      '确认下一步是补资料、进入 POC、下一轮门店活动, 还是转运营合同',
     ],
   };
 }
@@ -280,9 +280,9 @@ export function buildStandardPack(input: StandardPackInput): StandardPack {
   const hasBenchmark = input.links.trim().length > 0;
   const missingInputs = [
     !input.goal.trim() ? '增长目标' : '',
-    !input.brand.trim() ? '品牌 / 店铺上下文' : '',
-    !input.sku.trim() ? 'SKU / 卖点' : '',
-    !hasBenchmark ? 'benchmark URL / 竞品账号 / 评论证据' : '',
+    !input.brand.trim() ? '餐厅 / 门店上下文' : '',
+    !input.sku.trim() ? '菜品 / 套餐 / 活动卖点' : '',
+    !hasBenchmark ? 'benchmark URL / 竞品门店账号 / 评论或截图证据' : '',
   ].filter(Boolean);
 
   const benchmarkNote = hasBenchmark
@@ -299,9 +299,9 @@ export function buildStandardPack(input: StandardPackInput): StandardPack {
         title: '01 输入摘要',
         body: [
           `增长目标: ${input.goal.trim() || '待补'}`,
-          `品牌 / 店铺: ${input.brand.trim() || '待补'}`,
-          `SKU / 卖点: ${input.sku.trim() || '待补'}`,
-          `参考链接 / 账号: ${benchmarkNote}`,
+          `餐厅 / 门店: ${input.brand.trim() || '待补'}`,
+          `菜品 / 套餐 / 活动: ${input.sku.trim() || '待补'}`,
+          `参考链接 / 截图 / 账号: ${benchmarkNote}`,
         ],
       },
       {
@@ -329,9 +329,9 @@ export function buildStandardPack(input: StandardPackInput): StandardPack {
         body: [
           'Day 1: 补齐 benchmark 与素材, 定义版本命名。',
           'Day 2-3: 产出首批 3-5 个版本, 只测试一个核心变量。',
-          'Day 4-5: 根据播放、点击、评论信号做二轮改写。',
-          'Day 6: 汇总胜出 Hook、首帧、CTA 和素材缺口。',
-          'Day 7: 决定进入下一轮 SKU、进入主站合同, 或先补资料。',
+          'Day 4-5: 根据播放、点击、评论、私信、券领取或预约信号做二轮改写。',
+          'Day 6: 汇总胜出 Hook、首帧、CTA、发布凭证和素材缺口。',
+          'Day 7: 决定进入下一轮菜品/套餐/活动、转门店运营合同, 或先补资料。',
         ],
       },
       {
@@ -357,15 +357,15 @@ export function buildStandardPack(input: StandardPackInput): StandardPack {
       },
     ],
     nextActions: readiness.decision === 'hypothesis-only'
-      ? ['补 benchmark 证据', '重算准入评分', '再决定是否进入 10 SKU POC']
+      ? ['补 benchmark 证据', '重算准入评分', '再决定是否进入门店 POC']
       : missingInputs.length > 0
       ? [
         ...missingInputs.map(item => `补齐 ${item}`),
         '补齐后再安排制作和复盘时间',
       ]
       : readiness.contractReadiness >= 75
-          ? ['导出交付包', '进入人工终审', '锁定复盘会', '准备扩 SKU / 主站合同']
-          : ['导出交付包', '进入人工终审', '提交 10 SKU POC', '补齐审核人和复盘节点'],
+          ? ['导出交付包', '进入人工终审', '锁定复盘会', '准备下一轮门店活动 / 运营合同']
+          : ['导出交付包', '进入人工终审', '提交门店 POC', '补齐店长/审核人和复盘节点'],
   };
 }
 
@@ -492,81 +492,81 @@ export interface StandardPackExecutionPlan {
 const EXECUTION_PLAN_BY_WORKFLOW: Record<WorkflowId, StandardPackExecutionPlan> = {
   benchmark: {
     primaryPipeline: {
-      label: '市场宣传包',
+      label: '本地内容活动包',
       href: '/pipelines/marketing-campaign',
-      reason: '先把 benchmark、评论痛点、Hook 和测试假设整理成增长测试包。',
+      reason: '先把同城 benchmark、点评痛点、到店 Hook 和测试假设整理成门店增长测试包。',
     },
     supportingPipelines: [
-      { label: '拆参考视频', href: '/pipelines/video-teardown' },
-      { label: '新品上新', href: '/pipelines/new-listing' },
+      { label: '拆探店/同城参考视频', href: '/pipelines/video-teardown' },
+      { label: '菜品/活动 Launch Pack', href: '/pipelines/new-listing' },
     ],
     customerSteps: [
-      '补齐 3 个以上参考来源或竞品账号',
-      '生成 benchmark-to-campaign 标准包',
-      '确认哪些假设进入 7 天内容测试',
-      '复盘后决定扩 SKU 或推进主站合同',
+      '补齐 3 个以上参考来源、竞品门店账号或点评截图',
+      '生成门店活动测试标准包',
+      '确认哪些假设进入 7 天本地内容测试',
+      '复盘后决定下一轮门店活动、会员复购或推进运营合同',
     ],
   },
   'podcast-ugc': {
     primaryPipeline: {
-      label: 'AI 视频',
+      label: '餐饮短视频脚本',
       href: '/pipelines/ai-video',
-      reason: '把口播脚本、镜头节奏和 CTA 变成可生产的视频资产。',
+      reason: '把口播脚本、镜头节奏和到店 CTA 变成可生产的探店/门店视频资产。',
     },
     supportingPipelines: [
-      { label: '市场宣传包', href: '/pipelines/marketing-campaign' },
-      { label: '拆参考视频', href: '/pipelines/video-teardown' },
+      { label: '本地内容活动包', href: '/pipelines/marketing-campaign' },
+      { label: '拆探店/同城参考视频', href: '/pipelines/video-teardown' },
     ],
     customerSteps: [
-      '确认目标人群、品牌语气和不能碰的功效词',
+      '确认目标客群、门店语气和不能碰的低价/功效/核销表述',
       '生成双人口播脚本和剪辑点位',
       '进入视频生产或人工拍摄 brief',
-      '用首帧、完播和评论反馈复盘',
+      '用首帧、完播、评论、私信和预约/券领取反馈复盘',
     ],
   },
   'street-interview': {
     primaryPipeline: {
-      label: '市场宣传包',
+      label: '本地内容活动包',
       href: '/pipelines/marketing-campaign',
-      reason: '先把街采问题、场景、授权边界和脚本拆成可执行清单。',
+      reason: '先把街采问题、用餐场景、授权边界和脚本拆成可执行清单。',
     },
     supportingPipelines: [
-      { label: 'AI 视频', href: '/pipelines/ai-video' },
-      { label: '达人外联', href: '/pipelines/influencer-outbound' },
+      { label: '餐饮短视频脚本', href: '/pipelines/ai-video' },
+      { label: '探店达人外联', href: '/pipelines/influencer-outbound' },
     ],
     customerSteps: [
       '确认采访场景和授权口径',
       '生成街采问题和镜头脚本',
       '人工终审敏感表达',
-      '复盘素材是否值得扩到达人/UGC 批量生产',
+      '复盘素材是否值得扩到探店达人/UGC 批量生产',
     ],
   },
   'slideshow-batch': {
     primaryPipeline: {
       label: 'AB 测试',
       href: '/pipelines/ab-test',
-      reason: 'Slideshow 的价值在于快速验证 Hook、首帧和卖点顺序。',
+      reason: 'Slideshow 的价值在于快速验证到店 Hook、首帧和菜品卖点顺序。',
     },
     supportingPipelines: [
-      { label: '产品主图', href: '/pipelines/product-image' },
-      { label: '市场宣传包', href: '/pipelines/marketing-campaign' },
+      { label: '菜品图/门店海报', href: '/pipelines/product-image' },
+      { label: '本地内容活动包', href: '/pipelines/marketing-campaign' },
     ],
     customerSteps: [
       '确认每个版本只测试一个变量',
       '生成 5 条 slideshow 版本和命名规则',
       '进入 AB 测试或平台小预算测试',
-      '按 CTR、收藏、加购或评论信号复盘',
+      '按点击、收藏、评论、私信、券领取或预约信号复盘',
     ],
   },
   'batch-ugc': {
     primaryPipeline: {
-      label: 'AI 视频',
+      label: '餐饮短视频脚本',
       href: '/pipelines/ai-video',
-      reason: '批量 UGC 需要把脚本、镜头表和素材 manifest 接到视频生产。',
+      reason: '批量 UGC 需要把脚本、镜头表和素材 manifest 接到探店/本地短视频生产。',
     },
     supportingPipelines: [
-      { label: '市场宣传包', href: '/pipelines/marketing-campaign' },
-      { label: '达人外联', href: '/pipelines/influencer-outbound' },
+      { label: '本地内容活动包', href: '/pipelines/marketing-campaign' },
+      { label: '探店达人外联', href: '/pipelines/influencer-outbound' },
     ],
     customerSteps: [
       '确认素材清单和可拍镜头',
@@ -577,16 +577,16 @@ const EXECUTION_PLAN_BY_WORKFLOW: Record<WorkflowId, StandardPackExecutionPlan> 
   },
   'animated-ads': {
     primaryPipeline: {
-      label: 'AI 视频',
+      label: '餐饮活动动效',
       href: '/pipelines/ai-video',
-      reason: '动效广告需要把功能解释、字幕节奏和 CTA 接到视频资产。',
+      reason: '活动动效需要把套餐结构、核销边界、字幕节奏和到店 CTA 接到视频资产。',
     },
     supportingPipelines: [
-      { label: '产品主图', href: '/pipelines/product-image' },
+      { label: '菜品图/团购券海报', href: '/pipelines/product-image' },
       { label: 'AB 测试', href: '/pipelines/ab-test' },
     ],
     customerSteps: [
-      '确认功能结构和不能夸大的限制条件',
+      '确认套餐结构、核销规则和不能夸大的限制条件',
       '生成动效分镜和字幕节奏',
       '进入视频生产',
       '用首帧和完播率判断是否扩版本',
@@ -596,7 +596,7 @@ const EXECUTION_PLAN_BY_WORKFLOW: Record<WorkflowId, StandardPackExecutionPlan> 
     primaryPipeline: {
       label: '视频拆解',
       href: '/pipelines/video-teardown',
-      reason: '已有素材时先诊断结构，再重排 Hook、字幕和 CTA。',
+      reason: '已有门店素材时先诊断结构，再重排到店 Hook、字幕和 CTA。',
     },
     supportingPipelines: [
       { label: 'AI 视频', href: '/pipelines/ai-video' },

@@ -65,7 +65,7 @@ export function buildFactoryOperatingLayers(report: Pick<ProductReadinessReport,
         : layer.id === 'Cut'
           ? '视频混剪'
           : layer.id === 'Cast'
-            ? '分发投放'
+          ? '同城发布'
             : '管理验收',
     body: layer.target,
     href: layer.id === 'Compose'
@@ -101,11 +101,11 @@ export function buildFactoryReadinessSlices(report: Pick<ProductReadinessReport,
     },
     {
       title: '外部接入后做',
-      items: externalItems.length > 0 ? externalItems : ['真实 OAuth、视频 provider、广告账户、平台数据同步和企业云资产均已配置后再验收。'],
+      items: externalItems.length > 0 ? externalItems : ['真实平台授权、视频 provider、商户活动权限、平台反馈回流和企业云资产均已配置后再验收。'],
     },
     {
       title: '现在不能宣称',
-      items: ['筷子等价', '自动投放优化', '平台级矩阵发布', ...blockedClaims.map(item => `${item} 自有规模`)],
+      items: ['筷子等价', '自动优化', '平台级外部发布完成', ...blockedClaims.map(item => `${item} 自有规模`)],
     },
   ];
 }
@@ -140,13 +140,13 @@ export function buildFactoryMobileCapabilities(report: Pick<ProductReadinessRepo
       title: '矩阵宝 / PubPal',
       layer: 'Cast',
       internal: cast?.internalCapability || '账号矩阵、发布槽位、dispatch 和证据回填已建账本。',
-      external: cast?.externalGate || '需要平台 OAuth、上传发布权限和平台回执。',
+      external: cast?.externalGate || '需要平台授权、上传发布权限和平台回执。',
     },
     {
-      title: '广告投放',
+      title: '活动发布',
       layer: 'Cast',
-      internal: cast?.target || '广告 campaign ledger、预算门禁、发布证据和表现回流。',
-      external: cast?.stopLine || '没有广告账户授权前不能宣称自动投放。',
+      internal: cast?.target || '门店活动账本、预算门禁、发布证据和反馈回流。',
+      external: cast?.stopLine || '没有商户授权和发布凭证前不能宣称外部发布已完成。',
     },
     {
       title: '企业数据安全',

@@ -191,9 +191,9 @@ export function buildNewListingStandardPackRoute(input: NewListingStandardPackRo
     workflow: 'benchmark',
     goal:
       input.mode === 'batch'
-        ? `为这批 ${categoryLabel} SKU 生成上新 Launch Pack 与验收复盘标准交付包`
-        : `为这个 ${categoryLabel} SKU 生成上新 Launch Pack 与验收复盘标准交付包`,
-    brand: `新品上新流水线 / ${categoryLabel} / ${input.mode === 'batch' ? '批量模式' : '单 SKU 模式'}`,
+        ? `为这批 ${categoryLabel} 门店活动生成本地内容 Launch Pack 与验收复盘标准交付包`
+        : `为这个 ${categoryLabel} 菜品/套餐生成本地内容 Launch Pack 与验收复盘标准交付包`,
+    brand: `餐饮门店增长流水线 / ${categoryLabel} / ${input.mode === 'batch' ? '批量活动模式' : '单菜品模式'}`,
     sku,
     links: resultSummary || undefined,
   });
@@ -212,10 +212,10 @@ const CREATIVE_WORKFLOW_MAP: Record<string, WorkflowId> = {
 export function buildInquiryStandardPackPrefill(input: InquiryStandardPackRouteInput): InquiryStandardPackPrefill {
   const workflow = CREATIVE_WORKFLOW_MAP[input.creativeNeeds || ''] || 'benchmark';
   const category = input.category.trim() || '未指定品类';
-  const goal = input.expectedDeliverables?.trim() || input.painPoint.trim() || '为这个客户生成电商 SKU 增长 POC 标准交付包';
+  const goal = input.expectedDeliverables?.trim() || input.painPoint.trim() || '为这个餐饮客户生成门店增长 POC 标准交付包';
   const brand = [input.company, category, input.platforms, input.scale].filter(Boolean).join(' / ');
   const sku = [
-    input.skuCount ? `${input.skuCount} 个 SKU` : 'SKU 数待确认',
+    input.skuCount ? `${input.skuCount} 个菜品/套餐/活动` : '菜品/套餐/活动数量待确认',
     input.assetsReady ? `素材状态: ${input.assetsReady}` : '',
     input.painPoint,
     input.expectedDeliverables ? `验收目标: ${input.expectedDeliverables}` : '',
@@ -224,7 +224,7 @@ export function buildInquiryStandardPackPrefill(input: InquiryStandardPackRouteI
   return {
     workflow,
     goal: truncateText(goal, 600),
-    brand: truncateText(brand || '询盘客户 / 待补店铺上下文', 600),
+    brand: truncateText(brand || '询盘客户 / 待补门店上下文', 600),
     sku: truncateText(sku, 1200),
     links: input.benchmarkLinks ? truncateText(input.benchmarkLinks, 800) : undefined,
   };
@@ -245,7 +245,7 @@ export function buildDataInsightsStandardPackRoute(input: DataInsightsStandardPa
     workflow: 'benchmark',
     goal: resultSummary
       ? `Turn this ${channelLabel} ${period} data review into an acceptance-ready POC recap pack`
-      : `Generate a data review SOP pack for this ${channelLabel} ${period} ecommerce performance dataset`,
+      : `Generate a data review SOP pack for this ${channelLabel} ${period} restaurant operating dataset`,
     brand: context
       ? `Data Insights / ${channelLabel} / ${period} / ${truncateText(context, 180)}`
       : `Data Insights / ${channelLabel} / ${period}`,
@@ -263,8 +263,8 @@ export function buildAbTestStandardPackRoute(input: AbTestStandardPackRouteInput
   return buildStandardPackRoute({
     workflow: 'benchmark',
     goal: resultSummary
-      ? `Turn this ${platformLabel} AB test result into an acceptance-ready SKU growth recap pack`
-      : `Generate an AB test SOP pack for this ${platformLabel} SKU image testing setup`,
+      ? `Turn this ${platformLabel} AB test result into an acceptance-ready restaurant offer recap pack`
+      : `Generate an AB test SOP pack for this ${platformLabel} dish image / offer hook testing setup`,
     brand: `AB Test / ${platformLabel} / budget ${input.dailyBudget} / ${primaryDimension}`,
     sku: productHint,
     links: resultSummary || undefined,
@@ -280,8 +280,8 @@ export function buildPhotoshootStandardPackRoute(input: PhotoshootStandardPackRo
   return buildStandardPackRoute({
     workflow: 'benchmark',
     goal: resultSummary
-      ? `Turn this ${modeLabel} image production run into an acceptance-ready ecommerce creative pack`
-      : `Generate an AI photoshoot SOP pack for this ${modeLabel} ecommerce image production setup`,
+      ? `Turn this ${modeLabel} image production run into an acceptance-ready restaurant creative pack`
+      : `Generate an AI photoshoot SOP pack for this ${modeLabel} restaurant image production setup`,
     brand: [
       'AI Photoshoot',
       modeLabel,
@@ -304,10 +304,10 @@ export function buildProductImageStandardPackRoute(input: ProductImageStandardPa
   return buildStandardPackRoute({
     workflow: 'benchmark',
     goal: resultSummary
-      ? `把这组 ${categoryLabel} 商品图产出转成可验收的电商图片交付包`
-      : `为这个 ${categoryLabel} SKU 生成商品图生产 SOP 与验收标准包`,
+      ? `把这组 ${categoryLabel} 菜品图/门店海报产出转成可验收的餐饮图片交付包`
+      : `为这个 ${categoryLabel} 菜品/套餐生成菜品图、门店海报与验收标准包`,
     brand: [
-      'Product Image',
+      '餐饮图片交付',
       categoryLabel,
       sceneLabel || '',
       input.outputs.length ? `${input.outputs.join(' / ')}` : '',
@@ -318,7 +318,7 @@ export function buildProductImageStandardPackRoute(input: ProductImageStandardPa
 }
 
 export function buildCustomerServiceStandardPackRoute(input: CustomerServiceStandardPackRouteInput): string {
-  const intentLabel = input.intentLabel.trim() || 'customer-service scenario';
+  const intentLabel = input.intentLabel.trim() || 'restaurant follow-up scenario';
   const languageLabel = input.languageLabel.trim() || 'target language';
   const customerMessage = truncateText(input.customerMessage, 1200);
   const shopContext = input.shopContext?.trim();
@@ -328,10 +328,10 @@ export function buildCustomerServiceStandardPackRoute(input: CustomerServiceStan
   return buildStandardPackRoute({
     workflow: 'benchmark',
     goal: resultSummary
-      ? `Turn this ${intentLabel} customer-service result into an acceptance-ready conversion SOP recap pack`
-      : `Generate a customer-service conversion SOP pack for this ${intentLabel} ecommerce scenario`,
+      ? `Turn this ${intentLabel} restaurant follow-up result into an acceptance-ready conversion SOP recap pack`
+      : `Generate a restaurant follow-up conversion SOP pack for this ${intentLabel} reservation / coupon / private-message scenario`,
     brand: [
-      'Customer Service',
+      '到店跟进',
       intentLabel,
       languageLabel,
       orderContext ? `order ${orderContext}` : '',
@@ -348,7 +348,7 @@ export function buildInfluencerOutboundStandardPackRoute(input: InfluencerOutbou
   const influencerInput = truncateText(input.influencerInput, 700);
   const resultSummary = input.resultSummary ? truncateText(input.resultSummary, 800) : '';
   const productContext = truncateText([
-    `product: ${productName}`,
+    `门店活动: ${productName}`,
     input.price?.trim() ? `price: ${input.price.trim()}` : '',
     input.usp?.trim() ? `usp: ${input.usp.trim()}` : '',
     input.cta?.trim() ? `collaboration goal: ${input.cta.trim()}` : '',
@@ -364,7 +364,7 @@ export function buildInfluencerOutboundStandardPackRoute(input: InfluencerOutbou
     workflow: 'benchmark',
     goal: resultSummary
       ? 'Turn this influencer outbound run into an acceptance-ready creator outreach recap pack'
-      : 'Generate an influencer outbound SOP pack for this ecommerce creator outreach batch',
+      : 'Generate an influencer outbound SOP pack for this restaurant creator / local community outreach batch',
     brand: [
       'Influencer Outbound',
       brandName,
@@ -383,14 +383,14 @@ export function buildVideoTeardownStandardPackRoute(input: VideoTeardownStandard
   const resultSummary = input.resultSummary ? truncateText(input.resultSummary, 800) : '';
   const skuContext = [
     videoContext ? `reference video:\n${videoContext}` : '',
-    productHint ? `product hint:\n${truncateText(productHint, 1000)}` : 'product hint: not provided yet',
+    productHint ? `菜品/套餐提示:\n${truncateText(productHint, 1000)}` : '菜品/套餐提示: not provided yet',
   ].filter(Boolean).join('\n\n');
 
   return buildStandardPackRoute({
     workflow: 'benchmark',
     goal: resultSummary
-      ? 'Turn this video teardown into an acceptance-ready ecommerce content benchmark recap pack'
-      : 'Generate a video teardown SOP pack for ecommerce benchmark-to-creative production',
+      ? 'Turn this video teardown into an acceptance-ready restaurant content benchmark recap pack'
+      : 'Generate a video teardown SOP pack for restaurant benchmark-to-creative production',
     brand: [
       'Video Teardown',
       templateLabel || 'template pending',
@@ -409,15 +409,15 @@ export function buildAIVideoStandardPackRoute(input: AIVideoStandardPackRouteInp
   const resultSummary = input.resultSummary ? truncateText(input.resultSummary, 800) : '';
   const skuContext = [
     imageUrl ? `source image: ${truncateText(imageUrl, 500)}` : '',
-    productHint ? `product hint: ${truncateText(productHint, 280)}` : '',
+    productHint ? `菜品/套餐提示: ${truncateText(productHint, 280)}` : '',
     `prompt:\n${prompt}`,
   ].filter(Boolean).join('\n\n');
 
   return buildStandardPackRoute({
     workflow: 'animated-ads',
     goal: resultSummary
-      ? `Turn this ${scenarioLabel} AI video run into an acceptance-ready ecommerce creative production recap pack`
-      : `Generate an AI video SOP pack for this ${scenarioLabel} ecommerce creative production setup`,
+      ? `Turn this ${scenarioLabel} AI video run into an acceptance-ready restaurant creative production recap pack`
+      : `Generate an AI video SOP pack for this ${scenarioLabel} restaurant creative production setup`,
     brand: [
       'AI Video',
       scenarioLabel,
@@ -431,26 +431,26 @@ export function buildAIVideoStandardPackRoute(input: AIVideoStandardPackRouteInp
 }
 
 export function buildBatchLaunchStandardPackRoute(input: BatchLaunchStandardPackRouteInput): string {
-  const platformLabel = input.platformLabel.trim() || 'mixed ecommerce channels';
+  const platformLabel = input.platformLabel.trim() || 'mixed restaurant channels';
   const brandContext = input.brandContext?.trim();
   const hasContentWorkflow = input.stages.some(stage => /social|content|benchmark|slideshow|内容|拆解|短视频|视频/i.test(stage));
   const resultSummary = input.resultSummary ? truncateText(input.resultSummary, 800) : '';
   const skuContext = [
-    `SKU count: ${input.skuCount || 10}`,
+    `活动数量: ${input.skuCount || 10}`,
     input.stages.length ? `selected stages: ${input.stages.join(' -> ')}` : '',
-    brandContext ? `brand context: ${truncateText(brandContext, 240)}` : '',
-    `SKU preview:\n${truncateText(input.skuInput, 900)}`,
+    brandContext ? `restaurant context: ${truncateText(brandContext, 240)}` : '',
+    `dish / offer preview:\n${truncateText(input.skuInput, 900)}`,
   ].filter(Boolean).join('\n\n');
 
   return buildStandardPackRoute({
     workflow: hasContentWorkflow ? 'slideshow-batch' : 'benchmark',
     goal: resultSummary
-      ? `Turn this ${input.skuCount || 10} SKU batch-launch plan into an acceptance-ready POC recap pack`
-      : `Generate a batch-launch SOP pack for ${input.skuCount || 10} ecommerce SKU POC delivery`,
+      ? `Turn this ${input.skuCount || 10} restaurant offer batch-launch plan into an acceptance-ready POC recap pack`
+      : `Generate a batch-launch SOP pack for ${input.skuCount || 10} restaurant dish/offer POC delivery`,
     brand: [
-      'Batch Launch',
+      'Restaurant Batch Launch',
       platformLabel,
-      brandContext ? truncateText(brandContext, 180) : 'brand context pending',
+      brandContext ? truncateText(brandContext, 180) : 'restaurant context pending',
     ].filter(Boolean).join(' / '),
     sku: truncateText(skuContext, 1200),
     links: resultSummary || (hasContentWorkflow ? 'pending benchmark links or competitor accounts' : undefined),
@@ -458,8 +458,8 @@ export function buildBatchLaunchStandardPackRoute(input: BatchLaunchStandardPack
 }
 
 export function buildProductDiscoveryStandardPackRoute(input: ProductDiscoveryStandardPackRouteInput): string {
-  const platformLabel = input.platformLabel.trim() || 'ecommerce channel';
-  const category = input.category.trim() || 'category pending';
+  const platformLabel = input.platformLabel.trim() || 'restaurant channel';
+  const category = input.category.trim() || 'restaurant category pending';
   const riskLabel = input.riskLabel.trim() || 'medium risk';
   const extraNote = input.extraNote?.trim();
   const skuContext = input.skuContext?.trim();
@@ -470,16 +470,16 @@ export function buildProductDiscoveryStandardPackRoute(input: ProductDiscoverySt
     `launch budget: CNY ${input.budget}`,
     `risk appetite: ${riskLabel}`,
     extraNote ? `operator note: ${truncateText(extraNote, 260)}` : '',
-    skuContext ? `existing SKU context:\n${truncateText(skuContext, 520)}` : '',
+    skuContext ? `existing dish / offer context:\n${truncateText(skuContext, 520)}` : '',
   ].filter(Boolean).join('\n\n');
 
   return buildStandardPackRoute({
     workflow: 'benchmark',
     goal: resultSummary
-      ? `Turn this ${platformLabel} product-discovery result into an acceptance-ready SKU decision recap pack`
-      : `Generate a product-discovery SOP pack for choosing the next ecommerce SKU candidates on ${platformLabel}`,
+      ? `Turn this ${platformLabel} dish/offer discovery result into an acceptance-ready restaurant decision recap pack`
+      : `Generate a dish/offer discovery SOP pack for choosing the next restaurant campaign candidates on ${platformLabel}`,
     brand: [
-      'Product Discovery',
+      'Restaurant Offer Discovery',
       platformLabel,
       category,
       `budget ${input.budget}`,
@@ -495,15 +495,15 @@ export function buildIntentMiningStandardPackRoute(input: IntentMiningStandardPa
   const knownSegments = input.knownSegments?.trim();
   const resultSummary = input.resultSummary ? truncateText(input.resultSummary, 800) : '';
   const skuContext = [
-    knownSegments ? `known/default audience segments to avoid:\n${truncateText(knownSegments, 360)}` : '',
-    `product:\n${product}`,
+    knownSegments ? `已知/默认客群排除:\n${truncateText(knownSegments, 360)}` : '',
+    `restaurant offer:\n${product}`,
   ].filter(Boolean).join('\n\n');
 
   return buildStandardPackRoute({
     workflow: resultSummary ? 'slideshow-batch' : 'benchmark',
     goal: resultSummary
-      ? 'Turn this intent-mining result into an acceptance-ready TikTok/Instagram audience-to-content test pack'
-      : 'Generate an intent-mining SOP pack for finding non-obvious ecommerce audiences and content angles',
+      ? 'Turn this intent-mining result into an acceptance-ready local diner audience-to-content test pack'
+      : 'Generate an intent-mining SOP pack for finding non-obvious restaurant diner segments and content angles',
     brand: [
       'Intent Mining',
       resultSummary ? 'audience validation recap' : 'pre-run audience discovery',
@@ -562,13 +562,13 @@ export function buildPocReportStandardPackRoute(input: PocReportStandardPackRout
 
   return buildStandardPackRoute({
     workflow: 'benchmark',
-    goal: 'Turn this ecommerce POC acceptance report into a contract-ready standard delivery recap pack',
-    brand: truncateText(`POC Report / ${categoryLabel} / ${sourceLabel}`, 600),
+    goal: 'Turn this restaurant POC acceptance report into a contract-ready standard delivery recap pack',
+    brand: truncateText(`Restaurant POC Report / ${categoryLabel} / ${sourceLabel}`, 600),
     sku: truncateText([
       `category: ${categoryLabel}`,
       `source: ${sourceLabel}`,
-      `sku planned: ${clampNumber(input.skuPlanned, 0, 999)}`,
-      `sku delivered: ${clampNumber(input.skuDelivered, 0, 999)}`,
+      `offers planned: ${clampNumber(input.skuPlanned, 0, 999)}`,
+      `offers delivered: ${clampNumber(input.skuDelivered, 0, 999)}`,
       `final review pass rate: ${clampNumber(input.finalReviewPassRate, 0, 100)}%`,
       `benchmark coverage: ${clampNumber(input.benchmarkCoverage, 0, 100)}%`,
       `risk count: ${clampNumber(input.riskCount, 0, 99)}`,
@@ -581,16 +581,16 @@ export function buildPocReportStandardPackRoute(input: PocReportStandardPackRout
 
 export const POC_STANDARD_PACK_ROUTE = buildStandardPackRoute({
   workflow: 'benchmark',
-  goal: '为 10 个真实 SKU 生成电商增长 POC 标准交付包',
-  brand: '电商团队 / 独立站 / Amazon / TikTok Shop / 多平台上新',
-  sku: '10 个真实 SKU: SKU 名称、品类、价格带、核心卖点、目标平台、现有商品图或参考图',
-  links: '待补充 TikTok / Instagram / Amazon / 独立站 benchmark 链接或竞品账号',
+  goal: '为 5-10 个真实菜品/套餐/门店活动生成餐饮增长 POC 标准交付包',
+  brand: '餐饮门店 / 大众点评 / 小红书 / 抖音 / 微信社群',
+  sku: '5-10 个真实菜品/套餐/活动: 餐厅名称、菜品/套餐、价格带、到店理由、目标客群、目标渠道、现有菜品图或点评截图',
+  links: '待补充大众点评 / 小红书 / 抖音 / 微信社群 benchmark 链接、截图或竞品账号',
 });
 
 export const POC_REPORT_STANDARD_PACK_ROUTE = buildStandardPackRoute({
   workflow: 'benchmark',
-  goal: '把 10 SKU POC 复盘转成可验收、可进入合同判断的标准报告',
-  brand: '电商 SKU 增长 POC / 交付复盘 / 主站合同前评估',
-  sku: '10 SKU 交付结果、风险项、待补资料、终审建议、下一轮 SKU 类目判断',
-  links: 'POC 输入材料、benchmark 链接、内容测试结果、客户复盘记录',
+  goal: '把餐饮门店 POC 复盘转成可验收、可进入合同判断的标准报告',
+  brand: '餐饮门店增长 POC / 内容交付复盘 / 门店运营合同前评估',
+  sku: '菜品/套餐/活动交付结果、风险项、待补资料、终审建议、下一轮门店活动判断',
+  links: 'POC 输入材料、benchmark 链接或截图、本地内容测试结果、预约/券领取/私信/店长复盘记录',
 });

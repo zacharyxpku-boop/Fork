@@ -60,7 +60,7 @@ describe('restaurant agent capability training route', () => {
     }));
     expect(payload.clawSkillCatalog.nextInternalTraining.length).toBeGreaterThan(0);
     expect(payload.clawSkillCatalog.externalSetupRequests.length).toBeGreaterThan(0);
-    expect(payload.clawSkillCatalog.safetyBoundary).toContain('Provider');
+    expect(payload.clawSkillCatalog.safetyBoundary).toContain('外部服务接入');
   });
 
   it('returns an actionable Claw training batch through the runtime API', async () => {
@@ -83,7 +83,7 @@ describe('restaurant agent capability training route', () => {
       owner: 'marketing',
     }));
     expect(payload.clawTrainingBatch.providerUnlockTasks[0].evidenceRequired).toContain('configured');
-    expect(payload.clawTrainingBatch.safetyBoundary).toContain('不会自动发布');
+    expect(payload.clawTrainingBatch.safetyBoundary).toContain('不会代发');
   });
 
   it('returns a benchmark strategy for choosing the restaurant product spine', async () => {

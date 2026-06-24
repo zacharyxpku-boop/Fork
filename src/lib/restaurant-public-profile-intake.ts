@@ -201,6 +201,6 @@ export function buildRestaurantPublicProfileIntake(input: {
       'auto publish requires runtime, operator approval and signed receipt callback',
     ],
     missingForActivation,
-    safetyBoundary: 'Public profile intake 只使用公开样例、白名单公开 URL 或客户手工文本；不登录平台、不绕过验证码、不读取私信、不采集手机号/微信号/订单/POS 明细，也不声称已自动获客或核销。',
+    safetyBoundary: 'Public profile intake 只使用公开样例、白名单公开 URL 或客户手工文本；不登录平台、不绕过验证码、不读取私信、不采集手机号/微信号/订单/POS 明细，也不声称已承接线索或核销。',
   };
 }

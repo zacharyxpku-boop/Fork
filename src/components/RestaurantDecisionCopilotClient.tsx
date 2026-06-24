@@ -46,7 +46,7 @@ export function RestaurantDecisionCopilotClient() {
           <h2 className="mt-2 text-2xl font-black tracking-tight">今晚到底推什么，先算出来</h2>
         </div>
         <p className="text-sm leading-6 text-emerald-50/80">
-          这里不是公开样例和账本，而是老板能直接判断的经营试算：输入价格、成本、库存、券领取、预约、私信和核销，系统马上给出主推决策、渠道内容、负责人动作和不能自动化的原因。
+          这里不是公开样例和账本，而是老板能直接判断的经营试算：输入价格、成本、库存、券领取、预约、私信和核销，系统马上给出主推决策、渠道内容、负责人动作和不能自行操作的原因。
         </p>
       </div>
 

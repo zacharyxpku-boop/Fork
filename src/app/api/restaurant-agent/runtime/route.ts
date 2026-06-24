@@ -121,6 +121,7 @@ import { buildRestaurantStaffNotificationHandoff } from '@/lib/restaurant-staff-
 import { buildRestaurantStaffNotificationDeliveryBridge } from '@/lib/restaurant-staff-notification-delivery-bridge';
 import { buildRestaurantTaskProviderHandoff } from '@/lib/restaurant-task-provider-handoff';
 import { buildRestaurantTodayCommandCockpit } from '@/lib/restaurant-today-command-cockpit';
+import { buildRestaurantTrialOrchestratorPack } from '@/lib/restaurant-trial-orchestrator';
 import { buildRestaurantTrialWorkflowPack } from '@/lib/restaurant-trial-workflow-pack';
 import { buildRestaurantVoiceOrderConsole } from '@/lib/restaurant-voice-order-console';
 
@@ -1297,6 +1298,25 @@ export async function POST(request: NextRequest) {
         visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
         constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
         evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+      }),
+    });
+  }
+
+  if (body.action === 'trial-orchestrator-pack') {
+    const runs = listRestaurantAgentRuns();
+    const receipts = listRestaurantAgentReceipts();
+    return NextResponse.json({
+      ok: true,
+      trialOrchestratorPack: buildRestaurantTrialOrchestratorPack({
+        restaurant: typeof body.restaurant === 'string' ? body.restaurant : undefined,
+        offer: typeof body.offer === 'string' ? body.offer : undefined,
+        audience: typeof body.audience === 'string' ? body.audience : undefined,
+        channels: typeof body.channels === 'string' ? body.channels : undefined,
+        visitReason: typeof body.visitReason === 'string' ? body.visitReason : undefined,
+        constraints: typeof body.constraints === 'string' ? body.constraints : undefined,
+        evidence: typeof body.evidence === 'string' ? body.evidence : undefined,
+        runs,
+        receipts,
       }),
     });
   }

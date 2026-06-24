@@ -49,7 +49,7 @@ describe('creative monitoring console page', () => {
     expect(html).toContain('生成脚本与分发计划');
     expect(html).toContain('采集器接入状态');
     expect(html).toContain('Hookshot / Hookly 参考层');
-    expect(html).toContain('可复用广告结构库');
+    expect(html).toContain('可复用到店内容结构库');
     expect(html).toContain('Hook Bank');
     expect(html).toContain('UGC Script Spine');
     expect(html).toContain('Offer Test Matrix');
@@ -73,7 +73,7 @@ describe('creative monitoring console page', () => {
     expect(html).toContain('Compose 启动下一步');
     expect(html).toContain('全网灵感管理');
     expect(html).toContain('热门视频解析');
-    expect(html).toContain('把灵感、视频、Hook 和投放假设串成一条生产约束链');
+    expect(html).toContain('把灵感、视频、Hook 和到店内容假设串成一条生产约束链');
     expect(html).toContain('不是只保存素材');
     expect(html).toContain('内部可做');
     expect(html).toContain('外部需要');
@@ -94,11 +94,11 @@ describe('creative monitoring console page', () => {
     expect(html).toContain('先导入竞品账号、榜单或视频拆解信号');
     expect(html).toContain('只导入公开可用或已授权观察');
     expect(html).toContain('只复用结构和验证逻辑');
-    expect(html).toContain('没有广告账户和 analytics sync 前，只能生成投放方案');
+    expect(html).toContain('没有平台授权、商户授权和反馈回流前，只能生成门店活动发布方案');
     expect(html).toContain('平台授权、榜单/视频数据源、合法抓取或官方 API');
     expect(html).toContain('多模态视频解析 provider、素材授权、下载/存储权限');
-    expect(html).toContain('投放回流和真实转化数据，验证哪个 hook 真正胜出');
-    expect(html).toContain('广告账户授权、自动建计划、平台 analytics sync');
+    expect(html).toContain('平台/社群反馈回流和真实到店信号，验证哪个 hook 真正带来到店意向');
+    expect(html).toContain('平台授权、商户授权、发布回执和平台/社群反馈回流');
     expect(html).toContain('开头钩子');
     expect(html).toContain('空结果只记录缺口，不生成洞察');
     expect(html).toContain('当前继续走人工运营回灌，不假装已完成未授权自动抓取。');

@@ -284,12 +284,12 @@ export async function getChannelAccountSnapshot(orgId: string, projectId = 'defa
   const adSpendCents = campaigns.reduce((sum, campaign) => sum + campaign.spendCents, 0);
   const adEvidenceCount = campaigns.filter(campaign => Boolean(campaign.evidenceUrl)).length;
   const adMissingLinks = [
-    campaigns.length === 0 ? 'Missing ad campaign ledger' : '',
-    campaigns.length > 0 && readyCampaigns.length === 0 ? 'Missing ready or active ad campaign' : '',
-    campaigns.some(campaign => campaign.accountId && !linkedAccountIds.has(campaign.accountId)) ? 'Ad campaign references missing channel account' : '',
-    activeCampaigns.some(campaign => campaign.budgetCents === 0) ? 'Active ad campaign missing budget' : '',
-    campaigns.some(campaign => (campaign.status === 'active' || campaign.status === 'completed') && !campaign.evidenceUrl) ? 'Ad campaign missing platform evidence URL' : '',
-    campaigns.some(campaign => campaign.budgetCents > 0 && campaign.spendCents > campaign.budgetCents) ? 'Ad campaign spend exceeds budget' : '',
+    campaigns.length === 0 ? 'Missing activity publish ledger' : '',
+    campaigns.length > 0 && readyCampaigns.length === 0 ? 'Missing ready or active store activity' : '',
+    campaigns.some(campaign => campaign.accountId && !linkedAccountIds.has(campaign.accountId)) ? 'Store activity references missing publish channel' : '',
+    activeCampaigns.some(campaign => campaign.budgetCents === 0) ? 'Active store activity missing budget' : '',
+    campaigns.some(campaign => (campaign.status === 'active' || campaign.status === 'completed') && !campaign.evidenceUrl) ? 'Store activity missing publish proof link or screenshot' : '',
+    campaigns.some(campaign => campaign.budgetCents > 0 && campaign.spendCents > campaign.budgetCents) ? 'Store activity spend exceeds budget' : '',
   ].filter(Boolean);
   const missingLinks = [
     accounts.length === 0 ? 'Missing channel account matrix' : '',
@@ -322,7 +322,7 @@ export async function getChannelAccountSnapshot(orgId: string, projectId = 'defa
     missingLinks,
     nextActions: [
       ...missingLinks.map(item => `Close channel gap: ${item}`),
-      ...adMissingLinks.map(item => `Close ad campaign gap: ${item}`),
+      ...adMissingLinks.map(item => `Close activity publish gap: ${item}`),
     ],
   };
 }
@@ -400,7 +400,7 @@ export async function evaluateChannelDispatchReadiness(
       return {
         allowed: false,
         reason: 'missing_ad_campaign',
-        message: `${channel} 缺少 ready/active/completed 广告活动，不能声明广告投放或投放回流。`,
+        message: `${channel} 缺少 ready/active/completed 门店活动发布账本，不能声明外部发布或反馈回流。`,
         account,
         snapshot,
       };
@@ -409,7 +409,7 @@ export async function evaluateChannelDispatchReadiness(
       return {
         allowed: false,
         reason: 'ad_campaign_not_ready',
-        message: `${channel} 广告活动未进入 ready/active/completed，不能进入投放执行。`,
+        message: `${channel} 门店活动未进入 ready/active/completed，不能进入外部发布执行。`,
         account,
         campaign,
         snapshot,
@@ -419,7 +419,7 @@ export async function evaluateChannelDispatchReadiness(
       return {
         allowed: false,
         reason: 'ad_campaign_missing_budget',
-        message: `${channel} 广告活动缺少预算，不能作为真实投放闭环。`,
+        message: `${channel} 门店活动缺少预算，不能作为真实发布闭环。`,
         account,
         campaign,
         snapshot,
@@ -429,7 +429,7 @@ export async function evaluateChannelDispatchReadiness(
       return {
         allowed: false,
         reason: 'ad_campaign_missing_evidence',
-        message: `${channel} 广告活动缺少平台证据链接，不能作为真实投放闭环。`,
+        message: `${channel} 门店活动缺少发布链接或截图凭证，不能作为真实发布闭环。`,
         account,
         campaign,
         snapshot,
@@ -439,7 +439,7 @@ export async function evaluateChannelDispatchReadiness(
       return {
         allowed: false,
         reason: 'ad_campaign_over_budget',
-        message: `${channel} 广告活动花费超过预算，需要先处理投放风险。`,
+        message: `${channel} 门店活动花费超过预算，需要先处理发布风险。`,
         account,
         campaign,
         snapshot,
@@ -451,14 +451,14 @@ export async function evaluateChannelDispatchReadiness(
         return {
           allowed: false,
           reason: 'ad_campaign_missing_measurement',
-          message: `${channel} 广告活动已完成但缺少转化或收入指标，不能标记为已回流。`,
+          message: `${channel} 门店活动已完成但缺少预约、券领取、私信或收入聚合信号，不能标记为已回流。`,
           account,
           campaign,
           snapshot,
         };
       }
     }
-    return { allowed: true, reason: 'allowed', message: '渠道账号和广告活动已满足执行条件。', account, campaign, snapshot };
+    return { allowed: true, reason: 'allowed', message: '渠道账号和门店活动发布账本已满足执行条件。', account, campaign, snapshot };
   }
 
   return { allowed: true, reason: 'allowed', message: '渠道账号已满足发布条件。', account, snapshot };

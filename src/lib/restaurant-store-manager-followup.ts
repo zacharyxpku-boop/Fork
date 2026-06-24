@@ -143,7 +143,7 @@ export function buildRestaurantStoreManagerFollowupPack(input: RestaurantTrialIn
     restaurant,
     offer,
     signal: 'setup-gap' as const,
-    action: '先补一条真实公开发布链接、截图或签名 runtime 回执，再生成店长跟进任务。',
+      action: '先补一条真实公开发布链接、截图或受控试跑回执，再生成店长跟进任务。',
     talkTrack: `${offer} 还没有可验收经营信号，先完成一次受控试跑或手工导入公开证据。`,
     evidenceRequired: 'accepted public proof receipt, screenshot id, or signed externalRunId',
     dueWindow: '生成第一条验收回执后',

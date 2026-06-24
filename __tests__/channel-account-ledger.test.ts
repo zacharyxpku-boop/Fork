@@ -99,7 +99,7 @@ describe('channel account ledger', () => {
     expect(getBody.snapshot.healthyAccountCount).toBe(1);
   });
 
-  it('keeps ad campaign readiness explicit instead of pretending ad automation is connected', async () => {
+  it('keeps store activity publish readiness explicit instead of pretending automation is connected', async () => {
     const orgId = `channel-ad-${Date.now()}`;
     const projectId = `ad-${Date.now()}`;
     await upsertChannelAdCampaign(orgId, {
@@ -115,16 +115,16 @@ describe('channel account ledger', () => {
     expect(snapshot.adCampaignCount).toBe(1);
     expect(snapshot.activeAdCampaignCount).toBe(1);
     expect(snapshot.adMissingLinks).toEqual(expect.arrayContaining([
-      'Ad campaign missing platform evidence URL',
-      'Ad campaign spend exceeds budget',
+      'Store activity missing publish proof link or screenshot',
+      'Store activity spend exceeds budget',
     ]));
     expect(snapshot.nextActions).toEqual(expect.arrayContaining([
-      'Close ad campaign gap: Ad campaign missing platform evidence URL',
-      'Close ad campaign gap: Ad campaign spend exceeds budget',
+      'Close activity publish gap: Store activity missing publish proof link or screenshot',
+      'Close activity publish gap: Store activity spend exceeds budget',
     ]));
   });
 
-  it('evaluates channel dispatch readiness before publish or ad measurement claims', async () => {
+  it('evaluates channel dispatch readiness before publish or store activity feedback claims', async () => {
     const orgId = `channel-readiness-${Date.now()}`;
     const projectId = `dispatch-readiness-${Date.now()}`;
 
@@ -214,6 +214,6 @@ describe('channel account ledger', () => {
 
     expect(res.status).toBe(400);
     expect(body.error).toBe('channel_account_required');
-    expect(body.message).toContain('平台账号');
+    expect(body.message).toContain('发布渠道');
   });
 });

@@ -57,7 +57,7 @@ const LOOP_STEPS = [
 ] as const;
 
 const MANUAL_IMPORTS = [
-  { source: 'POS / 收银', fields: '营业额、桌数、客单、菜品销量', stopLine: '未导入前不判断真实盈亏' },
+  { source: '收银汇总', fields: '营业额、桌数、客单、菜品销量', stopLine: '未导入前不判断实际盈亏' },
   { source: '菜单 / 库存', fields: '菜品价格、售罄、缺货、食材红线', stopLine: '未确认前不自动定价' },
   { source: '平台发布', fields: '大众点评/小红书/抖音链接或截图', stopLine: '无凭证不标记已发布' },
   { source: '社群 / 私信', fields: '券领取、预约、咨询、到店意向', stopLine: '无授权不自动联系顾客' },
@@ -69,6 +69,20 @@ const STATUS_COPY: Record<TaskRow['status'], string> = {
   'needs-proof': '等凭证',
   blocked: '外部阻断',
 };
+
+const formatRestaurantExternalCopy = (value: string) =>
+  value
+    .replaceAll('API key', '服务端账号配置')
+    .replaceAll('API', '接口')
+    .replaceAll('Google Places', 'Google 地图')
+    .replaceAll('Yelp', '海外点评平台')
+    .replaceAll('URL', '链接')
+    .replaceAll('地区可用性确认', '地区资料确认')
+    .replaceAll('可用性确认', '资料确认')
+    .replaceAll('审计边界', '复核边界')
+    .replaceAll('审计', '复核')
+    .replaceAll('provider', '试跑通道账号')
+    .replaceAll('Provider', '试跑通道账号');
 
 function loadSavedState(): LoopState {
   if (typeof window === 'undefined') return DEFAULT_STATE;
@@ -119,10 +133,10 @@ function buildTaskRows(state: LoopState): TaskRow[] {
       status: state.memory.trim() ? 'ready' : 'needs-proof',
     },
     {
-      title: '等待外部系统接入',
+      title: '等待资料和授权补齐',
       owner: '产品 / 技术',
-      proof: 'POS、库存、预约、会员、平台授权、消息通知、审计日志。',
-      next: '未接入前只做手工导入和证据账本，不宣称自动经营分析。',
+      proof: '收银、库存、预约、会员、店长授权范围、消息通知、复核记录。',
+      next: '未接入前只做手工导入和证据账本，不能标记经营分析结论。',
       status: 'blocked',
     },
   ];
@@ -168,12 +182,12 @@ export function RestaurantOperatingLoopClient() {
   const generateLocalPlan = () => {
     setState(prev => ({
       ...prev,
-      evidence: `${prev.focusDish}：菜品图、菜单价、套餐边界、禁用表达、至少 1 条真实顾客反馈。`,
+      evidence: `${prev.focusDish}：菜品图、菜单价、套餐边界、禁用表达、至少 1 条顾客反馈凭证。`,
       publishProof: `${prev.channel}：先生成发布任务；发布后回填链接或截图；无凭证不标记已发布。`,
       followup: `${prev.owner}：跟进券领取、预约、私信咨询和到店意向；未授权不自动联系顾客。`,
       memory: `${prev.restaurant} / ${prev.focusDish}：写回菜品卖点、价格红线、客群反馈、负责人和下轮复盘。`,
     }));
-    setLastAction('已生成本地任务闭环；仍需人工补真实数据和外部凭证。');
+    setLastAction('已生成本地任务闭环；仍需人工补实际数据和外部凭证。');
   };
 
   const applyPublicSample = (sample: RestaurantPublicSample) => {
@@ -184,9 +198,9 @@ export function RestaurantOperatingLoopClient() {
       focusDish: intake.offer,
       channel: intake.channels,
       evidence: intake.evidence,
-      dailyData: `${sample.area} 公开 POI 样例；场景：${sample.scenario}；经纬度 ${sample.coordinates.lat}, ${sample.coordinates.lon}；真实营业额、桌数、客单、库存和券核销仍需门店导入。`,
+      dailyData: `${sample.area} 公开 POI 样例；场景：${sample.scenario}；经纬度 ${sample.coordinates.lat}, ${sample.coordinates.lon}；实际营业额、桌数、客单、库存和券核销仍需门店导入。`,
       publishProof: `${sample.name} 尚未接入平台发布；可先用大众点评/小红书/抖音/微信社群的链接或截图手工回填。`,
-      followup: `${intake.audience}；等待真实预约、券领取、私信咨询或到店意向后分配给 ${prev.owner}。`,
+      followup: `${intake.audience}；等待预约、券领取、私信咨询或到店意向凭证后分配给 ${prev.owner}。`,
       memory: `${sample.name} 样例来自 ${sample.source.name}（${sample.source.license}）；只能作为公开门店输入演示，不代表门店授权或经营表现。`,
     }));
     setLastAction(`已载入公开样例：${sample.name}。下一步仍需门店补菜单、价格、图片、活动边界和发布凭证。`);
@@ -203,10 +217,10 @@ export function RestaurantOperatingLoopClient() {
       <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">本地经营循环</p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">本地可跑的 100% 试用闭环</h2>
+          <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">本地可先准备的 100% 试用闭环</h2>
         </div>
         <p className="text-sm leading-6 text-stone-600">
-          内部能补的先补成真实可用：任务流、表单字段、证据账本、负责人、手工数据导入、审计边界、内容和到店跟进都在这里跑通。外部系统未接入前，不冒充云端同步和自动经营分析。
+          本地能补的先补成可复核任务：任务流、表单字段、证据账本、负责人、手工数据导入、复核边界、内容和到店跟进都在这里跑通。外部系统未接入前，不冒充云端同步和经营分析结论。
         </p>
       </div>
 
@@ -245,10 +259,10 @@ export function RestaurantOperatingLoopClient() {
           <div className="rounded-lg border border-stone-200 bg-stone-950 p-4 text-white">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">Task ledger</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-400">任务台账</p>
                 <h3 className="mt-1 text-lg font-black">任务、证据、负责人和下一步</h3>
               </div>
-              <span className="w-fit rounded-full bg-amber-200 px-2.5 py-1 text-[11px] font-black text-stone-950">非外部接入</span>
+              <span className="w-fit rounded-full bg-amber-200 px-2.5 py-1 text-[11px] font-black text-stone-950">先手工试跑</span>
             </div>
             <div className="mt-4 space-y-3">
               {taskRows.map(task => (
@@ -276,9 +290,9 @@ export function RestaurantOperatingLoopClient() {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-500">人工导入条件</p>
-                <h3 className="mt-1 text-lg font-black text-stone-950">手工导入先跑，外部接入后再自动化</h3>
+                <h3 className="mt-1 text-lg font-black text-stone-950">手工导入先跑，资料补齐后再交接</h3>
               </div>
-              <span className="w-fit rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-stone-600">不造假自动化</span>
+              <span className="w-fit rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-stone-600">不假装已接通</span>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {MANUAL_IMPORTS.map(item => (
@@ -379,10 +393,10 @@ export function RestaurantOperatingLoopClient() {
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {RESTAURANT_EXTERNAL_SETUP_NEEDS.map(item => (
                 <article className="rounded-lg border border-stone-200 bg-[#fbfaf7] p-3" key={item.title}>
-                  <h4 className="text-sm font-black text-stone-950">{item.title}</h4>
-                  <p className="mt-2 text-xs leading-5 text-stone-600"><span className="font-bold text-stone-950">需要：</span>{item.neededFromUser}</p>
-                  <p className="mt-2 text-xs leading-5 text-emerald-800"><span className="font-bold">解锁：</span>{item.unlocks}</p>
-                  <p className="mt-2 rounded-lg bg-white px-3 py-2 text-xs leading-5 text-stone-600">{item.internalFallback}</p>
+                  <h4 className="text-sm font-black text-stone-950">{formatRestaurantExternalCopy(item.title)}</h4>
+                  <p className="mt-2 text-xs leading-5 text-stone-600"><span className="font-bold text-stone-950">需要：</span>{formatRestaurantExternalCopy(item.neededFromUser)}</p>
+                  <p className="mt-2 text-xs leading-5 text-emerald-800"><span className="font-bold">解锁：</span>{formatRestaurantExternalCopy(item.unlocks)}</p>
+                  <p className="mt-2 rounded-lg bg-white px-3 py-2 text-xs leading-5 text-stone-600">{formatRestaurantExternalCopy(item.internalFallback)}</p>
                 </article>
               ))}
             </div>
@@ -401,15 +415,15 @@ export function RestaurantOperatingLoopClient() {
                 <article className="rounded-lg border border-stone-200 bg-[#fbfaf7] p-3" key={source.name}>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <h4 className="text-sm font-black text-stone-950">{source.name}</h4>
-                      <p className="mt-1 text-xs leading-5 text-stone-600">{source.usefulFor}</p>
+                      <h4 className="text-sm font-black text-stone-950">{formatRestaurantExternalCopy(source.name)}</h4>
+                      <p className="mt-1 text-xs leading-5 text-stone-600">{formatRestaurantExternalCopy(source.usefulFor)}</p>
                     </div>
                     <span className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-black ${source.canUseNow ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
                       {source.canUseNow ? '可做样例' : '需外部条件'}
                     </span>
                   </div>
-                  <p className="mt-2 text-xs leading-5 text-stone-500">内部替代：{source.internalFallback}</p>
-                  <p className="mt-1 text-xs leading-5 text-amber-800">外部必需：{source.externalRequirement}</p>
+                  <p className="mt-2 text-xs leading-5 text-stone-500">内部替代：{formatRestaurantExternalCopy(source.internalFallback)}</p>
+                  <p className="mt-1 text-xs leading-5 text-amber-800">外部必需：{formatRestaurantExternalCopy(source.externalRequirement)}</p>
                 </article>
               ))}
             </div>

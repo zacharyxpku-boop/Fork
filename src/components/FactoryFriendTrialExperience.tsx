@@ -3,6 +3,24 @@ import type { ReactNode } from 'react';
 
 import { buildRestaurantClawSkillCatalog } from '@/lib/restaurant-claw-skill-catalog';
 import { buildRestaurantCapabilityTrainingPlan } from '@/lib/restaurant-capability-training-plan';
+import { buildRestaurantCompetitorCapabilityMatrix } from '@/lib/restaurant-competitor-capability-matrix';
+import {
+  RESTAURANT_GROWTH_LOOP_EXTERNAL_GATES_NOW,
+  RESTAURANT_GROWTH_LOOP_INTERNAL_READY_NOW,
+  RESTAURANT_GROWTH_LOOP_STAGES,
+  RESTAURANT_TODAY_TASK_CARDS,
+} from '@/lib/restaurant-growth-loop';
+import { RESTAURANT_FRIEND_TRIAL_PRODUCT_INDEX } from '@/lib/restaurant-friend-trial-product-index';
+import {
+  RESTAURANT_PUBLISH_PROOF_DEMO_PLANS,
+  buildRestaurantPublishProofLedger,
+  type RestaurantPublishProofStatus,
+} from '@/lib/restaurant-publish-proof-ledger';
+import {
+  RESTAURANT_RECOVER_SIGNAL_DEMO_ROWS,
+  buildRestaurantRecoverSignalImportReport,
+} from '@/lib/restaurant-recover-signal-import';
+import { buildRestaurantReviewLoopBossRecap } from '@/lib/restaurant-review-loop-boss-recap';
 import { buildRestaurantTrialOrchestratorPack } from '@/lib/restaurant-trial-orchestrator';
 import { appendRestaurantTrialIntake, type RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
 
@@ -66,6 +84,26 @@ const PRODUCT_FIELDS = [
   { label: '主推渠道', name: 'channels', value: '大众点评 / 小红书 / 微信社群' },
 ];
 
+function customerStopLineFor(moduleId: string): string {
+  if (moduleId === 'content-production-chain') return '没有视频通道资料和成片证明，不说视频已经做好。';
+  if (moduleId === 'publish-proof-board') return '没有账号确认和发布凭证，不说平台已经发出。';
+  if (moduleId === 'voice-frontdesk-gate') return '没有电话接入、菜单字段、收银和支付约定，不说能接真实来电或收款。';
+  if (moduleId === 'cost-inventory-review') return '没有销售、库存、采购和财务汇总约定，不写真实毛利或库存优化结论。';
+  if (moduleId === 'first-party-repeat-loop') return '没有订单、支付和会员授权，不说真实订单增长。';
+  if (moduleId === 'guest-experience-recovery') return '只看聚合信号，不保存顾客身份或聊天原文。';
+  return '只说今天能做什么、还缺什么、谁负责和凭证在哪里。';
+}
+
+function customerLoopStageLabel(stage: string): string {
+  if (stage === 'Intake') return '录入';
+  if (stage === 'Diagnose') return '诊断';
+  if (stage === 'Create') return '生成';
+  if (stage === 'Publish Proof') return '发布凭证';
+  if (stage === 'Recover') return '回收';
+  if (stage === 'Review Loop') return '复盘';
+  return stage;
+}
+
 const INTAKE_AUDIT_FIELDS = [
   { label: '到店理由', name: 'visitReason', placeholder: '例：工作日晚餐不用排队，双人套餐更适合附近白领。' },
   { label: '活动边界', name: 'constraints', placeholder: '例：不可写最低价；限量、食材来源、毛利和核销口径需店长确认。' },
@@ -87,7 +125,7 @@ const DELIVERABLES = [
 const OPERATING_KERNEL = [
   { title: '餐饮技能内置', body: '把品牌定位、菜单优化、外卖增长、本地生活、会员增长和盈利分析拆成可调用任务。' },
   { title: '门店分层记忆', body: '记录常用菜品、禁用表达、客群偏好、活动边界和负责人，不让下一轮从零开始。' },
-  { title: '沙箱安全隔离', body: '外部账号未确认前只做手动导入和证据回填，门店资料不会被伪装成已发布结果。' },
+  { title: '样例安全隔离', body: '账号资料未确认前只做手动导入和证据回填，门店资料不会被伪装成已发布结果。' },
   { title: '任务分工清楚', body: '文案、表格、长文档、图片理解和逻辑复盘分开处理，页面只展示可审核结论。' },
 ];
 
@@ -125,13 +163,13 @@ const CLAW_FEATURES = [
   { title: '今日任务包', detail: '把门店、菜品、活动边界和渠道变成可审核的工作单，不让客户从空白页开始。', state: '可试用' },
   { title: '证据回执', detail: '发布链接、截图、券领取、预约和私信咨询先进入证据账本，再交给负责人处理。', state: '本地试跑' },
   { title: '经营汇总', detail: '先支持链接、截图、表格和人工回填；核销、会员和评论数据等店长确认后再用。', state: '等店长确认' },
-  { title: '发布代办清单', detail: '先生成每个渠道该怎么发、谁负责、要回填什么截图；确认账号后再记录真实步骤。', state: '等店长确认' },
+  { title: '发布凭证清单', detail: '先生成每个渠道该怎么发、谁负责、要回填什么截图；确认账号后再回填凭证步骤。', state: '等店长确认' },
   { title: '安全边界', detail: '没确认账号不读取，没回填凭证不说已发布，没来源不做经营结论。', state: '已产品化' },
 ];
 
 const OPENING_STEPS = [
   { title: '填门店任务', detail: '先确认餐厅、菜品/套餐、目标客群、渠道和本轮活动边界。' },
-  { title: '生成今日工单', detail: '生成内容计划、负责人、凭证要求和下一步，不把待办说成已完成。' },
+  { title: '生成今日工单', detail: '生成内容计划、负责人、凭证要求和下一步，不把待办说成已交付结果。' },
   { title: '补缺的资料', detail: '需要真实发布、核销或经营分析时，再让店长补账号确认、截图或经营汇总表。' },
 ];
 
@@ -187,7 +225,7 @@ const ORCHESTRATOR_STAGE_LABELS = {
 } as const;
 
 const ORCHESTRATOR_STATUS_LABELS = {
-  ready: '内部可跑',
+  ready: '内部可处理',
   'needs-review': '待复核',
   'external-gated': '等账号资料',
 } as const;
@@ -198,6 +236,15 @@ const ORCHESTRATOR_OWNER_LABELS = {
   'store-manager': '店长',
   'runtime-admin': '技术复核',
 } as const;
+
+const PUBLISH_PROOF_STATUS_LABELS: Record<RestaurantPublishProofStatus, string> = {
+  planned: '已排期',
+  'needs-account': '等账号确认',
+  'needs-proof': '等凭证',
+  'proof-ready': '待复核',
+  accepted: '凭证已收',
+  blocked: '已阻断',
+};
 
 export function FactoryFriendTrialExperience({
   active,
@@ -230,6 +277,28 @@ export function FactoryFriendTrialExperience({
     visitReason: intake.visitReason || '工作日晚餐不用排队，双人套餐更适合附近白领。',
     constraints: intake.constraints || '价格、库存、核销口径由店长确认，发布前必须回填链接或截图。',
     evidence: intake.evidence || '菜单截图、菜品图、点评链接或券领取截图。',
+  });
+  const publishProofLedger = buildRestaurantPublishProofLedger({
+    restaurantName: productFields[0]?.value,
+    offerName: productFields[1]?.value,
+    plans: RESTAURANT_PUBLISH_PROOF_DEMO_PLANS.map(plan => ({
+      ...plan,
+      restaurantName: productFields[0]?.value,
+      offerName: productFields[1]?.value,
+    })),
+  });
+  const recoverSignalImport = buildRestaurantRecoverSignalImportReport({
+    restaurantName: productFields[0]?.value,
+    offerName: productFields[1]?.value,
+    rows: RESTAURANT_RECOVER_SIGNAL_DEMO_ROWS,
+  });
+  const reviewLoopBossRecap = buildRestaurantReviewLoopBossRecap({
+    publishProofLedger,
+    recoverImport: recoverSignalImport,
+  });
+  const competitorCapabilityMatrix = buildRestaurantCompetitorCapabilityMatrix({
+    restaurantName: productFields[0]?.value,
+    offerName: productFields[1]?.value,
   });
   const capabilityTrainingPlan = buildRestaurantCapabilityTrainingPlan();
 
@@ -298,7 +367,185 @@ export function FactoryFriendTrialExperience({
           </header>
 
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <section aria-label="friend trial product index" className="sr-only">
+              {RESTAURANT_FRIEND_TRIAL_PRODUCT_INDEX.map(item => (
+                <span key={item}>{item}</span>
+              ))}
+            </section>
             <div className="mx-auto max-w-[1180px] space-y-5 pb-12">
+              <section className="overflow-hidden rounded-3xl border border-stone-200 bg-[#fdfcf9] shadow-[0_18px_60px_rgba(28,25,23,0.08)]">
+                <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
+                  <div className="p-5 sm:p-6 lg:p-7">
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-emerald-700">今日门店任务控制台</p>
+                    <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                      <div>
+                        <h2 className="max-w-3xl text-3xl font-black leading-tight text-stone-950 sm:text-4xl">今天该做哪件事：先把一道主推菜变成可审核工单</h2>
+                        <p className="mt-3 max-w-2xl text-sm leading-6 text-stone-600">任务、负责人、证据、状态和下一步，先在门店内部跑清楚，再去补平台账号、商户授权和经营汇总表。</p>
+                      </div>
+                      <Link className="inline-flex w-fit items-center justify-center rounded-xl bg-stone-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-stone-800" href={primaryActionHref}>
+                        生成今日门店工单
+                      </Link>
+                    </div>
+
+                    <form action={formActionHref} className="mt-5 grid gap-3 lg:grid-cols-4" method="get">
+                      <input name="variant" type="hidden" value="friend_trial" />
+                      {productFields.map(item => (
+                        <label className="block rounded-xl border border-stone-200 bg-white px-3 py-2.5" key={item.label}>
+                          <span className="text-[11px] font-bold text-stone-500">{item.label}</span>
+                          <input className="mt-1 w-full bg-transparent text-sm font-black text-stone-950 outline-none" defaultValue={item.value} name={item.name} />
+                        </label>
+                      ))}
+                      <label className="block rounded-xl border border-stone-200 bg-white px-3 py-2.5 lg:col-span-2">
+                        <span className="text-[11px] font-bold text-stone-500">到店场景 / 今天理由</span>
+                        <input className="mt-1 w-full bg-transparent text-sm font-black text-stone-950 outline-none" defaultValue={intake.visitReason || ''} name="visitReason" placeholder="例：工作日晚餐、周末家庭、出门前双人" />
+                      </label>
+                      <label className="block rounded-xl border border-stone-200 bg-white px-3 py-2.5">
+                        <span className="text-[11px] font-bold text-stone-500">优惠边界</span>
+                        <input className="mt-1 w-full bg-transparent text-sm font-black text-stone-950 outline-none" defaultValue={intake.constraints || ''} name="constraints" />
+                      </label>
+                      <label className="block rounded-xl border border-stone-200 bg-white px-3 py-2.5">
+                        <span className="text-[11px] font-bold text-stone-500">素材现状</span>
+                        <input className="mt-1 w-full bg-transparent text-sm font-black text-stone-950 outline-none" defaultValue={intake.evidence || ''} name="evidence" />
+                      </label>
+                      <button className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-black text-emerald-800 transition hover:bg-emerald-100 lg:col-span-4" type="submit">
+                        生成今日门店工单
+                      </button>
+                    </form>
+
+                    <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                      {RESTAURANT_TODAY_TASK_CARDS.map(card => (
+                        <article className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm" key={card.title}>
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="text-sm font-black text-stone-950">{card.title}</h3>
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">{card.status}</span>
+                          </div>
+                          <dl className="mt-3 space-y-2 text-[11px] leading-4 text-stone-600">
+                            <div><dt className="inline font-bold text-stone-900">负责人：</dt><dd className="inline">{card.owner}</dd></div>
+                            <div><dt className="inline font-bold text-stone-900">证据：</dt><dd className="inline">{card.evidence}</dd></div>
+                            <div><dt className="inline font-bold text-stone-900">下一步：</dt><dd className="inline">{card.next}</dd></div>
+                          </dl>
+                        </article>
+                      ))}
+                    </div>
+
+                    <section className="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm" aria-label="发布凭证账本">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-700">发布凭证账本</p>
+                          <h3 className="mt-1 text-lg font-black text-stone-950">每个渠道都要留下负责人、时间、链接或截图</h3>
+                          <p className="mt-1 text-xs leading-5 text-stone-600">没有账号确认和凭证回填时，只生成排期和待补清单，不说已经发出。</p>
+                        </div>
+                        <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-stone-200 bg-stone-50 text-center text-xs">
+                          <div className="border-r border-stone-200 px-3 py-2">
+                            <div className="font-black text-stone-950">{publishProofLedger.summary.total}</div>
+                            <div className="mt-0.5 text-[10px] font-bold text-stone-500">渠道</div>
+                          </div>
+                          <div className="border-r border-stone-200 px-3 py-2">
+                            <div className="font-black text-stone-950">{publishProofLedger.summary.accepted}</div>
+                            <div className="mt-0.5 text-[10px] font-bold text-stone-500">已收</div>
+                          </div>
+                          <div className="px-3 py-2">
+                            <div className="font-black text-stone-950">{publishProofLedger.summary.nextActionCount}</div>
+                            <div className="mt-0.5 text-[10px] font-bold text-stone-500">待办</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 grid gap-2 md:grid-cols-3">
+                        {publishProofLedger.items.map(item => (
+                          <article className="rounded-xl border border-stone-200 bg-[#fbfaf7] p-3" key={item.id}>
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <h4 className="text-sm font-black text-stone-950">{item.storeName}</h4>
+                                <p className="mt-1 text-[11px] leading-4 text-stone-500">负责人：{item.owner} · 时间：{item.scheduledAt}</p>
+                              </div>
+                              <span className="rounded-full bg-amber-100 px-2 py-1 text-[10px] font-black text-amber-800">{PUBLISH_PROOF_STATUS_LABELS[item.status]}</span>
+                            </div>
+                            <p className="mt-2 text-xs leading-5 text-stone-600">{item.proofSummary}</p>
+                            <div className="mt-2 rounded-lg border border-stone-200 bg-white px-2 py-1 text-[11px] font-bold text-stone-500">下一步：{item.blockers[0] || item.nextAction}</div>
+                          </article>
+                        ))}
+                      </div>
+                      <p className="mt-3 rounded-xl bg-stone-950 px-3 py-2 text-[11px] leading-5 text-stone-100">回流只看脱敏汇总：预约、券领取、咨询、评价和到店意向；不保存顾客身份、聊天原文、券码、订单和收银明细。</p>
+                    </section>
+
+                    <section className="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm" aria-label="老板版下一轮复盘">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div>
+                          <p className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-700">老板版下一轮复盘</p>
+                          <h3 className="mt-1 text-lg font-black text-stone-950">{reviewLoopBossRecap.headline}</h3>
+                          <p className="mt-1 text-xs leading-5 text-stone-600">复盘只引用发布凭证账本和脱敏回流，不把待补资料写成经营归因。</p>
+                        </div>
+                        <div className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-xs">
+                          <div className="text-[10px] font-bold text-stone-500">本轮判断</div>
+                          <div className="mt-1 font-black text-stone-950">
+                            {reviewLoopBossRecap.decision === 'amplify' ? '小步放大' : reviewLoopBossRecap.decision === 'iterate' ? '继续验证' : '暂停放大'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {[
+                            ['下一轮推什么', reviewLoopBossRecap.nextDishAction],
+                            ['卖点怎么改', reviewLoopBossRecap.sellingPointChange],
+                            ['先补什么素材', reviewLoopBossRecap.materialGaps[0]],
+                            ['证据来源', `发布凭证账本：已收 ${reviewLoopBossRecap.summary.acceptedProofs}/${publishProofLedger.summary.total}；脱敏回流：${reviewLoopBossRecap.summary.recoverRows} 行。`],
+                          ].map(([label, value]) => (
+                            <div className="rounded-xl border border-stone-200 bg-[#fbfaf7] p-3" key={label}>
+                              <div className="text-[11px] font-bold text-stone-500">{label}</div>
+                              <p className="mt-1 text-xs font-bold leading-5 text-stone-800">{value}</p>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="rounded-xl border border-stone-200 bg-stone-50 p-3">
+                          <div className="text-[11px] font-black text-stone-950">负责人下一步</div>
+                          <div className="mt-2 space-y-2">
+                            {reviewLoopBossRecap.ownerActions.slice(0, 3).map(item => (
+                              <div className="rounded-lg bg-white px-2 py-1.5 text-[11px] leading-4 text-stone-600" key={`${item.owner}-${item.evidenceRequired}`}>
+                                <span className="font-black text-stone-900">{item.owner}：</span>{item.action}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[11px] leading-5 text-amber-800 ring-1 ring-inset ring-amber-200">放大前必须补齐发布凭证和脱敏回流；没有平台授权、核销数据约定和店长确认时，只给下一步动作，不宣称真实增长结果。</p>
+                    </section>
+                  </div>
+
+                  <aside className="border-t border-stone-200 bg-stone-950 p-5 text-white xl:border-l xl:border-t-0">
+                    <p className="text-[11px] font-black uppercase tracking-[0.16em] text-amber-200">当前能跑 / 还缺什么</p>
+                    <div className="mt-4 space-y-3">
+                      <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3">
+                        <h3 className="text-sm font-black text-emerald-100">当前内部可完成</h3>
+                        <ul className="mt-2 space-y-1 text-[11px] leading-4 text-emerald-50/85">
+                          {RESTAURANT_GROWTH_LOOP_INTERNAL_READY_NOW.map(item => <li key={item}>路 {item}</li>)}
+                        </ul>
+                      </div>
+                      <div className="rounded-xl border border-amber-300/25 bg-amber-300/10 p-3">
+                        <h3 className="text-sm font-black text-amber-100">账号 / 授权 / 数据条件</h3>
+                        <ul className="mt-2 space-y-1 text-[11px] leading-4 text-amber-50/90">
+                          {RESTAURANT_GROWTH_LOOP_EXTERNAL_GATES_NOW.map(item => <li key={item}>路 {item}</li>)}
+                        </ul>
+                        <p className="mt-2 text-[11px] leading-4 text-amber-50/90">账号资料：补齐账号、截图或经营表格后解锁</p>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+
+                <div className="grid gap-2 border-t border-stone-200 bg-[#fbfaf7] p-4 md:grid-cols-3 xl:grid-cols-6">
+                  {RESTAURANT_GROWTH_LOOP_STAGES.map(step => (
+                    <article className="rounded-xl border border-stone-200 bg-white p-3" key={step.id}>
+                      <div className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-700">{step.customerStage}</div>
+                      <h3 className="mt-1 text-sm font-black text-stone-950">{step.title}</h3>
+                      <p className="mt-2 min-h-16 text-[11px] leading-4 text-stone-600">{step.body}</p>
+                      <div className="mt-2 rounded-lg bg-stone-50 px-2 py-1 text-[11px] font-bold text-stone-500">证据：{step.proof}</div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
               <section className="relative overflow-hidden rounded-3xl border border-emerald-900/45 bg-[#07130f] text-white shadow-[0_24px_80px_rgba(7,19,15,0.28)]">
                 <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(rgba(16,185,129,0.16)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.12)_1px,transparent_1px)] [background-size:42px_42px]" />
                 <div className="absolute -right-28 -top-28 h-72 w-72 rounded-full border border-emerald-300/20" />
@@ -331,7 +578,7 @@ export function FactoryFriendTrialExperience({
                       {[
                         { label: '先看今天能做啥', body: '直接告诉老板今天能先做哪几件事', href: '#restaurant-trial-spine' },
                         { label: '生成试跑工单', body: '做出一张门店活动工单、负责人和回填凭证要求', href: '#restaurant-trial-spine' },
-                        { label: '补缺的资料', body: '不用等接口 key，先列出还差哪些截图或表格', href: '#restaurant-trial-spine' },
+                        { label: '补缺的资料', body: '不用等账号配置，先列出还差哪些截图或表格', href: '#restaurant-trial-spine' },
                         { label: '看回收结果', body: '只用链接、截图、预约、券领取和去掉隐私的汇总表做判断', href: withIntake('/factory/manage?variant=friend_trial') },
                       ].map(item => (
                         <a className="border border-white/10 bg-white/[0.055] px-3 py-2 text-left transition hover:border-emerald-200/40 hover:bg-emerald-200/10" href={item.href} key={item.label}>
@@ -359,6 +606,20 @@ export function FactoryFriendTrialExperience({
                             <p className="mt-1 text-[11px] leading-4 text-stone-400">{item.body}</p>
                           </div>
                         ))}
+                      </div>
+                      <div className="mt-3 grid gap-2 md:grid-cols-3">
+                        <div className="border border-white/10 bg-black/20 p-3">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/60">开跑前 30 秒检查</div>
+                          <p className="mt-1 text-[11px] leading-4 text-stone-400">缺账号、授权或经营汇总表就停在待补资料</p>
+                        </div>
+                        <div className="border border-white/10 bg-black/20 p-3">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/60">7 分钟现场演示路径</div>
+                          <p className="mt-1 text-[11px] leading-4 text-stone-400">2 分钟填门店和主推套餐，结束后回填凭证、负责人和停止线</p>
+                        </div>
+                        <div className="border border-white/10 bg-black/20 p-3">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-100/60">现场永远不说</div>
+                          <p className="mt-1 text-[11px] leading-4 text-stone-400">只说今天能做什么、需要补什么、谁负责、凭证在哪里</p>
+                        </div>
                       </div>
                     </div>
 
@@ -548,6 +809,7 @@ export function FactoryFriendTrialExperience({
                         <p className="text-[11px] font-semibold tracking-[0.16em] text-emerald-700">门店试跑主流程</p>
                         <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">五段试跑主链路</h2>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">{trialOrchestratorPack.spine}</p>
+                        <p className="mt-2 text-xs font-bold text-stone-500">试跑输入 -&gt; 标准交付包 -&gt; 内容素材生产 -&gt; 发布凭证 -&gt; 店长跟进</p>
                       </div>
                       <div className="grid w-full grid-cols-3 overflow-hidden rounded-2xl border border-stone-200 bg-stone-50 text-center sm:w-[310px]">
                         <div className="border-r border-stone-200 p-3">
@@ -611,6 +873,7 @@ export function FactoryFriendTrialExperience({
                         </ul>
                       </div>
                       <p className="text-[11px] leading-5 text-stone-400">{trialOrchestratorPack.safetyBoundary}</p>
+                      <p className="text-[11px] leading-5 text-amber-100/75">读取平台或发布之前，先拿到店长确认的授权范围。</p>
                     </div>
                   </div>
                 </div>
@@ -672,7 +935,7 @@ export function FactoryFriendTrialExperience({
                     <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                       <div className="text-[11px] font-semibold text-amber-700">工具权限</div>
                       <div className="mt-2 text-2xl font-black text-amber-950">{clawSkillCatalog.summary.internalReadyTools} / {clawSkillCatalog.summary.trainingNeededTools} / {clawSkillCatalog.summary.providerGatedTools}</div>
-                      <p className="mt-2 text-xs leading-5 text-amber-900">导入器、检查器可先跑；回执器、复盘器必须等平台、收银系统或执行工具。</p>
+                      <p className="mt-2 text-xs leading-5 text-amber-900">导入器、检查器可先处理；回执器、复盘器必须等平台、收银系统或执行工具。</p>
                     </div>
                   </div>
                   <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -729,7 +992,7 @@ export function FactoryFriendTrialExperience({
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">真实餐饮场景</p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">真实餐饮场景，即刻体验</h2>
+                    <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">门店试跑场景，即刻体验</h2>
                   </div>
                   <p className="max-w-2xl text-sm leading-6 text-stone-600">
                     这些不是泛泛的内容生成入口，而是餐饮老板每天会问的问题。没有外部数据时，工作台只输出清单、草稿和待确认项；账号确认后再升级为真实经营分析和执行。
@@ -776,11 +1039,68 @@ export function FactoryFriendTrialExperience({
                 <div className="border-b border-stone-200 bg-[#fbfaf7] p-5 sm:p-6">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
                     <div>
+                      <p className="text-[11px] font-semibold tracking-[0.18em] text-emerald-700">竞品能力转成 Wenai 模块</p>
+                      <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">不是堆竞品名，而是每项都有负责人、证据和停止线</h2>
+                    </div>
+                    <p className="max-w-2xl text-sm leading-6 text-stone-600">
+                      参考 Kuaizi、美团智能掌柜、语音接待、Owner.com、SevenRooms、MarketMan 和餐饮运营工具，但统一翻译成门店增长闭环里的任务模块。
+                    </p>
+                  </div>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-4">
+                    {[
+                      ['模块', competitorCapabilityMatrix.summary.modules],
+                      ['闭环阶段', competitorCapabilityMatrix.summary.loopStages],
+                      ['当前能展示', competitorCapabilityMatrix.summary.visibleNow],
+                      ['待补条件', competitorCapabilityMatrix.summary.gated],
+                    ].map(([label, value]) => (
+                      <div className="rounded-2xl border border-stone-200 bg-white px-3 py-2 text-center" key={label}>
+                        <div className="text-[11px] font-semibold text-stone-500">{label}</div>
+                        <div className="mt-1 text-xl font-black text-stone-950">{value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid gap-3 p-5 sm:p-6 lg:grid-cols-2">
+                  {competitorCapabilityMatrix.modules.slice(0, 8).map(item => (
+                    <article className="rounded-2xl border border-stone-200 bg-[#fbfaf7] p-4" key={item.id}>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="text-[11px] font-semibold text-emerald-700">{customerLoopStageLabel(item.loopStage)} · {item.source}</div>
+                          <h3 className="mt-1 text-lg font-black text-stone-950">{item.wenaiModule}</h3>
+                        </div>
+                        <span className={`w-fit rounded-full px-2.5 py-1 text-[11px] font-black ${item.canShowNow ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'}`}>
+                          {item.canShowNow ? '可先展示' : '待补资料'}
+                        </span>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-stone-700">{item.customerJob}</p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <div className="rounded-xl border border-stone-200 bg-white p-3">
+                          <div className="text-[11px] font-bold text-stone-500">输出</div>
+                          <p className="mt-1 text-xs leading-5 text-stone-700">{item.output.join(' / ')}</p>
+                        </div>
+                        <div className="rounded-xl border border-stone-200 bg-white p-3">
+                          <div className="text-[11px] font-bold text-stone-500">证据</div>
+                          <p className="mt-1 text-xs leading-5 text-stone-700">{item.evidence.join(' / ')}</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                        <span className="font-black">负责人：{item.owner}。</span>{item.nextAction} {item.gate}
+                      </div>
+                      <p className="mt-2 text-[11px] leading-5 text-stone-500">{customerStopLineFor(item.id)}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
+                <div className="border-b border-stone-200 bg-[#fbfaf7] p-5 sm:p-6">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                    <div>
                       <p className="text-[11px] font-semibold tracking-[0.18em] text-emerald-700">能力训练清单</p>
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">竞品能力训练与接入矩阵</h2>
                     </div>
                     <p className="max-w-2xl text-sm leading-6 text-stone-600">
-                      目标不是堆技能数量，而是每项能力都有训练材料、外部条件、验收证据和第一步。内部能做的先训练成任务包，外部要补的明确列出来。
+                      目标不是堆技能数量，而是每项能力都有训练材料、外部条件、凭证要求和第一步。内部能做的先训练成任务包，外部要补的明确列出来。
                     </p>
                   </div>
                 </div>

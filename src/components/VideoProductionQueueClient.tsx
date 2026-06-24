@@ -6,9 +6,26 @@ import { FactoryFriendTrialExperience } from '@/components/FactoryFriendTrialExp
 import { FactoryVariantConsole } from '@/components/FactoryVariantConsole';
 import type { FactoryUiVariantId } from '@/lib/factory-readiness-view';
 import type { OneClickVideoOperationResult, VideoProductionQueue } from '@/lib/industrial-video-workflow';
+import {
+  buildRestaurantContentDeliveryPack,
+  type RestaurantContentChannel,
+} from '@/lib/restaurant-content-delivery-pack';
+import { buildRestaurantVideoProductionPassport } from '@/lib/restaurant-video-production-passport';
 import type { RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
 
 const DEFAULT_PLATFORMS = '大众点评,小红书,抖音,微信社群';
+
+function parseRestaurantContentChannels(value: string): RestaurantContentChannel[] {
+  const normalized = value.toLowerCase();
+  const channels: RestaurantContentChannel[] = [];
+
+  if (/大众点评|点评|dianping/.test(normalized)) channels.push('dianping');
+  if (/小红书|xiaohongshu|red/.test(normalized)) channels.push('xiaohongshu');
+  if (/抖音|douyin|tiktok/.test(normalized)) channels.push('douyin');
+  if (/微信|社群|wechat|wecom/.test(normalized)) channels.push('wechat');
+
+  return Array.from(new Set(channels));
+}
 
 function capabilityStatusLabel(status: string) {
   if (status === 'internal_ready') return '内部已就绪';
@@ -109,12 +126,12 @@ function reviewIdentity(value: string) {
 
 function queueText(value: string) {
   const map: Record<string, string> = {
-    'Provider generation remains handoff-only until config, consent, references, and product assets are ready.': '供应商生成仍处于仅交接状态，需要完成配置、授权、参考视频和产品素材后才能执行。',
+    'Provider generation remains handoff-only until config, consent, references, and product assets are ready.': '供应商生成仍处于仅交接状态，需要完成配置、授权、参考视频和门店素材后才能执行。',
     'Produced video assets are waiting for client review approval.': '已产出的视频资产正在等待客户审核批准。',
     'Client requested revisions on at least one produced video asset.': '客户已对至少一个视频资产提出返修。',
     'Create distribution plans for the video workflow asset.': '为视频工作流资产创建分发计划。',
     'Create dispatch records and assign an owner for every target platform.': '为每个目标平台创建分发记录并分配负责人。',
-    'Attach provider credentials, legal consent, references, and product assets before provider execution.': '执行供应商生成前，需要补齐供应商凭据、授权、参考视频和产品素材。',
+    'Attach provider credentials, legal consent, references, and product assets before provider execution.': '执行供应商生成前，需要补齐供应商凭据、授权、参考视频和门店素材。',
     'Ingest completed provider/editor result URLs through /api/industrial-chain/production-result.': '通过生产结果接口导入已完成的视频或剪辑结果链接。',
     'Create client review links for produced video assets.': '为已产出的视频资产创建客户审核链接。',
     'Send the review portal link to the client and capture approval or revision feedback.': '把审核链接发给客户，并收集批准或返修反馈。',
@@ -143,13 +160,13 @@ function operationClosureCards(operation: OneClickVideoOperationResult) {
   }, {
     title: '仍需外部接入',
     body: operation.externalRequirements.length
-      ? `还有 ${operation.externalRequirements.length} 个外部 gate，未补齐前只能交接，不能自动出片或自动发布。`
+      ? `还有 ${operation.externalRequirements.length} 个账号资料条件，未补齐前只能交接，不能标记成片或外部发布完成。`
       : '外部 gate 暂无阻塞，可以继续按供应商或平台自动化验收。',
   }, {
     title: '运营下一步',
     body: operation.commerciallyExecutable
       ? '进入供应商执行、成片回写、客户审核和表现回流。'
-      : '先补视频 provider、授权素材、平台账号和发布/回流证据。',
+      : '先补视频试跑通道、授权素材、平台账号和发布/回流证据。',
   }, {
     title: '禁止伪规模',
     body: '91M+ / 42M+ 只作竞品对标，未有审计账本前不能作为 Wenai 自有指标展示。',
@@ -216,8 +233,8 @@ function FriendTrialProductionConsole({
       time: '14:28:12',
       level: 'WARN',
       text: blockedGates.length
-        ? `外部门禁仍未接通：${blockedGates.map(check => check.gate).slice(0, 2).join(' · ')}。`
-        : '外部门禁已达到当前队列所需的最小可运行状态。',
+        ? `账号资料条件仍未接通：${blockedGates.map(check => check.gate).slice(0, 2).join(' · ')}。`
+        : '账号资料条件已达到当前队列所需的最小可运行状态。',
     },
     {
       time: '14:15:33',
@@ -241,7 +258,7 @@ function FriendTrialProductionConsole({
     },
     {
       label: '平台授权',
-      detail: '抖音 / 小红书 / 微信的 OAuth、广告账户和自动发布仍需外部材料。',
+      detail: '抖音 / 小红书 / 微信的店长授权、发布权限和回执仍需补齐资料。',
       state: providerSandboxChecks[1]?.ready ? 'ready' : 'blocked',
     },
     {
@@ -300,7 +317,7 @@ function FriendTrialProductionConsole({
               <p className="text-xs uppercase text-neutral-500">Wenai 视频生产总控台</p>
               <h2 className="text-balance text-3xl font-semibold text-neutral-950 sm:text-4xl">视频生产队列</h2>
               <p className="max-w-3xl text-pretty text-sm leading-6 text-neutral-600">
-                从创意洞察、素材库、视频生产到分发计划、表现回流和 CRM 交接的可验证工作流。
+                从创意洞察、素材库、视频生产到分发计划、表现回流和到店跟进交接的可验证工作流。
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -308,7 +325,7 @@ function FriendTrialProductionConsole({
                 内部链路已验证
               </span>
               <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-                外部门禁 {blockedGates.length ? `${blockedGates.length} 项待配置` : '已收敛'}
+                账号资料条件 {blockedGates.length ? `${blockedGates.length} 项待配置` : '已收敛'}
               </span>
               <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-700">
                 {providerReadyRatio} 供应商就绪
@@ -324,13 +341,13 @@ function FriendTrialProductionConsole({
                 value={String(queue?.itemCount || 0)}
               />
               <TrialQueueMetricCard
-                detail={`Provider ready ${providerReadyRatio}`}
+                detail={`试跑通道就绪 ${providerReadyRatio}`}
                 label="供应商就绪"
                 tone={queue && queue.providerReadyCount === queue.itemCount ? 'success' : 'warning'}
                 value={providerReadyRatio}
               />
               <TrialQueueMetricCard
-                detail="免登录 review 门户与客户反馈写回"
+                detail="免登录审核入口与客户反馈写回"
                 label="审核链接"
                 tone={queue && queue.clientReviewCount > 0 ? 'success' : 'warning'}
                 value={String(queue?.clientReviewCount || 0)}
@@ -423,7 +440,7 @@ function FriendTrialProductionConsole({
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-xs uppercase text-neutral-500">Blockers</p>
-                      <h3 className="mt-2 text-lg font-semibold text-neutral-950">关键外部门禁</h3>
+                      <h3 className="mt-2 text-lg font-semibold text-neutral-950">关键账号资料条件</h3>
                     </div>
                     <div className="text-xs font-medium text-neutral-500">
                       {providerSandboxChecks.filter(check => check.ready).length}/{providerSandboxChecks.length} ready
@@ -500,8 +517,8 @@ function manualTrialRunbook(item: VideoProductionQueue['items'][number]) {
       title: '人工/供应商执行',
       state: item.mode === 'provider_ready' ? '可走 provider' : '人工交接',
       detail: item.mode === 'provider_ready'
-        ? 'provider gate 已满足，可进入自动提交或供应商队列。'
-        : '外部 token 未接齐时，按交接包人工剪辑；不要宣称自动成片。',
+        ? '账号资料条件已满足，可进入人工确认后的交接队列。'
+        : '账号资料未接齐时，按交接包人工剪辑；不要宣称已产出成片。',
     },
     {
       title: '成片回灌',
@@ -516,15 +533,15 @@ function manualTrialRunbook(item: VideoProductionQueue['items'][number]) {
       detail: hasApproval
         ? '客户批准已写回生产链路。'
         : hasReview
-          ? '客户可通过 review 链接反馈或批准。'
-          : '成片回灌后必须创建 review 链接，不能只在聊天里确认。',
+          ? '客户可通过审核链接反馈或批准。'
+          : '成片回灌后必须创建审核链接，不能只在聊天里确认。',
     },
     {
       title: '分发与回流',
       state: hasPerformance ? '已回流' : '待发布证据',
       detail: hasPerformance
         ? '表现数据已回到队列，可进入复盘和下一轮创意。'
-        : '发布或投放后补平台证据和表现数据；没有 OAuth 前保持手工回流。',
+        : '发布后补链接/截图凭证和平台/社群反馈；没有商户授权前保持手工回流。',
     },
   ];
 }
@@ -551,8 +568,8 @@ export function buildVideoProductionPassport(item: VideoProductionQueue['items']
       value: providerReady ? 'provider 可提交' : '人工交接',
       tone: providerReady ? 'ready' : 'attention',
       detail: providerReady
-        ? '素材、授权和 provider gate 已满足，可进入真实执行队列。'
-        : '外部 provider 未满足前，只交付剪辑包和手工回填入口。',
+        ? '素材、授权和账号资料条件已满足，可进入外部 provider 试跑交接队列。'
+        : '外部 provider / 试跑通道未满足前，只交付剪辑包和手工回填入口。',
     },
     {
       title: '成片证据',
@@ -567,17 +584,17 @@ export function buildVideoProductionPassport(item: VideoProductionQueue['items']
       value: hasApproval ? '已批准' : hasReview ? '审核中' : '待生成审核',
       tone: hasApproval ? 'ready' : hasReview ? 'attention' : 'locked',
       detail: hasApproval
-        ? '客户批准已写回，后续可进入分发/CRM。'
+        ? '客户批准已写回，后续可进入分发/到店跟进。'
         : hasReview
-          ? '客户可通过 review 链接反馈或批准。'
-          : '成片回填后必须生成免登录 review 链接。',
+          ? '客户可通过审核链接反馈或批准。'
+          : '成片回填后必须生成免登录审核链接。',
     },
     {
       title: '分发证据',
       value: item.measuredDispatchCount > 0 ? `${item.measuredDispatchCount} 条回流` : `${item.dispatchCount} 条计划`,
       tone: hasPerformance ? 'ready' : item.dispatchCount > 0 ? 'attention' : 'locked',
       detail: hasPerformance
-        ? '发布或投放表现已经回流，可进入复盘和品牌学习。'
+        ? '发布表现或到店反馈已经回流，可进入复盘和品牌学习。'
         : item.dispatchCount > 0
           ? '已有分发计划或 dispatch，仍需发布证据和表现数据。'
           : '缺少分发计划时不能形成 Cast/Manage 闭环。',
@@ -616,28 +633,28 @@ function friendTrialReadiness(queue: VideoProductionQueue | null, variant: Facto
     verdict,
     evidence: [
       hasTask ? `已有 ${queue?.itemCount || 0} 个视频任务` : '还没有视频任务',
-      hasResult ? `已有 ${queue?.resultAssetCount || 0} 个成片结果` : '尚未回写真实成片',
+      hasResult ? `已有 ${queue?.resultAssetCount || 0} 个成片结果` : '尚未回写成片链接',
       hasReview ? `已有 ${reviewCount} 个客户审核入口` : '尚未生成客户审核链接',
       hasApproval ? `已有 ${queue?.approvedDeliverableCount || 0} 个批准结果` : '尚未获得客户批准',
       hasReturn ? `已有 ${queue?.measuredCount || 0} 条表现回流` : '尚未形成发布后表现回流',
     ],
     firstReviewLink: firstReviewLink ? reviewUrlWithVariant(firstReviewLink, variant) : '',
     nextAction: !hasTask
-      ? '先创建一个视频工作流，把产品、平台、参考视频和素材写入队列。'
+      ? '先创建一个视频工作流，把菜品/套餐、平台、参考视频和素材写入队列。'
       : !hasResult
-        ? '先回写真实成片 URL；没有可打开成片时，只能测试审核入口，不能算完整朋友试用。'
+        ? '先回写成片链接；没有可打开成片时，只能测试审核入口，不能算完整朋友试用。'
       : !hasReview
-        ? '先回写真实成片 URL，并让系统生成客户审核链接。'
+        ? '先回写成片链接，并让系统生成客户审核链接。'
         : !hasApproval
           ? '把审核链接发给朋友或客户，让他们只做反馈或批准。'
           : !hasReturn
             ? '批准后进入分发或手工发布，并补回发布证据与表现数据。'
             : '把表现回流写入品牌学习档案，进入下一轮 Compose / Cut 优化。',
     stopLine: hasResult && hasReview
-      ? '可以让朋友试用审核动作，但未接真实 provider/OAuth 前仍不能宣称自动出片或自动发布。'
+      ? '可以让朋友试用审核动作，但未接真实 provider 和平台授权前仍不能宣称成片或外部发布已完成。'
       : hasReview
-        ? '有审核入口但没有真实成片，只能验证客户前台，不能让朋友以为视频已经产出。'
-      : '缺少 review 链接前，不要把内部队列截图发给朋友；先回写成片并生成审核入口。',
+        ? '有审核入口但没有成片链接，只能验证客户前台，不能让朋友以为视频已经产出。'
+      : '缺少审核链接前，不要把内部队列截图发给朋友；先回写成片并生成审核入口。',
   };
 }
 
@@ -653,18 +670,18 @@ function commercialCutReadiness(queue: VideoProductionQueue | null) {
       label: '真实视频 provider 回调',
       ok: providerCompleted,
       detail: providerCompleted
-        ? `已有 ${queue?.completedProviderExecutionCount || 0} 条完成回调。`
+        ? `已有 ${queue?.completedProviderExecutionCount || 0} 条完成回执。`
         : '还没有完成的 provider execution；只能算人工交接或本地队列。',
     },
     {
       label: '可打开成片资产',
       ok: hasResult,
-      detail: hasResult ? `已有 ${queue?.resultAssetCount || 0} 个成片结果。` : '还没有真实成片 URL 写回。',
+      detail: hasResult ? `已有 ${queue?.resultAssetCount || 0} 个成片结果。` : '还没有成片链接写回。',
     },
     {
       label: '客户审核入口',
       ok: hasReview,
-      detail: hasReview ? `已有 ${queue?.clientReviewCount || 0} 个审核入口。` : '还没有 review 链接。',
+      detail: hasReview ? `已有 ${queue?.clientReviewCount || 0} 个审核入口。` : '还没有审核链接。',
     },
     {
       label: '客户批准',
@@ -686,7 +703,7 @@ function commercialCutReadiness(queue: VideoProductionQueue | null) {
       ? `存在 ${providerFailures} 条 provider 失败或待重试记录，商用前必须处理。`
       : '暂无 provider 失败记录；主要风险仍是外部授权与真实回流证据。',
     stopLine: passed === gates.length
-      ? '可以进入小规模商用验收，但仍需按平台 OAuth、广告账户和资产权限继续扩展。'
+      ? '可以进入小规模商用验收，但仍需按平台授权、商户授权和资产权限继续扩展。'
       : '没有 provider 完成回调、成片、客户批准和表现回流前，不能宣称筷子级稳定视频工厂。',
   };
 }
@@ -721,16 +738,16 @@ export function buildVideoProviderSandboxChecks(queue: VideoProductionQueue | nu
     {
       gate: '提交适配器门禁',
       ready: providerReadyCount > 0 || submittedCount > 0 || completedCount > 0,
-      evidence: `provider-ready ${providerReadyCount} / submitted ${submittedCount}`,
-      internalMove: '保留 submit payload、clientRequestId、dispatchId、sourceHandoffAssetId 和 providerName，不把 token 写入页面或账本。',
-      externalGate: '需要 provider submit endpoint、服务端 token、沙盒账号和成本上限。',
+      evidence: `试跑通道就绪 ${providerReadyCount} / 已交接 ${submittedCount}`,
+      internalMove: '保留交接内容、客户请求编号、分发编号、来源素材编号和通道名称，不把账号配置值写入页面或台账。',
+      externalGate: '需要试跑通道交接地址、服务端账号配置、沙盒账号和成本上限。',
     },
     {
       gate: '回调验签门禁',
       ready: completedCount > 0,
-      evidence: `完成回调 ${completedCount} / 失败 ${failedCount}`,
-      internalMove: '继续使用 callback nonce、webhook signature、taskId 和 result URL 对齐同一条 execution。',
-      externalGate: '需要 webhook secret、callback URL allowlist、provider 真实 signed callback 样例。',
+      evidence: `完成回执 ${completedCount} / 失败 ${failedCount}`,
+      internalMove: '继续使用回执编号、签名规则、任务编号和成片链接对齐同一条试跑记录。',
+      externalGate: '需要回执签名配置、回执地址白名单和签名回执样例。',
     },
     {
       gate: '失败恢复门禁',
@@ -749,8 +766,8 @@ export function buildVideoProviderSandboxChecks(queue: VideoProductionQueue | nu
     {
       gate: '客户验收门禁',
       ready: reviewCount > 0 && approvedCount > 0,
-      evidence: `review ${reviewCount} / approved ${approvedCount}`,
-      internalMove: '成片必须生成 review token，客户反馈或批准要写回生产链路。',
+      evidence: `审核 ${reviewCount} / 批准 ${approvedCount}`,
+      internalMove: '成片必须生成审核入口，客户反馈或批准要写回生产链路。',
       externalGate: '需要正式域名、客户访问权限、通知通道和可审计的验收记录。',
     },
   ];
@@ -783,39 +800,39 @@ export function buildCutOperatingChecks(queue: VideoProductionQueue | null): Cut
       status: hasRemixPlan ? 'ready' : 'blocked',
       evidence: hasRemixPlan ? '已有可交给剪辑师或 provider 的镜头顺序、素材说明和平台适配。' : '还没有可执行 remix plan。',
       internalMove: '把 15s/30s/45s 版本、素材清单、字幕节奏、平台时长规则和禁用表达沉淀为可复用模板。',
-      externalGate: '真实剪辑引擎、素材授权、音乐/字体授权、成片回调。',
+      externalGate: '真实剪辑引擎、素材授权、音频/字体授权和成片回调。',
     },
     {
       label: '一键视频编排',
       status: hasTask ? 'ready' : 'blocked',
       evidence: hasTask
-        ? `已能从 brief 创建生产 handoff、分发计划和 dispatch，provider ready ${queue?.providerReadyCount || 0}/${queue?.itemCount || 0}。`
+        ? `已能从 brief 创建生产交接包、分发计划和分发记录，试跑通道就绪 ${queue?.providerReadyCount || 0}/${queue?.itemCount || 0}。`
         : '还没有从 brief 自动生成视频工作流。',
-      internalMove: '保留一键编排能力，但 UI 必须继续标注 provider-gated，避免把编排误说成自动成片。',
-      externalGate: '视频生成 provider token、webhook secret、成本上限、失败重试和回调验签。',
+      internalMove: '保留一键编排能力，但界面必须继续标注 provider-gated 和待补资料，避免把编排误说成已产出成片。',
+      externalGate: '视频试跑通道账号、回执签名规则、成本上限、失败重试和回执验签。',
     },
     {
       label: 'Provider 执行闭环',
       status: providerReady && providerCompleted && !hasProviderRecovery ? 'ready' : 'blocked',
       evidence: providerCompleted
-        ? `完成回调 ${queue?.completedProviderExecutionCount || 0} 条 / 失败或待重试 ${(queue?.failedProviderExecutionCount || 0) + (queue?.retryableProviderExecutionCount || 0)} 条`
+        ? `完成回执 ${queue?.completedProviderExecutionCount || 0} 条 / 失败或待重试 ${(queue?.failedProviderExecutionCount || 0) + (queue?.retryableProviderExecutionCount || 0)} 条`
         : `已提交 ${queue?.submittedProviderExecutionCount || 0} 条 / 完成 0 条`,
-      internalMove: '继续保留 callback nonce、失败原因、retryable 状态和人工回填入口。',
-      externalGate: 'provider sandbox 账号、真实任务回调、失败码、重试策略、成本账单。',
+      internalMove: '继续保留回执编号、失败原因、可重试状态和人工回填入口。',
+      externalGate: '试跑通道沙箱账号、任务回执、失败码、重试策略、成本账单。',
     },
     {
       label: '成片入库与客户审核',
       status: hasResult && hasReview && hasApproval ? 'ready' : 'blocked',
-      evidence: `成片 ${queue?.resultAssetCount || 0} / review ${queue?.clientReviewCount || 0} / 批准 ${queue?.approvedDeliverableCount || 0}`,
-      internalMove: '成片 URL 必须进入 production result，再生成 review token，客户批准或返修要写回生产链路。',
+      evidence: `成片 ${queue?.resultAssetCount || 0} / 审核 ${queue?.clientReviewCount || 0} / 批准 ${queue?.approvedDeliverableCount || 0}`,
+      internalMove: '成片链接必须进入结果库，再生成审核入口，客户批准或返修要写回生产链路。',
       externalGate: '正式域名、客户权限策略、签名 URL、下载/水印/DLP 策略。',
     },
     {
       label: '分发表现回流',
       status: hasPerformance ? 'ready' : 'blocked',
       evidence: `已回流 ${queue?.measuredCount || 0} 条表现数据 / dispatch ${items.reduce((sum, item) => sum + item.dispatchCount, 0)} 条`,
-      internalMove: '把发布证据、投放假设、表现 CSV/API 数据回写到 SKU、素材、账号和品牌学习档案。',
-      externalGate: '平台 OAuth、广告账户授权、自动发布回执、analytics sync、归因窗口。',
+      internalMove: '把发布凭证、活动假设、平台/社群反馈数据回写到门店活动、素材、渠道和品牌学习档案。',
+      externalGate: '平台授权、商户授权、发布回执、反馈回流、归因窗口。',
     },
   ];
 }
@@ -831,13 +848,13 @@ const MIXCUT_OPERATION_BOARD = [
     title: 'UGC Script Spine 成片',
     input: '真人口播骨架、产品使用场景、前后对比和 CTA',
     action: '拆成 15s / 30s / 45s 三档剪辑包，进入供应商或剪辑师交接',
-    gate: '需要视频 provider、产品素材 URL、生成授权和回调配置后，才能自动产出成片',
+    gate: '需要视频试跑通道、门店素材链接、生成授权和回执配置后，才能交接成片',
   },
   {
     title: 'Offer Test Matrix 分发',
     input: '折扣、套装、赠品、信任背书、平台活动和目标受众',
-    action: '写入分发计划、dispatch、广告假设、停止条件和表现回流字段',
-    gate: '没有平台 OAuth、广告账户和 analytics sync 前，只能做计划与手工回灌',
+    action: '写入分发计划、dispatch、活动假设、停止条件和反馈回流字段',
+    gate: '没有平台授权、商户授权和反馈回流前，只能做计划与手工回灌',
   },
 ];
 
@@ -851,31 +868,31 @@ const CUT_PRODUCTION_LINE = [
   },
   {
     stage: '智能混剪',
-    input: 'Hook Bank、UGC Script Spine、产品素材、参考节奏和平台时长规则',
+    input: 'Hook Bank、UGC Script Spine、门店素材、参考节奏和平台时长规则',
     output: '生成 15s / 30s / 45s 版本的镜头顺序、字幕节奏、素材清单和风险边界',
     internal: '内部可做：混剪计划、镜头清单、变体策略、供应商交接包',
-    external: '外部需要：真实剪辑引擎、素材授权、音频/字体授权和成片回调',
+    external: '还需要：真实剪辑引擎、素材授权、音频/字体授权和成片回调',
   },
   {
     stage: '一键视频',
-    input: '商品 brief、素材 URL、参考视频、授权确认、平台列表和分发目标',
-    output: '创建生产 handoff、分发计划、dispatch、客户 review 链路和表现回流字段',
+    input: '门店 brief、素材 URL、参考视频、授权确认、平台列表和分发目标',
+    output: '创建生产交接包、分发计划、分发记录、客户审核链接和表现回流字段',
     internal: '内部可做：一键编排、队列状态、门禁判断、审计证据',
-    external: '外部需要：视频生成 provider token、任务回调、失败重试和成本额度',
+    external: '还需要：视频生成 provider token、任务回调、失败重试和成本额度',
   },
   {
     stage: '客户审核',
-    input: '成片 URL、交付包、review token、客户反馈和批准/返修结论',
+    input: '成片链接、交付包、审核入口、客户反馈和批准/返修结论',
     output: '把批准状态写回生产链路，进入分发或返修，不让结果停在聊天里',
-    internal: '内部可做：review 门户、反馈、批准、过期/撤销、审计日志',
+    internal: '内部可做：审核门户、反馈、批准、过期/撤销、审计日志',
     external: '外部需要：正式域名、客户权限策略、素材下载/水印策略',
   },
   {
     stage: '分发回流',
-    input: '平台账号、发布证据、广告假设、投放数据、自然流量和销售指标',
-    output: '回写表现 CSV/API 数据，沉淀胜出结构并反哺下一轮 Compose 和 Cut',
-    internal: '内部可做：dispatch gate、campaign ledger、表现导入、复盘字段',
-    external: '外部需要：平台 OAuth、广告账户授权、自动发布和 analytics sync',
+    input: '平台账号、发布凭证、活动假设、自然流量、预约/券领取/私信和销售指标',
+    output: '回写平台/社群反馈数据，沉淀胜出结构并反哺下一轮 Compose 和 Cut',
+    internal: '内部可做：dispatch gate、门店活动账本、反馈导入、复盘字段',
+    external: '外部需要：平台授权、商户授权、发布执行和反馈回流',
   },
 ];
 
@@ -893,31 +910,31 @@ const VIDEO_FACTORY_UI_VARIANTS: Record<FactoryUiVariantId, {
     label: '合作者视角',
     audience: '给合作者、客户负责人和投资评审看清产品形态',
     headline: 'Cut 不是单个生成按钮，而是一条可审计的视频工业化生产线',
-    body: '这一屏展示 Wenai 如何把 AI 视频分析、智能混剪、一键视频、客户审核、分发回流串成闭环；Hookly / Omneky 这类广告平台提供 UGC 变体和表现优化参考，筷子科技提供编拍剪投管的全链路参照。',
-    firstAction: '先看能力矩阵和外部门禁，再判断是否具备商用交付条件。',
-    proof: '证明点：队列、handoff、review token、dispatch、performance return 都是同一项目账本。',
-    stopLine: '未接真实视频 provider、平台 OAuth、广告账户和 analytics sync 前，不宣称自动规模化。',
-    reference: '参考：筷子科技的编拍剪投管；Hookly/Hookshot 类平台的 hook/UGC 变体；Omneky 的广告创意表现回流。',
+    body: '这一屏展示 Wenai 如何把 AI 视频分析、智能混剪、一键视频、客户审核、分发回流串成闭环；Hookly / Omneky 这类内容运营平台提供 UGC 变体和反馈优化参考，筷子科技提供编拍剪投管的全链路参照。',
+    firstAction: '先看能力矩阵和账号资料条件，再判断是否具备交付条件。',
+    proof: '证明点：队列、交接包、审核入口、分发记录、表现回流都是同一项目账本。',
+    stopLine: '未接真实视频 provider、平台授权、商户授权和反馈回流前，不宣称自动规模化；未接真实视频 provider、平台授权、商户授权、反馈回流和审计规模账本前，不展示 91M+/42M+ 为 Wenai 自有能力。',
+    reference: '参考：筷子科技的编拍剪投管；Hookly/Hookshot 类平台的 hook/UGC 变体；Omneky 的内容表现回流。',
   },
   operator: {
     label: '运营视角',
     audience: '给内部运营、剪辑交付和增长负责人每天处理任务',
     headline: '先看卡在哪里，再把下一步动作写回队列',
-    body: '这一屏优先暴露任务阶段、provider gate、成片回写、客户审核、返修和表现回流，避免视频任务停在聊天记录、表格或供应商私信里。',
-    firstAction: '创建视频工作流，回写真实成片 URL，然后把 review 链接交给客户确认。',
+    body: '这一屏优先暴露任务阶段、账号资料条件、成片回写、客户审核、返修和表现回流，避免视频任务停在聊天记录、表格或供应商私信里。',
+    firstAction: '创建视频工作流，回写成片链接，然后把审核链接交给客户确认。',
     proof: '证明点：每个任务都有 missing evidence、runbook action、SLA、渠道和闭环分数。',
-    stopLine: '缺素材授权、provider token、平台账号或发布证据时，只能人工交接，不能进入自动发布。',
-    reference: '参考：Clico 的客户 review / production handoff；广告平台的任务看板和结果回灌。',
+    stopLine: '缺素材授权、试跑通道账号、平台账号或发布证据时，只能人工交接，不能标记平台发布完成。',
+    reference: '参考：Clico 的客户 review / production handoff；内容平台的任务看板和结果回灌。',
   },
   friend_trial: {
     label: '朋友试用视角',
     audience: '给非技术朋友或客户第一次打开时不迷路',
-    headline: '给一个产品和参考视频，系统帮你排出可审核的视频生产流程',
-    body: '这一屏少讲内部术语，只保留三件事：创建任务、等待成片、打开审核链接。复杂的 provider、OAuth、广告账户和数据回流都放在后台边界里。',
-    firstAction: '填写产品名、平台、参考视频和素材链接，先生成一个可交接的视频任务。',
+    headline: '给一个菜品/套餐和参考视频，系统帮你排出可审核的视频生产流程',
+    body: '这一屏少讲内部术语，只保留三件事：创建任务、等待成片、打开审核链接。复杂的 provider、平台授权、商户授权和数据回流都放在后台边界里。',
+    firstAction: '填写菜品/套餐、平台、参考视频和素材链接，先生成一个可交接的视频任务。',
     proof: '证明点：朋友不需要理解 API，也能看到任务、成片、审核和下一步。',
-    stopLine: '如果没有真实成片 URL，页面不能让用户误以为视频已经自动生成。',
-    reference: '参考：短视频广告工具的一键试用体验，但保留 Wenai 的审核与回流闭环。',
+    stopLine: '如果没有成片链接，页面不能让用户误以为视频已经生成。',
+    reference: '参考：短视频内容工具的一键试用体验，但保留 Wenai 的审核与回流闭环。',
   },
 };
 
@@ -937,12 +954,12 @@ export function buildVideoFactoryVariantPlaybook(queue: VideoProductionQueue | n
       primaryAction: trial.firstReviewLink
         ? `把 ${trial.firstReviewLink} 发给朋友，只让对方预览、反馈或批准。`
         : trial.nextAction,
-      proofToCheck: '必须有可打开成片和客户审核入口；没有真实成片 URL 时，只能验证审核前台，不能说视频已经自动生成。',
+      proofToCheck: '必须有可打开成片和客户审核入口；没有真实成片 URL 时，只能验证审核前台，不能说视频已经生成。',
       handoffBoundary: trial.stopLine,
       cards: [
         `任务 ${itemCount} / 成片 ${resultCount} / 审核入口 ${reviewCount}`,
         `客户批准 ${approvedCount} / 表现回流 ${measuredCount}`,
-        '朋友不看 provider、OAuth、广告账户和内部账本，只看交付物能否验收。',
+        '朋友不看 provider、平台授权、商户授权和内部账本，只看交付物能否验收。',
       ],
     };
   }
@@ -951,10 +968,10 @@ export function buildVideoFactoryVariantPlaybook(queue: VideoProductionQueue | n
     return {
       title: '运营执行路径',
       primaryAction: blockedCount > 0
-        ? '先处理阻断项：补素材授权、provider 配置、成片 URL、review 链接或发布回流证据。'
-        : '继续创建视频工作流、回灌成片、生成 review 链接，并把下一步动作写回队列。',
-      proofToCheck: '每个视频任务都要有 missing evidence、runbook action、owner、接口路径和可追踪的下一步。',
-      handoffBoundary: '外部 token、平台账号、广告账户或 analytics sync 未接入时，运营只能走人工交接和手动回流。',
+        ? '先处理阻断项：补素材授权、试跑通道配置、成片链接、审核链接或发布回流证据。'
+        : '继续创建视频工作流、回灌成片、生成审核链接，并把下一步动作写回队列。',
+      proofToCheck: '每个视频任务都要有 missing evidence、操作动作、负责人和可追踪的下一步。',
+      handoffBoundary: '账号配置、平台账号、店长授权或反馈回流未接入时，运营只能走人工交接和手动回流。',
       cards: [
         `队列任务 ${itemCount} / 阻断 ${blockedCount} / Cut readiness ${cut.score}`,
         `成片 ${resultCount} / 审核 ${reviewCount} / 批准 ${approvedCount}`,
@@ -967,11 +984,11 @@ export function buildVideoFactoryVariantPlaybook(queue: VideoProductionQueue | n
     title: '合作者验收路径',
     primaryAction: '先看 Commercial Cut Readiness 和 Scale Claim Guard，再判断是否已经具备商用交付边界。',
     proofToCheck: '证明 Wenai 是 Compose/Create/Cut/Cast/Manage 的闭环，不是单个生成按钮：队列、handoff、review、dispatch、performance return 必须同项目可追踪。',
-    handoffBoundary: '未接真实视频 provider、平台 OAuth、广告账户、analytics sync 和审计规模账本前，不展示 91M+/42M+ 为 Wenai 自有能力。',
+    handoffBoundary: '未接视频试跑通道、平台授权、商户授权、反馈回流和审计规模账本前，不展示 91M+/42M+ 为 Wenai 自有能力。',
     cards: [
       `Cut readiness ${cut.score} / ${cut.verdict}`,
       `任务 ${itemCount} / 成片 ${resultCount} / 表现回流 ${measuredCount}`,
-      '合作者视角要看到外部材料清单、内部已完成能力和不能越线宣传的边界。',
+      '合作者视角要看到待补资料清单、本地已完成能力和不能越线宣传的边界。',
     ],
   };
 }
@@ -1084,8 +1101,25 @@ export function VideoProductionQueueClient({
       { title: '短视频口播', body: '先生成 15-30 秒镜头脚本和口播，不冒充已剪出成片。' },
       { title: '图文笔记', body: '输出标题、封面建议、正文结构和点评/小红书差异。' },
       { title: '社群话术', body: '给群主可发送的活动说明、券领取提醒和私信回复。' },
-      { title: '剪辑交接包', body: '真实视频 provider 未接入前，只给素材、镜头、审核和负责人。' },
+      { title: '剪辑交接包', body: '视频试跑通道未接入前，只给素材、镜头、审核和负责人。' },
     ];
+    const contentDeliveryPack = buildRestaurantContentDeliveryPack({
+      restaurantName: initialIntake.restaurant || '南城川味小馆',
+      dishOrOffer: productName || initialIntake.offer || '双人酸菜鱼套餐',
+      audience: initialIntake.audience || '附近 3 公里工作日晚餐客',
+      localArea: initialIntake.visitReason || category || '本地商圈',
+      channels: parseRestaurantContentChannels(initialIntake.channels || platforms),
+      referenceEvidence: reference || initialIntake.evidence,
+      constraints: initialIntake.constraints || '价格、库存、限量、核销和食品安全边界待店长确认',
+    });
+    const contentProductionPassport = buildRestaurantVideoProductionPassport({
+      contentPack: contentDeliveryPack,
+      externalVideoChannelReady: false,
+      finishedVideoUrl: resultUrls.split(/[\n,]/).map(item => item.trim()).filter(Boolean)[0],
+      managerApproved: false,
+      publishProofReady: false,
+      recoveredAggregateReady: false,
+    });
 
     return (
       <FactoryFriendTrialExperience
@@ -1176,6 +1210,113 @@ export function VideoProductionQueueClient({
               ))}
             </div>
           </section>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">餐饮内容交付包</p>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950">{contentDeliveryPack.title}</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{contentDeliveryPack.note}</p>
+            </div>
+            <span className="w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+              {contentDeliveryPack.status === 'ready_for_manager_review' ? '待店长审核' : '草稿待补证据'}
+            </span>
+          </div>
+
+          <div className="mt-5 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-3">
+              {contentDeliveryPack.scripts.map(script => (
+                <article className="rounded-xl border border-slate-200 bg-slate-50 p-4" key={script.title}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-950">{script.title}</h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">{script.hook}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500">15-30s</span>
+                  </div>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {script.storyboard.slice(0, 4).map(item => (
+                      <p className="rounded-lg bg-white px-3 py-2 text-xs leading-5 text-slate-600" key={item}>{item}</p>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs font-semibold text-slate-700">CTA: {script.cta}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              {[
+                ['补充镜头素材', contentDeliveryPack.brollChecklist],
+                ['发布证明', contentDeliveryPack.publishProofSlots],
+                ['店长审核', contentDeliveryPack.managerReviewChecklist],
+                ['跟进任务', contentDeliveryPack.followUpTasks],
+              ].map(([title, items]) => (
+                <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" key={String(title)}>
+                  <h3 className="text-sm font-semibold text-slate-950">{String(title)}</h3>
+                  <ul className="mt-3 space-y-2 text-xs leading-5 text-slate-600">
+                    {(items as string[]).slice(0, 4).map(item => (
+                      <li className="flex gap-2" key={item}>
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">视频生产护照</p>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950">脚本、素材、剪辑、成片、审核和发布证明在一张表里</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">这不是成片生成按钮。它只告诉店长：现在能准备什么、缺哪份凭证、谁负责，等成片链接或截图回填后再进入发布。</p>
+            </div>
+            <div className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              已准备 {contentProductionPassport.summary.readyStages}/{contentProductionPassport.summary.totalStages}
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-7">
+            {contentProductionPassport.stages.map(stage => (
+              <article
+                className={`rounded-xl border p-3 ${
+                  stage.status === 'ready'
+                    ? 'border-emerald-200 bg-emerald-50'
+                    : stage.status === 'external-gated'
+                      ? 'border-amber-200 bg-amber-50'
+                      : 'border-slate-200 bg-slate-50'
+                }`}
+                key={stage.id}
+              >
+                <div className="text-xs font-semibold text-slate-500">{stage.owner}</div>
+                <h3 className="mt-1 text-sm font-semibold text-slate-950">{stage.title}</h3>
+                <p className="mt-2 text-xs leading-5 text-slate-600">{stage.output}</p>
+                <p className="mt-2 rounded-lg bg-white px-2 py-1 text-[11px] leading-4 text-slate-500">下一步：{stage.nextAction}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <h3 className="text-sm font-semibold text-slate-950">负责人待办</h3>
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                {contentProductionPassport.ownerChecklist.slice(0, 4).map(item => (
+                  <div className="rounded-lg bg-white px-3 py-2 text-xs leading-5 text-slate-600" key={`${item.owner}-${item.evidenceRequired}`}>
+                    <span className="font-semibold text-slate-900">{item.owner}：</span>{item.action}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <h3 className="text-sm font-semibold text-amber-900">停止线</h3>
+              <p className="mt-2 text-xs leading-5 text-amber-800">没有外部视频通道资料和成片凭证，不说视频已经完成。</p>
+              <p className="mt-2 text-xs leading-5 text-amber-800">没有店长审核、发布证明和脱敏反馈，不写成真实经营结果。</p>
+            </div>
+          </div>
         </section>
       </FactoryFriendTrialExperience>
     );
@@ -1279,7 +1420,7 @@ export function VideoProductionQueueClient({
             <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Commercial Cut Readiness</p>
             <h2 className="mt-2 text-xl font-semibold text-neutral-950">商用 Cut 放行门禁</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">
-              这层只判断视频工厂是否已经能进入真实商用验收：provider 完成回调、成片资产、客户审核、客户批准、发布或表现回流必须全部有证据。
+              这层只判断视频工厂是否已经能进入试跑验收：试跑回执、成片资产、客户审核、客户批准、发布或表现回流必须全部有证据。
             </p>
           </div>
           <div className="flex w-fit flex-col items-start gap-2 rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs">
@@ -1318,13 +1459,13 @@ export function VideoProductionQueueClient({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-neutral-500">Provider Sandbox Contract</p>
-            <h2 className="mt-2 text-xl font-semibold text-neutral-950">视频 provider 沙盒接入合约</h2>
+            <h2 className="mt-2 text-xl font-semibold text-neutral-950">视频 provider 沙盒接入合约 / 视频试跑通道沙盒接入合约</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-600">
-              这层不配置真实密钥，也不伪装自动成片。它把接入视频 provider 前必须验证的提交、回调、失败恢复、成片入库和客户验收拆成沙盒门禁，等外部材料齐后直接对照验收。
+              这层不配置真实账号值，也不伪装已产出成片。它把接入视频试跑通道前必须验证的交接、回执、失败恢复、成片入库和客户验收拆成沙盒条件，等账号资料齐后直接对照验收。
             </p>
           </div>
           <div className="w-fit rounded-2xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-700">
-            ready {providerSandboxChecks.filter(check => check.ready).length}/{providerSandboxChecks.length}
+            已通过 {providerSandboxChecks.filter(check => check.ready).length}/{providerSandboxChecks.length}
           </div>
         </div>
         <div className="mt-4 grid gap-3 lg:grid-cols-5">
@@ -1336,7 +1477,7 @@ export function VideoProductionQueueClient({
               <div className={`text-sm font-semibold ${check.ready ? 'text-emerald-700' : 'text-neutral-900'}`}>{check.gate}</div>
               <p className="mt-2 text-xs leading-5 text-neutral-600">证据：{check.evidence}</p>
               <p className="mt-2 text-xs leading-5 text-cyan-700">内部推进：{check.internalMove}</p>
-              <p className="mt-2 text-xs leading-5 text-amber-700">外部门禁：{check.externalGate}</p>
+              <p className="mt-2 text-xs leading-5 text-amber-700">账号资料条件：{check.externalGate}</p>
             </article>
           ))}
         </div>
@@ -1369,7 +1510,7 @@ export function VideoProductionQueueClient({
               </div>
               <p className="mt-2 text-xs leading-5 text-neutral-600">证据：{check.evidence}</p>
               <p className="mt-2 text-xs leading-5 text-cyan-700">内部推进：{check.internalMove}</p>
-              <p className="mt-2 text-xs leading-5 text-amber-700">外部门禁：{check.externalGate}</p>
+              <p className="mt-2 text-xs leading-5 text-amber-700">账号资料条件：{check.externalGate}</p>
             </article>
           ))}
         </div>
@@ -1382,7 +1523,7 @@ export function VideoProductionQueueClient({
             <h2 className="mt-2 text-xl font-semibold text-neutral-950">从 Hook 结构库到智能混剪包</h2>
           </div>
           <div className="max-w-sm text-xs leading-5 text-neutral-600">
-            这层承接创意工厂，不把“创建任务”说成“自动成片”。只有 provider、素材授权、平台账号和回流都接上，才进入真实规模化视频工厂。
+            这层承接创意工厂，不把“创建任务”说成“已产出成片”。只有 provider、素材授权、平台账号和回流都接上，才进入可复用的视频工厂。
           </div>
         </div>
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
@@ -1404,7 +1545,7 @@ export function VideoProductionQueueClient({
             <h2 className="mt-2 text-xl font-semibold text-neutral-950">从视频解析到分发回流的一条成片生产线</h2>
           </div>
           <p className="max-w-md text-xs leading-5 text-neutral-600">
-            这层承接 Clico 的视频任务体验，也对齐筷子式批量混剪和一键视频。Wenai 先把任务、证据、审核、返修和回流做成可验收闭环；外部 provider 接入前，不把计划页包装成真实自动成片。
+            这层承接 Clico 的视频任务体验，也对齐筷子式批量混剪和一键视频。Wenai 先把任务、证据、审核、返修和回流做成可验收闭环；试跑通道接入前，不把计划页包装成已产出成片。
           </p>
         </div>
         <div className="mt-4 grid gap-3 xl:grid-cols-5">
@@ -1502,7 +1643,7 @@ export function VideoProductionQueueClient({
               <p className="text-xs font-semibold uppercase text-neutral-500">Create workflow</p>
               <h2 className="mt-2 text-lg font-semibold text-neutral-950">创建视频工作流</h2>
               <p className="mt-2 text-sm leading-6 text-neutral-600">
-                只创建可交接的生产任务、分发计划和执行记录；provider 未配置时不会宣称自动成片。
+                只创建可交接的生产任务、分发计划和执行记录；试跑通道未配置时不会宣称已产出成片。
               </p>
             </div>
             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
@@ -1511,11 +1652,11 @@ export function VideoProductionQueueClient({
           </div>
           <div className="mt-5 grid gap-3">
             <input className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none focus:border-neutral-400" value={projectId} onChange={event => setProjectId(event.target.value)} placeholder="项目 ID" />
-            <input className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none focus:border-neutral-400" value={productName} onChange={event => setProductName(event.target.value)} placeholder="产品名" required />
+            <input className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none focus:border-neutral-400" value={productName} onChange={event => setProductName(event.target.value)} placeholder="菜品/套餐名" required />
             <input className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none focus:border-neutral-400" value={category} onChange={event => setCategory(event.target.value)} placeholder="类目" />
             <input className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none focus:border-neutral-400" value={platforms} onChange={event => setPlatforms(event.target.value)} placeholder="平台，用逗号分隔" />
             <input className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none focus:border-neutral-400" value={reference} onChange={event => setReference(event.target.value)} placeholder="参考视频 URL" />
-            <input className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none focus:border-neutral-400" value={productAsset} onChange={event => setProductAsset(event.target.value)} placeholder="产品素材 URL" />
+            <input className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-950 outline-none focus:border-neutral-400" value={productAsset} onChange={event => setProductAsset(event.target.value)} placeholder="门店素材 URL" />
             <label className="flex items-center gap-2 text-sm text-neutral-700">
               <input type="checkbox" checked={providerConfigured} onChange={event => setProviderConfigured(event.target.checked)} />
               供应商已配置
@@ -1539,11 +1680,11 @@ export function VideoProductionQueueClient({
               <p className="text-xs font-semibold uppercase text-neutral-500">Ingest result</p>
               <h2 className="mt-2 text-lg font-semibold text-neutral-950">回灌成片并生成审核链接</h2>
               <p className="mt-2 text-sm leading-6 text-neutral-600">
-                供应商或剪辑师完成后，把真实成片 URL 写回生产链路，系统再创建客户审核门户。
+                供应商或剪辑师完成后，把成片链接写回生产链路，系统再创建客户审核门户。
               </p>
             </div>
             <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-              review-ready
+              审核就绪
             </span>
           </div>
           <div className="mt-5 grid gap-3">
@@ -1569,11 +1710,11 @@ export function VideoProductionQueueClient({
             <h2 className="mt-2 text-lg font-semibold text-neutral-950">队列状态</h2>
           </div>
           <div className="text-xs text-neutral-500">
-            {queue ? `${queue.itemCount} 个任务 · 供应商就绪 ${providerReadyRatio} · 结果 ${queue.resultAssetCount} · 审核 ${queue.clientReviewCount} · 已批准 ${queue.approvedDeliverableCount}` : '正在加载 · 供应商就绪 0/0'}
+            {queue ? `${queue.itemCount} 个任务 · 试跑通道就绪 ${providerReadyRatio} · 结果 ${queue.resultAssetCount} · 审核 ${queue.clientReviewCount} · 已批准 ${queue.approvedDeliverableCount}` : '正在加载 · 试跑通道就绪 0/0'}
           </div>
         </div>
         <p className="mt-3 max-h-10 overflow-hidden text-sm leading-5 text-neutral-600">
-          运营动作包会把阶段、优先级、服务时限、下一步接口路径、请求方式和请求内容汇总出来，方便手工执行或后续接自动化队列。
+          运营动作包会把阶段、优先级、服务时限、下一步动作和交接内容汇总出来，方便手工执行或后续接试跑队列。
         </p>
         <div className="mt-4 grid gap-2 text-sm text-neutral-700 sm:grid-cols-4">
           <div className="rounded-md border border-neutral-200 bg-white px-3 py-2">仅交接：{queue?.handoffOnlyCount || 0}</div>
@@ -1698,7 +1839,7 @@ export function VideoProductionQueueClient({
                   <div className="mt-2 space-y-1">
                     {item.runbookActions.map(action => (
                       <div className="text-xs text-neutral-600" key={action.id}>
-                        {action.label} · 请求方式 {action.method} · 接口路径 {action.endpoint}
+                        {action.label} · 交接方式 {action.method} · 交接位置 {action.endpoint}
                         <div className="mt-1 truncate text-neutral-400">请求内容：{readablePayload(action.payload)}</div>
                       </div>
                     ))}
@@ -1724,7 +1865,7 @@ export function VideoProductionQueueClient({
           <p className={isFriendTrialVariant ? 'text-xs uppercase text-neutral-500' : 'text-xs uppercase tracking-[0.24em] text-amber-200'}>Wenai 视频工厂</p>
           <h1 className="mt-3 max-w-4xl text-3xl font-semibold leading-tight sm:text-5xl">视频生产队列</h1>
           <p className={isFriendTrialVariant ? 'mt-4 max-w-3xl text-sm leading-6 text-neutral-600' : 'mt-4 max-w-3xl text-sm leading-6 text-white/65'}>
-            把商品 brief、参考视频、产品素材、AI 视频分析、智能混剪、供应商门禁、分发计划和执行记录统一到一条队列里。没有真实供应商授权时，任务保持仅交接，不伪装自动生成。
+            把门店 brief、参考视频、菜品/门店素材、AI 视频分析、智能混剪、供应商门禁、分发计划和执行记录统一到一条队列里。没有真实供应商授权时，任务保持仅交接，不伪装自动生成。供应商就绪只代表试跑通道资料齐，不代表已产出成片。
           </p>
         </header>
 
@@ -1816,7 +1957,7 @@ export function VideoProductionQueueClient({
               <p className="text-xs uppercase tracking-[0.22em] text-violet-200">Commercial Cut Readiness</p>
               <h2 className="mt-2 text-xl font-semibold">商用 Cut 放行门禁</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-                这层只判断视频工厂是否已经能进入真实商用验收：provider 完成回调、成片资产、客户审核、客户批准、发布或表现回流必须全部有证据。
+              这层只判断视频工厂是否已经能进入试跑验收：试跑回执、成片资产、客户审核、客户批准、发布或表现回流必须全部有证据。
               </p>
             </div>
             <div className="flex w-fit flex-col items-start gap-2 border border-white/10 bg-black/25 px-3 py-2 text-xs">
@@ -1855,9 +1996,9 @@ export function VideoProductionQueueClient({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-cyan-200">Provider Sandbox Contract</p>
-              <h2 className="mt-2 text-xl font-semibold">视频 provider 沙盒接入合约</h2>
+              <h2 className="mt-2 text-xl font-semibold">视频 provider 沙盒接入合约 / 视频试跑通道沙盒接入合约</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-                这层不配置真实密钥，也不伪装自动成片。它把接入视频 provider 前必须验证的提交、回调、失败恢复、成片入库和客户验收拆成沙盒门禁，等外部材料齐后直接对照验收。
+                这层不配置真实账号值，也不伪装已产出成片。它把接入视频试跑通道前必须验证的交接、回执、失败恢复、成片入库和客户验收拆成沙盒条件，等账号资料齐后直接对照验收。
               </p>
             </div>
             <div className="w-fit border border-white/10 bg-black/25 px-3 py-2 text-xs text-cyan-100">
@@ -1873,7 +2014,7 @@ export function VideoProductionQueueClient({
                 <div className={`text-sm font-semibold ${check.ready ? 'text-emerald-100' : 'text-cyan-100'}`}>{check.gate}</div>
                 <p className="mt-2 text-xs leading-5 text-white/55">证据：{check.evidence}</p>
                 <p className="mt-2 text-xs leading-5 text-cyan-100/80">内部推进：{check.internalMove}</p>
-                <p className="mt-2 text-xs leading-5 text-amber-100">外部门禁：{check.externalGate}</p>
+                <p className="mt-2 text-xs leading-5 text-amber-100">账号资料条件：{check.externalGate}</p>
               </article>
             ))}
           </div>
@@ -1906,7 +2047,7 @@ export function VideoProductionQueueClient({
                 </div>
                 <p className="mt-2 text-xs leading-5 text-white/55">证据：{check.evidence}</p>
                 <p className="mt-2 text-xs leading-5 text-orange-100/80">内部推进：{check.internalMove}</p>
-                <p className="mt-2 text-xs leading-5 text-amber-100">外部门禁：{check.externalGate}</p>
+                <p className="mt-2 text-xs leading-5 text-amber-100">账号资料条件：{check.externalGate}</p>
               </article>
             ))}
           </div>
@@ -1989,7 +2130,7 @@ export function VideoProductionQueueClient({
               <h2 className="mt-2 text-xl font-semibold">从 Hook 结构库到智能混剪包</h2>
             </div>
             <div className="max-w-sm text-xs leading-5 text-emerald-100/80">
-              这层承接创意工厂，不把“创建任务”说成“自动成片”。只有 provider、素材授权、平台账号和回流都接上，才进入真实规模化视频工厂。
+              这层承接创意工厂，不把“创建任务”说成“已产出成片”。只有 provider、素材授权、平台账号和回流都接上，才进入可复用的视频工厂。
             </div>
           </div>
           <div className="mt-4 grid gap-3 lg:grid-cols-3">
@@ -2011,7 +2152,7 @@ export function VideoProductionQueueClient({
               <h2 className="mt-2 text-xl font-semibold">从视频解析到分发回流的一条成片生产线</h2>
             </div>
             <p className="max-w-md text-xs leading-5 text-white/55">
-              这层承接 Clico 的视频任务体验，也对齐筷子式批量混剪和一键视频。Wenai 先把任务、证据、审核、返修和回流做成可验收闭环；外部 provider 接入前，不把计划页包装成真实自动成片。
+              这层承接 Clico 的视频任务体验，也对齐筷子式批量混剪和一键视频。Wenai 先把任务、证据、审核、返修和回流做成可验收闭环；试跑通道接入前，不把计划页包装成已产出成片。
             </p>
           </div>
           <div className="mt-4 grid gap-3 xl:grid-cols-5">
@@ -2035,11 +2176,11 @@ export function VideoProductionQueueClient({
               <h2 className="text-base font-semibold">创建视频工作流</h2>
               <div className="mt-4 grid gap-3">
                 <input className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={projectId} onChange={event => setProjectId(event.target.value)} placeholder="项目 ID" />
-                <input className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={productName} onChange={event => setProductName(event.target.value)} placeholder="产品名" required />
+                <input className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={productName} onChange={event => setProductName(event.target.value)} placeholder="菜品/套餐名" required />
                 <input className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={category} onChange={event => setCategory(event.target.value)} placeholder="类目" />
                 <input className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={platforms} onChange={event => setPlatforms(event.target.value)} placeholder="平台，用逗号分隔" />
                 <input className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={reference} onChange={event => setReference(event.target.value)} placeholder="参考视频 URL" />
-                <input className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={productAsset} onChange={event => setProductAsset(event.target.value)} placeholder="产品素材 URL" />
+                <input className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={productAsset} onChange={event => setProductAsset(event.target.value)} placeholder="门店素材 URL" />
                 <label className="flex items-center gap-2 text-sm text-white/65">
                   <input type="checkbox" checked={providerConfigured} onChange={event => setProviderConfigured(event.target.checked)} />
                   供应商已配置
@@ -2060,7 +2201,7 @@ export function VideoProductionQueueClient({
             <form className="border border-white/10 bg-white/[0.03] p-5" onSubmit={ingestProductionResult}>
               <h2 className="text-base font-semibold">回灌成片并生成审核链接</h2>
               <p className="mt-2 text-xs leading-5 text-white/50">
-                供应商或剪辑师完成后，把真实成片 URL 写回生产链路，系统会自动创建客户审核门户链接。
+                供应商或剪辑师完成后，把成片链接写回生产链路，系统会创建客户审核门户链接。
               </p>
               <div className="mt-4 grid gap-3">
                 <select className="border border-white/15 bg-black/30 px-3 py-2 text-sm outline-none focus:border-amber-300" value={resultTarget?.assetId || ''} onChange={event => setResultAssetId(event.target.value)}>
@@ -2082,11 +2223,11 @@ export function VideoProductionQueueClient({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-base font-semibold">队列状态</h2>
               <div className="text-xs text-white/50">
-                {queue ? `${queue.itemCount} 个任务 · 供应商就绪 ${providerReadyRatio} · 结果 ${queue.resultAssetCount} · 审核 ${queue.clientReviewCount} · 已批准 ${queue.approvedDeliverableCount}` : '正在加载 · 供应商就绪 0/0'}
+                {queue ? `${queue.itemCount} 个任务 · 试跑通道就绪 ${providerReadyRatio} · 结果 ${queue.resultAssetCount} · 审核 ${queue.clientReviewCount} · 已批准 ${queue.approvedDeliverableCount}` : '正在加载 · 试跑通道就绪 0/0'}
               </div>
             </div>
             <p className="mt-2 text-xs leading-5 text-white/45">
-              运营动作包会把每个视频任务的阶段、优先级、服务时限、下一步接口路径、请求方式和请求内容汇总出来，方便手工执行或后续接自动化队列。
+              运营动作包会把每个视频任务的阶段、优先级、服务时限、下一步动作和交接内容汇总出来，方便手工执行或后续接试跑队列。
             </p>
             <div className="mt-4 grid gap-2 text-xs text-white/60 sm:grid-cols-4">
               <div className="border border-white/10 px-3 py-2">仅交接：{queue?.handoffOnlyCount || 0}</div>
@@ -2226,7 +2367,7 @@ export function VideoProductionQueueClient({
                       <div className="mt-2 space-y-1">
                         {item.runbookActions.map(action => (
                           <div className="text-xs text-white/55" key={action.id}>
-                            {action.label} · 请求方式 {action.method} · 接口路径 {action.endpoint}
+                            {action.label} · 交接方式 {action.method} · 交接位置 {action.endpoint}
                             <div className="mt-1 truncate text-white/35">请求内容：{readablePayload(action.payload)}</div>
                           </div>
                         ))}

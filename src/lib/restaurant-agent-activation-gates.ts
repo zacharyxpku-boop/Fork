@@ -57,7 +57,7 @@ export function buildRestaurantActivationGates(input: {
   const gates: RestaurantActivationGate[] = [
     gate({
       id: 'auto-publish',
-      name: '自动发布',
+      name: '发布执行',
       status: autoPublishReady ? 'ready' : 'blocked',
       customerPromise: '把已审批内容交给受控浏览器 runtime，在授权平台账号内提交，并写回签名回执。',
       canDoInternallyNow: ['生成平台发布草稿', '生成发布步骤', '生成证据字段', '生成执行投递包', '校验签名回执'],
@@ -69,25 +69,25 @@ export function buildRestaurantActivationGates(input: {
     }),
     gate({
       id: 'auto-acquisition',
-      name: '自动获客',
+      name: '线索承接',
       status: receiptReady ? 'ready' : 'blocked',
       customerPromise: '只在真实发布回执、预约/券领取/咨询聚合数据回流后，把线索信号交给店长跟进。',
       canDoInternallyNow: ['生成获客内容计划', '导入发布链接或截图', '汇总手工录入的预约/领券/咨询数量', '生成负责人下一步动作'],
       mustHaveExternal: ['发布回执', '平台线索聚合导出或 webhook', '商家授权的数据使用边界', '去标识化字段合同'],
       blockingReason: receiptReady ? '' : blockedMap.get('receipt-capture')?.reason || 'Receipt and lead-signal capture gates are missing.',
-      nextAction: receiptReady ? 'Attach platform receipt capture and aggregate lead-count callbacks.' : '先让平台回执或手工证据进入验收账本，不要宣称自动获客。',
+      nextAction: receiptReady ? 'Attach platform receipt capture and aggregate lead-count callbacks.' : '先让平台回执或手工证据进入验收账本，不要宣称线索已经自动承接。',
       evidenceRequired: ['source channel', 'time window', 'aggregate count', 'evidence link or screenshot', 'owner'],
       safetyBoundary: '不读取或保存私信原文、手机号、微信号、顾客姓名等可识别信息。',
     }),
     gate({
       id: 'auto-redemption',
-      name: '自动核销',
+      name: '核销承接',
       status: posReady ? 'ready' : 'blocked',
       customerPromise: '读取授权导出的核销聚合数据，进入 POS import validator 和经营信号聚合。',
       canDoInternallyNow: ['校验脱敏 POS 样表', '聚合领券/核销/订单/销售额', '生成可审计回执草稿'],
       mustHaveExternal: ['POS/API 或 CSV/sheet 导出', '字段字典', '核销来源', '商家数据授权合同'],
       blockingReason: posReady ? '' : blockedMap.get('pos-import')?.reason || 'POS and redemption contract gates are missing.',
-      nextAction: posReady ? 'Import governed redemption aggregates and reject row-level private data.' : '先拿一张脱敏 POS/核销样表跑 validator；没合同前不能自动核销。',
+      nextAction: posReady ? 'Import governed redemption aggregates and reject row-level private data.' : '先拿一张脱敏 POS/核销样表跑 validator；没合同前不能宣称核销已完成。',
       evidenceRequired: ['data mode', 'field dictionary', 'redemption source', 'import batch id', 'aggregate counts'],
       safetyBoundary: '不写回核销、不保存订单明细、支付流水、手机号、地址或顾客身份。',
     }),
@@ -145,6 +145,6 @@ export function buildRestaurantActivationGates(input: {
     },
     answerToCustomer: ready
       ? `已有 ${ready} 个能力具备受控执行条件；其余能力仍按缺口清单处理。`
-      : '当前能内部跑的是草稿、任务、证据、回执校验、POS 脱敏样表和经营信号聚合；真正自动发布/获客/核销/经营分析必须先补外部授权和数据合同。',
+      : '当前能内部跑的是草稿、任务、证据、回执校验、POS 脱敏样表和经营信号聚合；真正发布执行/线索承接/核销/经营分析必须先补外部授权和数据合同。',
   };
 }

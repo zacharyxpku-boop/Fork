@@ -236,10 +236,10 @@ const EXTERNAL_REQUIREMENT_OWNER_LABELS: Record<ExternalIntegrationRequirement['
 const EXTERNAL_REQUIREMENT_CATEGORY_LABELS: Record<ExternalIntegrationRequirement['category'], string> = {
   video_provider: '视频生成/剪辑',
   video_analysis: 'AI 视频分析',
-  platform_oauth: '多平台 OAuth',
-  ad_delivery: '广告投放',
-  auto_publish: '自动发布/矩阵分发',
-  analytics_sync: '平台数据同步',
+  platform_oauth: '多平台授权',
+  ad_delivery: '门店活动发布',
+  auto_publish: '外部发布执行/矩阵分发',
+  analytics_sync: '平台反馈回流',
   asset_cloud: '企业云资产',
   scale_claims: '规模化数字',
 };
@@ -458,8 +458,8 @@ function buildKuaiziCapabilityLadder(projectMaturity?: ReadinessResponse['report
     {
       name: 'Cast 多平台分发',
       ok: (evidence.channelAvailableSlots || 0) > 0 && (evidence.publishedWithEvidence || 0) > 0 && (evidence.channelReadyAdCampaigns || 0) > 0,
-      evidence: `矩阵账号 ${evidence.channelAccounts || 0} 个 / 可排期 ${evidence.channelAvailableSlots || 0} 档 / 发布证据 ${evidence.publishedWithEvidence || 0} / 广告活动 ${evidence.channelAdCampaigns || 0}`,
-      gap: '继续接入 OAuth、自动发布、广告账户和平台数据同步。',
+      evidence: `矩阵账号 ${evidence.channelAccounts || 0} 个 / 可排期 ${evidence.channelAvailableSlots || 0} 档 / 发布证据 ${evidence.publishedWithEvidence || 0} / 门店活动 ${evidence.channelAdCampaigns || 0}`,
+      gap: '继续接入平台授权、外部发布执行、商户活动权限和平台反馈回流。',
     },
     {
       name: 'Manage 企业管理',
@@ -552,7 +552,7 @@ const STATUS_VARIANT_ROADMAP = [
   { step: '1', page: '/status', job: '验收台统一 partner / operator / friend_trial 三视角：分别讲商业边界、执行队列和朋友试用风险。' },
   { step: '2', page: '/factory/creative', job: '创意洞察继续加厚：突出竞品账号、榜单、视频拆解、品牌学习和 action queue。' },
   { step: '3', page: '/factory/video', job: '视频工厂继续加厚：区分内部一键视频队列和真实外部生成门禁后的成片。' },
-  { step: '4', page: '/settings/kuaizi', job: '接入清单继续加厚：把 OAuth、广告账户、自动发布、云资产材料变成可执行 checklist。' },
+  { step: '4', page: '/settings/kuaizi', job: '接入清单继续加厚：把平台授权、商户活动权限、外部发布回执、云资产材料变成可执行 checklist。' },
 ];
 
 const COMPETITOR_REFERENCE_RADAR = [
@@ -563,32 +563,32 @@ const COMPETITOR_REFERENCE_RADAR = [
   },
   {
     name: 'Hookshot / Hookly 类',
-    lesson: '电商广告不只生成素材，关键是 hook、脚本结构、AI UGC、保存灵感和一键复用。',
+    lesson: '本地生活内容不只生成素材，关键是 hook、脚本结构、AI UGC、保存灵感和一键复用。',
     wenaiMove: '把创意洞察层加厚为 hook bank、结构偏好、胜出脚本和下一轮生产约束。',
   },
   {
     name: 'Macro 类',
-    lesson: '创意团队需要 campaign canvas：计划、生成、审稿、发布在同一张工作台里流转。',
+    lesson: '创意团队需要门店活动 canvas：计划、生成、审稿、发布在同一张工作台里流转。',
     wenaiMove: '把 factory 页面从功能入口升级为项目作战台，减少跳页和断点。',
   },
   {
     name: 'AdHawk / Omneky 类',
-    lesson: '真正商业化靠投放和回流：广告账户、动态 URL、素材标签、预算、ROAS 和自动优化。',
-    wenaiMove: 'Cast 不停在分发计划，必须接广告账户和 analytics sync 后才能宣称平台级执行。',
+    lesson: '真正商业化靠活动发布和回流：商户授权、动态 URL、素材标签、预算、券领取/预约和自动优化门禁。',
+    wenaiMove: 'Cast 不停在分发计划，必须接商户活动权限和反馈回流后才能宣称平台级执行。',
   },
   {
     name: 'Creatify 类',
-    lesson: '商品素材到 UGC 视频广告要有 avatar、voice、scene、版本矩阵、成片 URL 和客户审核，不是单次生成。',
-    wenaiMove: 'Create/Cut 继续把商品素材、脚本、视频任务、成片回灌和 review token 绑到同一条生产护照。',
+    lesson: '菜品/套餐素材到 UGC 短视频要有 avatar、voice、scene、版本矩阵、成片 URL 和客户审核，不是单次生成。',
+    wenaiMove: 'Create/Cut 继续把菜品/门店素材、脚本、视频任务、成片回灌和 review token 绑到同一条生产护照。',
   },
   {
     name: 'Marpipe / catalog testing 类',
-    lesson: '目录商品广告靠变量实验和表现归因：SKU feed、offer、版式、受众和预算必须能复盘。',
-    wenaiMove: 'Cast/Manage 继续把 dispatch、campaign ledger、表现回流和品牌学习档案接到下一轮创意约束。',
+    lesson: '本地生活活动靠变量实验和表现归因：菜品/套餐、活动权益、版式、客群和预算必须能复盘。',
+    wenaiMove: 'Cast/Manage 继续把 dispatch、门店活动账本、表现回流和品牌学习档案接到下一轮创意约束。',
   },
   {
     name: 'Pencil 类',
-    lesson: '生成式广告平台的护城河来自品牌记忆：胜出 hook、禁用表达、素材偏好和下一轮规则持续复利。',
+    lesson: '生成式内容平台的护城河来自品牌记忆：胜出 hook、禁用表达、素材偏好和下一轮规则持续复利。',
     wenaiMove: 'Manage 必须把批准交付物、表现赢家和品牌学习档案沉淀成 Compose/Create/Cut 的生产约束。',
   },
 ];
@@ -596,8 +596,8 @@ const COMPETITOR_REFERENCE_RADAR = [
 const FINAL_PRODUCT_COMMAND_CENTER = [
   {
     title: '最终形态',
-    value: '电商 AI 内容工业化操作系统',
-    body: '不是单点 AI 生成工具，而是从灵感、素材、视频、分发、广告、客户验收、资产权限到表现回流的运营系统。',
+    value: '餐饮 AI 内容工业化操作系统',
+    body: '不是单点 AI 生成工具，而是从灵感、素材、视频、同城发布、门店活动、客户验收、资产权限到表现回流的运营系统。',
   },
   {
     title: '主工作流',
@@ -611,8 +611,8 @@ const FINAL_PRODUCT_COMMAND_CENTER = [
   },
   {
     title: '外部停线',
-    value: 'provider / OAuth / ads / cloud / audit',
-    body: '真实视频 provider、多平台 OAuth、广告账户、自动发布、analytics sync、企业云资产和规模审计缺一项，就不宣称平台级商用等价。',
+    value: 'provider / platform auth / activity / cloud / audit',
+    body: '真实视频 provider、多平台授权、商户活动权限、外部发布回执、反馈回流、企业云资产和规模审计缺一项，就不宣称平台级商用等价。',
   },
 ];
 
@@ -626,7 +626,7 @@ const FINAL_PRODUCT_BLUEPRINT = [
   },
   {
     layer: 'Create',
-    target: '从商品/Brief 到脚本、素材、生产 handoff、一键生成任务和客户可验收交付物。',
+    target: '从菜品/套餐 Brief 到脚本、素材、生产 handoff、一键生成任务和客户可验收交付物。',
     internalMove: '继续把资产库、脚本、provider request、生产结果、客户审核和 CRM handoff 串成同一条任务线。',
     externalNeed: '图像/视频生成 provider、对象存储、正式域名和客户可访问交付链接。',
     stopLine: '没有真实 provider 成功回调和可打开交付物前，不能说“自动生成已商用”。',
@@ -640,10 +640,10 @@ const FINAL_PRODUCT_BLUEPRINT = [
   },
   {
     layer: 'Cast',
-    target: '多平台分发、PubPal/矩阵分发、广告投放、预算门禁、发布证据和 analytics sync。',
-    internalMove: '继续强化账号矩阵、发布槽位、dispatch handoff、campaign ledger、UTM 和表现导入。',
-    externalNeed: 'TikTok/Meta/Google/小红书等平台 OAuth、广告账户授权、自动发布权限和转化事件。',
-    stopLine: '没有平台授权和发布/投放回执前，不能展示已自动分发或已自动优化广告。',
+    target: '多平台分发、PubPal/矩阵分发、门店活动发布、预算门禁、发布证据和反馈回流。',
+    internalMove: '继续强化账号矩阵、发布槽位、dispatch handoff、门店活动账本、UTM 和表现导入。',
+    externalNeed: 'TikTok/Meta/Google/小红书等平台授权、商户活动权限、外部发布权限和券领取/预约事件。',
+    stopLine: '没有平台授权和发布/活动回执前，不能展示已自动分发或已自动优化。',
   },
   {
     layer: 'Manage',
@@ -668,10 +668,10 @@ const INTERNAL_EXTERNAL_DELIVERY_BOUNDARY = [
     stopLine: '没有 provider 完成回调、可打开成片和客户批准前，不宣称一键视频或智能混剪已商用。',
   },
   {
-    layer: 'Cast / 分发与广告',
-    internal: 'Wenai 继续补账号矩阵、发布槽位、dispatch handoff、campaign ledger、UTM、预算门禁和表现导入。',
-    external: 'TikTok/Meta/Google/小红书等 OAuth app、广告主/广告账户 ID、发布权限、测试预算、转化事件和 analytics sync。',
-    stopLine: '没有平台授权、自动发布回执和广告账户证据前，不宣称 PubPal/矩阵分发、自动投放或自动优化。',
+    layer: 'Cast / 分发与门店活动',
+    internal: 'Wenai 继续补账号矩阵、发布槽位、dispatch handoff、门店活动账本、UTM、预算门禁和表现导入。',
+    external: 'TikTok/Meta/Google/小红书等平台授权 app、商户/活动账号 ID、发布权限、测试预算、券领取/预约事件和反馈回流。',
+    stopLine: '没有平台授权、外部发布回执和商户活动证据前，不宣称 PubPal/矩阵分发、外部发布完成或自动优化。',
   },
   {
     layer: 'Manage / 企业资产与权限',
@@ -690,18 +690,18 @@ const INTERNAL_EXTERNAL_DELIVERY_BOUNDARY = [
 const ALTERNATIVE_PLATFORM_REFERENCES = [
   {
     name: 'Hooksy / Hooked',
-    reference: '广告库、品牌追踪、脚本提取、hook patterns、产品图到短视频和 UGC 广告批量生成。',
-    wenaiDecision: '把 Compose 和 Cut 合并成“从胜出广告结构到可复用视频任务”的闭环，而不是只生成单条素材。',
+    reference: '内容库、品牌追踪、脚本提取、hook patterns、菜品/门店图到短视频和 UGC 内容批量生成。',
+    wenaiDecision: '把 Compose 和 Cut 合并成“从胜出内容结构到可复用视频任务”的闭环，而不是只生成单条素材。',
   },
   {
     name: 'Omneky',
-    reference: '跨平台 campaign launcher、creative testing、brand-safe generation、creative analytics 和优化建议。',
-    wenaiDecision: 'Cast 必须带 campaign ledger、素材标签、预算证据和表现回流，才能从内容工具变成增长系统。',
+    reference: '跨平台活动 launcher、creative testing、brand-safe generation、creative analytics 和优化建议。',
+    wenaiDecision: 'Cast 必须带门店活动账本、素材标签、预算证据和表现回流，才能从内容工具变成增长系统。',
   },
   {
     name: 'AdHawk / AI Media Buyer',
-    reference: '围绕广告账户持续优化：目标、预算、投放、异常、转化和收益都要进入自动决策。',
-    wenaiDecision: '广告投放先做门禁和审计，等账号授权后再开放自动调预算、暂停疲劳素材和放量建议。',
+    reference: '围绕商户活动账号持续优化：目标、预算、发布、异常、券领取/预约和收益都要进入受控决策。',
+    wenaiDecision: '门店活动发布先做门禁和审计，等账号授权后再开放自动调预算、暂停疲劳素材和扩量建议。',
   },
   {
     name: 'Hookshot',
@@ -710,32 +710,32 @@ const ALTERNATIVE_PLATFORM_REFERENCES = [
   },
   {
     name: 'Creatify',
-    reference: '商品链接、素材、avatar、voice、scene 和 UGC ad variants 连接到视频广告生产。',
-    wenaiDecision: 'Wenai 要把商品素材、版本矩阵、成片 URL、客户审核和 CRM/分发交接放进同一条 Create/Cut 任务。',
+    reference: '菜品/套餐、素材、avatar、voice、scene 和 UGC content variants 连接到短视频生产。',
+    wenaiDecision: 'Wenai 要把菜品/门店素材、版本矩阵、成片 URL、客户审核和店长/分发交接放进同一条 Create/Cut 任务。',
   },
   {
     name: 'Marpipe',
-    reference: '目录商品广告测试强调 SKU feed、变量组合、受众、预算和表现归因。',
-    wenaiDecision: 'Wenai 要让 Cast/Manage 把 SKU、offer、素材变量、dispatch、campaign 和 performance return 绑定成可复盘实验。',
+    reference: '本地生活活动测试强调菜品/套餐 feed、变量组合、客群、预算和表现归因。',
+    wenaiDecision: 'Wenai 要让 Cast/Manage 把菜品/套餐、活动权益、素材变量、dispatch、门店活动和 feedback return 绑定成可复盘实验。',
   },
   {
     name: 'Pencil',
-    reference: '生成式广告创意和品牌学习结合，持续积累胜出结构、禁用表达和下一轮创意规则。',
+    reference: '生成式内容创意和品牌学习结合，持续积累胜出结构、禁用表达和下一轮创意规则。',
     wenaiDecision: 'Wenai 的品牌学习档案必须反哺 Compose/Create/Cut，而不是只作为复盘报告存在。',
   },
   {
     name: 'Smartly.io',
-    reference: 'creative、media、intelligence 一体化：创意交付、媒体购买、实时优化、报告和平台协作必须连成运营系统。',
-    wenaiDecision: 'Wenai 的 Cast/Manage 要把素材版本、账号、预算、campaign、平台回执、表现回流和下一轮 action queue 放在同一块可审计面板里。',
+    reference: 'creative、media、intelligence 一体化：创意交付、渠道发布、实时优化、报告和平台协作必须连成运营系统。',
+    wenaiDecision: 'Wenai 的 Cast/Manage 要把素材版本、账号、预算、门店活动、平台回执、表现回流和下一轮 action queue 放在同一块可审计面板里。',
   },
   {
     name: 'VidMob',
-    reference: '创意分析、平台就绪、表现学习和账号发布一体化，强调 creative analytics 而不是只看素材产出。',
+    reference: '创意分析、平台就绪、表现学习和账号发布一体化，强调 creative feedback 而不是只看素材产出。',
     wenaiDecision: 'Wenai 的 AI 视频分析和表现回流要把 creative、platform 和 optimization 连起来，不能只停在任务状态。',
   },
   {
     name: 'Creatopy',
-    reference: 'brand kit、模板复用、URL-to-ad 和权限控制，强调品牌安全的大规模创意生产。',
+    reference: 'brand kit、模板复用、URL-to-content 和权限控制，强调品牌安全的大规模创意生产。',
     wenaiDecision: 'Create/Cut 要把品牌资产、模板、权限和多语言版本统一起来，才能做规模化内容工厂。',
   },
   {
@@ -826,9 +826,9 @@ const MANAGE_ACCEPTANCE_BOARD = [
   {
     stage: '表现回流 / 复盘',
     owner: '增长负责人',
-    proof: '表现导入、dispatch evidence、campaign ledger、品牌学习档案和下一轮建议已经互相引用。',
+    proof: '表现导入、dispatch evidence、门店活动账本、品牌学习档案和下一轮建议已经互相引用。',
     pass: '每个已发布或已交付资产都能追溯到表现数据、胜出结构和下一轮生产约束。',
-    next: '接平台 analytics sync 后，替代手动 CSV 导入并形成自动复盘。',
+    next: '接平台反馈回流后，替代手动 CSV 导入并形成自动复盘。',
   },
 ];
 
@@ -960,14 +960,14 @@ function FriendTrialStatusConsole({
       title: '分发计划',
       icon: 'send',
       status: '需外部授权',
-      detail: `${compactNumber(trialValue(evidence, 'plans'))} 条计划，等待平台 OAuth`,
+      detail: `${compactNumber(trialValue(evidence, 'plans'))} 条计划，等待平台授权`,
       tone: 'danger',
     },
     {
       title: '效果回流',
       icon: 'chart',
       status: '待配置',
-      detail: `${compactNumber(trialValue(evidence, 'performanceReturns'))} 条回流，等待 analytics sync`,
+      detail: `${compactNumber(trialValue(evidence, 'performanceReturns'))} 条回流，等待平台反馈`,
       tone: 'neutral',
     },
     {
@@ -1266,7 +1266,7 @@ function FriendTrialStatusConsole({
             <section className="col-span-12 flex justify-center pb-3">
               <div className="max-w-4xl rounded-3xl border border-amber-200 bg-gradient-to-r from-amber-50 to-indigo-50 px-10 py-6 text-center shadow-sm">
                 <p className="text-base font-semibold leading-8 text-neutral-700">
-                  在真实 OAuth、广告账户、发布 API、数据同步和企业云权限配置完成前，
+                  在真实平台授权、商户活动权限、发布 API、反馈回流和企业云权限配置完成前，
                   Wenai 仍是一个已验证的 <span className="rounded-md bg-amber-200/80 px-2 py-1 font-bold text-neutral-950">内部运行骨架</span>，
                   而非完全自动化的筷子科技级别平台。
                 </p>
@@ -1525,7 +1525,7 @@ export default function StatusPage() {
               竞品参考雷达
             </div>
             <div className="text-[10px] font-mono text-accent">
-              终局不是单点生成，而是电商增长作战系统
+              终局不是单点生成，而是餐饮门店增长作战系统
             </div>
           </div>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
@@ -1752,7 +1752,7 @@ export default function StatusPage() {
                 </div>
               </div>
               <div className="text-[11px] font-semibold text-text-primary">
-                {FEATURE_STATUS_LABELS[platformConnectorFeature.status]} · OAuth / 广告账户 / 自动发布 / 数据同步 / 资产权限
+                {FEATURE_STATUS_LABELS[platformConnectorFeature.status]} · 平台授权 / 商户活动权限 / 外部发布 / 反馈回流 / 资产权限
               </div>
               <p className="mt-1 text-[10px] leading-relaxed text-text-secondary">
                 {platformConnectorFeature.evidence}

@@ -1,6 +1,6 @@
 export function RestaurantAdvancedAudit() {
     const copilotQuestions = [
-      { question: '今晚 6-8 点应该推哪道菜？', answer: '先看预约、库存、毛利和天气；缺 POS/库存表前只给待确认建议。' },
+      { question: '今晚 6-8 点应该推哪道菜？', answer: '先看预约、库存、毛利和天气；缺收银/库存表前只给待确认建议。' },
       { question: '哪些客人值得社群优先跟？', answer: '把券领取、私信、复购标签和差评风险放进同一张跟进清单。' },
       { question: '要不要提高双人套餐曝光？', answer: '需要团购券领取、到店核销和桌均消费回填后再判断。' },
     ];
@@ -9,29 +9,29 @@ export function RestaurantAdvancedAudit() {
         claim: '开箱即用，无需额外训练',
         gap: '当前还需要让餐饮老板一眼看出能从哪一个门店任务开始。',
         internalFix: '把第一屏改成餐厅活动表单和 6 个餐饮任务包，默认带样例字段、证据要求和下一步。',
-        externalNeed: '如果要做到真实门店自动诊断，需要导入历史经营数据、菜单、评价和门店权限。',
+        externalNeed: '如果要做到真实门店诊断，需要导入历史经营数据、菜单、评价和门店权限。',
       },
       {
-        claim: '跨平台数据分析能力',
-        gap: '现在只能承接手工链接和截图，还不能像 Claw 那样打通线上线下经营壁垒。',
+        claim: '跨渠道资料汇总',
+        gap: '现在只能承接手工链接和截图，还不能打通线上线下经营壁垒。',
         internalFix: '先做手工数据槽位、证据账本、负责人和复盘摘要，避免空谈“数据分析”。',
-        externalNeed: 'POS、外卖、点评、抖音、小红书、社群、会员系统的 API、平台授权或合法导出。',
+        externalNeed: '收银、外卖、点评、抖音、小红书、社群、会员系统的接口、平台授权或合法导出。',
       },
       {
-        claim: '餐饮技能内置',
-        gap: '已有内容链路，但缺菜品研发、排班、库存、门店服务、选址、采购等经营技能入口。',
+        claim: '餐饮任务内置',
+        gap: '已有内容链路，但缺菜品研发、排班、库存、门店服务、选址、采购等经营任务入口。',
         internalFix: '补“餐饮开箱任务包”，把营销以外的门店问题也变成可填、可交付的任务。',
-        externalNeed: '要自动执行排班、采购、库存和财务动作，必须接外部系统和管理授权。',
+        externalNeed: '要执行排班、采购、库存和财务动作，必须接外部系统和管理授权。',
       },
       {
-        claim: 'Hermes 架构：分层记忆 + 沙箱隔离 + 自我进化',
+        claim: '分层记忆架构：门店记忆 + 沙箱隔离 + 复盘迭代',
         gap: '现在有记忆概念，但还没有按门店、菜品、客群、禁用表达、负责人分层展示学习闭环。',
         internalFix: '把门店记忆拆成可见层级，明确每轮反馈写回哪里，哪些能力只在沙箱内运行。',
-        externalNeed: '跨门店长期记忆、权限隔离、企业存储、审计日志需要后端账号体系和数据治理。',
+        externalNeed: '跨门店长期记忆、权限隔离、企业存储、复核记录需要后端账号体系和数据治理。',
       },
     ];
     const quickTasks = [
-      { title: '经营日报', input: '昨日营业额、桌数、客单、差评、缺货', output: '异常点、店长追问、明日动作', boundary: '无 POS 前只支持手工导入' },
+      { title: '经营日报', input: '昨日营业额、桌数、客单、差评、缺货', output: '异常点、店长追问、明日动作', boundary: '无收银汇总前只支持手工导入' },
       { title: '菜单优化', input: '菜单图、价格、毛利、库存、顾客评价', output: '主推菜、下架风险、禁用表达', boundary: '不自动定价，不判断真实毛利' },
       { title: '本地生活内容', input: '菜品图、到店理由、团购券、平台', output: '点评/小红书/抖音/社群草稿', boundary: '无账号授权不执行外部发布' },
       { title: '排班与服务复盘', input: '时段客流、投诉、员工备注、等位情况', output: '高压时段、服务提醒、复盘清单', boundary: '无排班系统前不改班表' },
@@ -39,18 +39,18 @@ export function RestaurantAdvancedAudit() {
       { title: '食品安全审核', input: '食材来源、过敏原、功效词、限量说明', output: '红线提示、审核人、待确认字段', boundary: '不替代门店合规签字' },
     ];
     const connectorReadiness = [
-      { source: 'POS / 收银 / 损益', today: 'CSV 或截图导入营业额、桌数、菜品销量', external: 'POS API、财务口径、门店账号权限', output: '经营日报、菜品贡献、异常提醒', risk: '未接入前不做实时盈亏和自动归因' },
+      { source: '收银汇总与损益', today: '表格或截图导入营业额、桌数、菜品销量', external: '收银接口、财务口径、门店账号权限', output: '经营日报、菜品贡献、异常提醒', risk: '未接入前不做实时盈亏和自动归因' },
       { source: '库存 / 采购 / 供应链', today: '手工录入缺货、采购价、损耗备注', external: '库存系统、供应商单据、采购审批', output: '缺货风险、采购提醒、菜单可售边界', risk: '未接入前不自动下采购单' },
       { source: '预订 / 排队 / 电话', today: '粘贴预约表、电话备注、爽约原因', external: '桌台库存、电话助手、小程序/WhatsApp', output: '待确认预约、取消风险、店长回拨清单', risk: '未授权前不自动确认客人' },
-      { source: '点评 / 小红书 / 抖音', today: '链接、截图、评论摘录、发布证明', external: '平台授权、API 或合法导出', output: '内容复盘、差评原因、下轮发布任务', risk: '无凭证不说已发布或已分析全量评价' },
-      { source: '会员 / 私域 / 社群', today: '券领取、私信、群反馈、复购标签', external: '会员系统、短信/微信触达、权限审计', output: '高意向名单、负责人分配、社群话术', risk: '未授权前不自动触达顾客' },
+      { source: '点评 / 小红书 / 抖音', today: '链接、截图、评论摘录、发布证明', external: '平台授权、接口或合法导出', output: '内容复盘、差评原因、下轮发布任务', risk: '无凭证不说已发布或已分析全量评价' },
+      { source: '会员 / 私域 / 社群', today: '券领取、私信、群反馈、复购标签', external: '会员系统、短信/微信触达、权限复核', output: '高意向名单、负责人分配、社群话术', risk: '未授权前不自动触达顾客' },
     ];
     const skillMap = [
-      { group: '运营中台', skills: ['经营日报', '排班复盘', '门店服务 SOP', '等位与翻台诊断'], internal: '表单 + 复盘模板', external: 'POS、排班、桌台数据' },
+      { group: '运营中台', skills: ['经营日报', '排班复盘', '门店服务 SOP', '等位与翻台诊断'], internal: '表单 + 复盘模板', external: '收银、排班、桌台数据' },
       { group: '增长中台', skills: ['本地生活内容', '团购券跟进', '社群私域', '评价复盘'], internal: '内容草稿 + 证据账本', external: '平台账号、评论和私信数据' },
       { group: '菜单中台', skills: ['菜单优化', '主推菜选择', '新品研发', '食品安全红线'], internal: '菜单卡 + 禁用表达审核', external: '销量、毛利、库存、食材凭证' },
       { group: '财务成本', skills: ['毛利核对', '损耗记录', '采购异常', '人效复盘'], internal: '异常清单和店长追问', external: '财务系统、供应链和工资排班' },
-      { group: '组织管理', skills: ['负责人分配', '交接班备注', '培训清单', '多店标准化'], internal: '任务流和责任人', external: '账号体系、权限、审计日志' },
+      { group: '组织管理', skills: ['负责人分配', '交接班备注', '培训清单', '多店标准化'], internal: '任务流和责任人', external: '账号体系、权限、复核记录' },
     ];
     const evolutionLoop = [
       { layer: '门店记忆', writes: '餐厅定位、常用语气、服务红线、负责人', uses: '下次生成内容和任务时自动带入', gate: '仅当前试用工作区可见' },
@@ -61,19 +61,19 @@ export function RestaurantAdvancedAudit() {
     const finalStateDimensions = [
       {
         dimension: '数据底座',
-        finalForm: '门店所有经营数据能被统一提问：POS、库存、采购、排班、会员、评价、外卖和本地生活都进入同一张语义账本。',
+        finalForm: '门店所有经营数据能被统一提问：收银、库存、采购、排班、会员、评价、外卖和本地生活都进入同一张语义账本。',
         currentGap: '现在只有手工表单、链接和截图槽位，不能自动汇总全量经营数据。',
         internalPath: '先做字段标准、手工导入模板、证据来源、数据缺口提示。',
-        externalPath: 'POS/库存/排班/会员/平台 API 或合法导出，企业账号与权限。',
+        externalPath: '收银/库存/排班/会员/平台接口或合法导出，企业账号与权限。',
         proof: '每条建议都能追溯到来源字段、截图、链接或导入文件。',
       },
       {
-        dimension: '餐饮技能内核',
-        finalForm: '像 Claw 一样覆盖选址、菜单、运营、营销、服务、排班、采购、财务、人效和连锁标准化。',
-        currentGap: '当前主要围绕本地内容和跟进，经营技能还不够深。',
-        internalPath: '把技能拆成经营日报、菜单优化、排班复盘、食品安全、社群跟进等开箱任务。',
+        dimension: '餐饮任务内核',
+        finalForm: '覆盖选址、菜单、运营、营销、服务、排班、采购、财务、人效和连锁标准化。',
+        currentGap: '当前主要围绕本地内容和跟进，经营任务还不够深。',
+        internalPath: '把经营动作拆成经营日报、菜单优化、排班复盘、食品安全、社群跟进等开箱任务。',
         externalPath: '真实毛利、销量、损耗、人效、采购价和多店对标数据。',
-        proof: '技能输出不是泛建议，而是任务、负责人、字段缺口和下一步动作。',
+        proof: '输出不是泛建议，而是任务、负责人、字段缺口和下一步动作。',
       },
       {
         dimension: 'AI 问答与执行',
@@ -81,20 +81,20 @@ export function RestaurantAdvancedAudit() {
         currentGap: '现在能展示判断路径，但还不是可执行的经营 Copilot。',
         internalPath: '先把高频问题模板化，输出待确认建议、发布草稿和追问清单。',
         externalPath: '实时销售、库存、预订、客资和执行系统写入权限。',
-        proof: '每个回答都区分可执行、待确认、缺数据、禁止自动化。',
+        proof: '每个回答都区分可执行、待确认、缺数据、禁止外部动作。',
       },
       {
         dimension: '分层记忆',
         finalForm: '系统持续记住门店、菜品、客群、证据和负责人，越用越像一个熟悉这家店的运营经理。',
         currentGap: '目前是页面展示记忆概念，还没有真实长期存储和跨轮学习。',
         internalPath: '先把写回层级、写回字段和下次使用场景展示清楚。',
-        externalPath: '账号体系、数据库、权限隔离、审计日志、跨门店数据治理。',
+        externalPath: '账号体系、数据库、权限隔离、复核记录、跨门店数据治理。',
         proof: '每次复盘明确写回哪一层，谁确认，下一次哪里会复用。',
       },
       {
         dimension: '安全沙箱',
-        finalForm: '所有外部账号、顾客数据、财务数据和发布动作都在授权沙箱中运行，可审计、可撤回。',
-        currentGap: '当前只能承诺不伪装自动化，还没有真实授权和审计链。',
+        finalForm: '所有外部账号、顾客数据、财务数据和发布动作都在授权沙箱中运行，可复核、可撤回。',
+        currentGap: '当前只能承诺不伪装已接入外部执行，还没有真实授权和复核留痕。',
         internalPath: '先把停止线产品化：无凭证不发布、无授权不触达、无来源不归因。',
         externalPath: '平台授权、企业权限、日志、加密存储、数据处理协议。',
         proof: '页面上每个高风险动作都有授权状态、责任人和阻断原因。',
@@ -112,36 +112,36 @@ export function RestaurantAdvancedAudit() {
       {
         dimension: '数据底座',
         internalClosed: '字段标准、手工导入、证据来源、缺口提示已产品化。',
-        externalOpen: 'POS、库存、排班、会员、平台 API 或合法导出。',
+        externalOpen: '收银、库存、排班、会员、平台接口或合法导出。',
         hundredPercentGate: '每条经营建议都能追溯来源，并标记实时/手工/缺失状态。',
         claimGuard: '未接入外部数据前，不宣称全量经营分析。',
       },
       {
-        dimension: '餐饮技能内核',
+        dimension: '餐饮任务内核',
         internalClosed: '经营日报、菜单优化、本地生活、排班复盘、社群跟进、食品安全任务已覆盖。',
         externalOpen: '销量、毛利、损耗、人效、采购、多店对标数据。',
-        hundredPercentGate: '每个技能都有输入字段、输出物、负责人和禁止越界动作。',
-        claimGuard: '未接入真实经营数据前，不宣称自动诊断或自动决策。',
+        hundredPercentGate: '每个任务都有输入字段、输出物、负责人和禁止越界动作。',
+        claimGuard: '未接入真实经营数据前，不宣称已复核诊断结论或经营决策。',
       },
       {
         dimension: 'AI 问答与执行',
         internalClosed: '高频店长问题、判断路径、待确认建议和下一步任务已展示。',
         externalOpen: '实时销售、库存、预订、客资和执行系统写入权限。',
-        hundredPercentGate: '回答必须拆成可执行、待确认、缺数据、禁止自动化四类。',
+        hundredPercentGate: '回答必须拆成可执行、待确认、缺数据、禁止外部动作四类。',
         claimGuard: '未授权前，不自动确认预订、改库存、发消息或发布内容。',
       },
       {
         dimension: '分层记忆',
         internalClosed: '门店、菜品、客群、证据四层写回闭环已显性化。',
-        externalOpen: '账号体系、数据库、跨门店权限、审计日志。',
+        externalOpen: '账号体系、数据库、跨门店权限、复核记录。',
         hundredPercentGate: '每轮复盘都能说明写回哪一层、谁确认、下轮如何复用。',
         claimGuard: '没有长期存储前，不宣称跨会话或跨门店记忆。',
       },
       {
         dimension: '安全沙箱',
         internalClosed: '无凭证不发布、无授权不触达、无来源不归因的停止线已产品化。',
-        externalOpen: '平台授权、企业权限、加密存储、数据处理协议、操作日志。',
-        hundredPercentGate: '所有高风险动作都有授权状态、责任人、阻断原因和可审计记录。',
+        externalOpen: '平台授权、企业权限、加密存储、数据处理协议、操作留痕。',
+        hundredPercentGate: '所有高风险动作都有授权状态、责任人、阻断原因和可复核记录。',
         claimGuard: '无授权链路前，不宣称已接入平台账号或顾客数据。',
       },
       {
@@ -153,16 +153,16 @@ export function RestaurantAdvancedAudit() {
       },
     ];
     const agentRoster = [
-      { name: '预订 Agent', job: '接住电话/私信预约、识别取消和爽约风险', needs: '预约表 / 电话记录', state: '待接数据' },
-      { name: '菜单 Agent', job: '检查菜品描述、套餐边界、毛利和缺货风险', needs: '菜单 / 库存 / 毛利', state: '可先手工导入' },
-      { name: '本地生活 Agent', job: '生成点评、小红书、抖音、社群发布任务', needs: '平台账号 / 发布凭证', state: '人工发布门禁' },
-      { name: '会员 Agent', job: '把券领取、复购、生日和社群互动转成跟进动作', needs: '会员表 / 社群记录', state: '待回填' },
-      { name: '食品安全 Agent', job: '记录过敏原、禁用表达、食材声明和审核人', needs: '菜品说明 / 审核记录', state: '先做审核卡' },
-      { name: '经营复盘 Agent', job: '把反馈、核销、桌均和评价汇总成下一轮决策', needs: '反馈表 / 核销表', state: '不伪装自动分析' },
+      { name: '预订助手', job: '接住电话/私信预约、识别取消和爽约风险', needs: '预约表 / 电话记录', state: '待接数据' },
+      { name: '菜单助手', job: '检查菜品描述、套餐边界、毛利和缺货风险', needs: '菜单 / 库存 / 毛利', state: '可先手工导入' },
+      { name: '本地生活助手', job: '生成点评、小红书、抖音、社群发布任务', needs: '平台账号 / 发布凭证', state: '人工发布门禁' },
+      { name: '会员助手', job: '把券领取、复购、生日和社群互动转成跟进动作', needs: '会员表 / 社群记录', state: '待回填' },
+      { name: '食品安全助手', job: '记录过敏原、禁用表达、食材声明和审核人', needs: '菜品说明 / 审核记录', state: '先做审核卡' },
+      { name: '经营复盘助手', job: '把反馈、核销、桌均和评价汇总成下一轮决策', needs: '反馈表 / 核销表', state: '不伪装自动分析' },
     ];
     const dataGates = [
       { source: '预订 / 排队', fields: '姓名、人数、时段、来源、取消原因', gate: '没有接入前不展示满座预测' },
-      { source: 'POS / 菜单', fields: '菜品、价格、毛利、库存、售罄状态', gate: '没有接入前不做自动定价建议' },
+      { source: '收银汇总与菜单', fields: '菜品、价格、毛利、库存、售罄状态', gate: '没有接入前不做自动定价建议' },
       { source: '大众点评 / 抖音 / 小红书', fields: '发布链接、截图、评论摘录、私信截图', gate: '没有凭证前不说已发布' },
       { source: '微信社群 / 会员', fields: '券领取、复购标签、生日、群互动', gate: '没有授权前只允许手工导入' },
     ];
@@ -174,21 +174,21 @@ export function RestaurantAdvancedAudit() {
         stopLine: '未接入前不能自动确认预订，也不能说已满座预测。',
       },
       {
-        domain: 'POS / 菜单 / 库存',
+        domain: '收银汇总 / 菜单 / 库存',
         internal: ['手工导入菜单、价格和库存', '生成菜品卖点与禁用表达审核卡', '标记需要门店确认的毛利字段'],
-        external: ['POS API', '库存实时同步', '券核销和销售流水'],
+        external: ['收银接口', '库存实时同步', '券核销和销售流水'],
         stopLine: '未接入前不做自动定价、售罄判断或真实经营归因。',
       },
       {
         domain: '本地生活发布',
         internal: ['生成点评、小红书、抖音、社群任务', '记录链接、截图、负责人和审核状态', '整理复用素材包'],
-        external: ['平台授权 / API', '发布执行权限', '平台回执和评论同步'],
+        external: ['平台授权 / 接口', '发布执行权限', '平台回执和评论同步'],
         stopLine: '没有发布凭证时，不能冒充已接入或已发布。',
       },
       {
         domain: '会员 / 社群 / 私域',
         internal: ['手工导入券领取、私信、群反馈', '把高意向客资分配给负责人', '生成社群二次触达话术'],
-        external: ['会员系统 API', '短信、微信或电话触达权限', '自动分群和黑名单同步'],
+        external: ['会员系统接口', '短信、微信或电话触达权限', '分群和黑名单同步'],
         stopLine: '未授权前不自动联系顾客，不导出敏感客资。',
       },
       {
@@ -211,10 +211,10 @@ export function RestaurantAdvancedAudit() {
                 <div className="grid gap-5 border-b border-white/10 p-5 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300">对标清单</p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight">对标勺子 Claw：差距先摆出来</h2>
+                    <h2 className="mt-2 text-2xl font-black tracking-tight">打法对标：先看哪些能试跑</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-300">
-                    Claw 的核心不是“帮你写文案”，而是餐饮人的超级 AI 大脑：开箱即用、跨平台分析、餐饮技能内置、分层记忆和沙箱隔离。当前版本必须先补可用工作台，再谈外部系统级自动化。
+                    成熟餐饮经营系统的核心不是“帮你写文案”，而是把公开资料、门店任务、分层记忆和样例试跑变成可复核的工作流。当前版本必须先补可复核工作台，再谈真实账号交接。
                   </p>
                 </div>
                 <div className="grid gap-3 p-5 xl:grid-cols-4">
@@ -238,7 +238,7 @@ export function RestaurantAdvancedAudit() {
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮 AI 大脑最终形态定义</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
-                    不再以旧交付工厂为参照，而是按餐饮经营系统的终局拆维度：每一层都必须说明最终形态、当前差距、内部补足、外部必需和验收证据。
+                    不再以旧交付工厂为参照，而是按餐饮经营系统的终局拆维度：每一层都必须说明最终形态、当前差距、内部补足、外部必需和复核证据。
                   </p>
                 </div>
                 <div className="divide-y divide-stone-100">
@@ -261,7 +261,7 @@ export function RestaurantAdvancedAudit() {
                         <p className="mt-2 text-xs leading-5 text-stone-600">{item.internalPath}</p>
                       </div>
                       <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">外部必需 / 验收证据</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">外部必需 / 复核证据</div>
                         <p className="mt-2 text-xs leading-5 text-stone-600">{item.externalPath}</p>
                         <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">{item.proof}</p>
                       </div>
@@ -274,7 +274,7 @@ export function RestaurantAdvancedAudit() {
                 <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">100% Closure</p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">六维 100% 闭环验收表</h2>
+                    <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">六维 100% 闭环复核表</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
                     这里的 100% 不是假装外部系统已接入，而是每个维度都补齐内部可交付闭环，并把外部系统接入前不能越过的门槛写死。
@@ -287,7 +287,7 @@ export function RestaurantAdvancedAudit() {
                         <th className="px-4 py-3 font-semibold">维度</th>
                         <th className="px-4 py-3 font-semibold">内部已补齐</th>
                         <th className="px-4 py-3 font-semibold">外部仍必需</th>
-                        <th className="px-4 py-3 font-semibold">100% 验收门槛</th>
+                        <th className="px-4 py-3 font-semibold">100% 复核门槛</th>
                         <th className="px-4 py-3 font-semibold">禁止伪装</th>
                       </tr>
                     </thead>
@@ -313,7 +313,7 @@ export function RestaurantAdvancedAudit() {
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮 AI 开箱任务包</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
-                    不等 POS 和平台授权，也能先让门店开箱使用：每个任务都写清输入、输出和不能越过的边界。
+                    不等收银汇总和平台授权，也能先让门店开箱使用：每个任务都写清输入、输出和不能越过的边界。
                   </p>
                 </div>
                 <div className="grid gap-3 p-5 md:grid-cols-2 xl:grid-cols-3">
@@ -321,7 +321,7 @@ export function RestaurantAdvancedAudit() {
                     <article className="rounded-2xl border border-stone-200 bg-[#fbfaf7] p-4" key={task.title}>
                       <div className="flex items-start justify-between gap-3">
                         <h3 className="text-base font-black text-stone-950">{task.title}</h3>
-                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">内部可先跑</span>
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">内部可先准备</span>
                       </div>
                       <dl className="mt-4 space-y-3 text-xs leading-5">
                         <div>
@@ -345,11 +345,11 @@ export function RestaurantAdvancedAudit() {
               <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">数据连接板</p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">跨平台数据接入板</h2>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">资料条件板</p>
+                    <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">手工导入与待补资料板</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
-                    继续对标 Claw、R365、Hang、Stavio 这类餐饮 AI/经营系统：先把“今天能手工跑”和“必须外部接入”并排展示，否则无法成为餐饮经营大脑。
+                    继续对标成熟餐饮经营系统：先把“今天能手工跑”和“还缺授权/表格/回执”并排展示，否则无法成为餐饮经营工作台。
                   </p>
                 </div>
                 <div className="overflow-x-auto">
@@ -382,10 +382,10 @@ export function RestaurantAdvancedAudit() {
                 <div className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">门店技能图</p>
-                      <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮技能地图，不只做营销</h2>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">门店任务图</p>
+                      <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">餐饮任务地图，不只做营销</h2>
                     </div>
-                    <span className="w-fit rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-600">先覆盖可交付任务，再接系统自动化</span>
+                    <span className="w-fit rounded-full border border-stone-200 bg-stone-50 px-3 py-1.5 text-xs font-semibold text-stone-600">先覆盖可交付任务，再接系统授权</span>
                   </div>
                   <div className="mt-5 grid gap-3 md:grid-cols-2">
                     {skillMap.map(group => (
@@ -406,7 +406,7 @@ export function RestaurantAdvancedAudit() {
                 <div className="rounded-3xl border border-stone-200 bg-stone-950 p-5 text-white shadow-sm">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">自我进化记忆</p>
                   <h2 className="mt-2 text-2xl font-black tracking-tight">分层记忆写回闭环</h2>
-                  <p className="mt-3 text-sm leading-6 text-stone-300">Claw 的“越用越懂”不能只停留在口号。试用版先把每轮反馈写回的位置、用途和沙箱门槛显性化。</p>
+                  <p className="mt-3 text-sm leading-6 text-stone-300">“越用越懂”不能只停留在口号。试用版先把每轮反馈写回的位置、用途和沙箱门槛显性化。</p>
                   <div className="mt-5 space-y-3">
                     {evolutionLoop.map(item => (
                       <article className="rounded-2xl border border-white/10 bg-white/[0.06] p-4" key={item.layer}>
@@ -479,10 +479,10 @@ export function RestaurantAdvancedAudit() {
                 <div className="grid gap-4 border-b border-stone-200 p-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">能力边界</p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">内部可先跑，外部必须接入</h2>
+                    <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">内部可先准备，外部必须接入</h2>
                   </div>
                   <p className="text-sm leading-6 text-stone-600">
-                    竞品级餐厅 OS 不只是生成文案，还连着预订、POS、库存、会员、电话和平台数据。试用版先把内部可解决的工作流做深，把必须外部授权的能力放在明面上。
+                    竞品级餐厅操作系统不只是生成文案，还连着预订、收银、库存、会员、电话和平台数据。试用版先把内部可解决的工作流做深，把必须外部授权的能力放在明面上。
                   </p>
                 </div>
                 <div className="divide-y divide-stone-100">
@@ -493,7 +493,7 @@ export function RestaurantAdvancedAudit() {
                         <div className="mt-2 rounded-full bg-stone-100 px-3 py-1 text-[11px] font-semibold text-stone-500">不能冒充已接入</div>
                       </div>
                       <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">内部可先跑</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">内部可先准备</div>
                         <ul className="mt-3 space-y-2 text-xs leading-5 text-stone-600">
                           {item.internal.map(task => (
                             <li className="flex gap-2" key={task}>
@@ -504,7 +504,7 @@ export function RestaurantAdvancedAudit() {
                         </ul>
                       </div>
                       <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">必须外部接入</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-700">还缺授权或导入</div>
                         <ul className="mt-3 space-y-2 text-xs leading-5 text-stone-600">
                           {item.external.map(requirement => (
                             <li className="flex gap-2" key={requirement}>
@@ -526,9 +526,9 @@ export function RestaurantAdvancedAudit() {
               <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-sm">
                 <div className="grid gap-0 lg:grid-cols-[300px_minmax(0,1fr)]">
                   <div className="border-b border-stone-200 bg-[#f8f6f0] p-5 lg:border-b-0 lg:border-r">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">不假装自动化</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">不假装已接通</p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">接入门槛先说清</h2>
-                    <p className="mt-3 text-sm leading-6 text-stone-600">竞品强在 POS、预订、菜单、库存、会员和语音入口；当前试用版先把字段和阻断线展示出来，避免把手工流程包装成已自动化。</p>
+                    <p className="mt-3 text-sm leading-6 text-stone-600">竞品强在收银、预订、菜单、库存、会员和语音入口；当前试用版先把字段和阻断线展示出来，避免把手工流程包装成已接通。</p>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[720px] text-left text-sm">

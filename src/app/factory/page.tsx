@@ -50,12 +50,12 @@ export default async function FactoryPage({
     const usabilityGaps = [
       { gap: '原通用工厂入口太像概念展板', fix: '第一屏改成餐厅活动表单，客户直接填餐厅、菜品、客群、渠道和证据。', owner: '当前可试跑' },
       { gap: '缺少餐饮真实经营输入', fix: '把预约、收银汇总、库存、券核销、评价和社群反馈列成补资料清单。', owner: '等门店资料' },
-      { gap: '不能把内容生成说成经营自动化', fix: '所有代办都带停止线：无凭证不说已发布，无授权不联系顾客。', owner: '已加边界' },
+      { gap: '不能把内容生成说成经营动作已接通', fix: '所有交接动作都带停止线：无凭证不说已发布，无授权不联系顾客。', owner: '已加边界' },
     ];
     const contentScaleAudit = [
       { label: '默认可操作区', value: '6 块', detail: '入口表单、步骤卡、差距提示、门店作战板、规模判断、高级入口' },
-      { label: '高级审计区', value: '折叠', detail: '底层能力、接入门槛和数据门禁收进内部复核区' },
-      { label: '当前判断', value: '先跑闭环', detail: '默认页不再加模块，后续只加到作战板或折叠审计里' },
+      { label: '高级复核区', value: '折叠', detail: '底层打法、待补资料和数据门禁收进内部复核区' },
+      { label: '当前判断', value: '先跑闭环', detail: '默认页不再加模块，后续只加到作战板或折叠复核里' },
     ];
 
     return (
@@ -112,7 +112,7 @@ export default async function FactoryPage({
               <h2 className="mt-2 text-2xl font-black tracking-tight text-stone-950">内容规模先收住</h2>
             </div>
             <p className="max-w-2xl text-sm leading-6 text-stone-600">
-              当前工作台已经具备完整战略说明，但默认界面不能像说明书。餐饮客户先跑闭环，深度对标和外部依赖放到高级审计里。
+              当前工作台已经具备完整战略说明，但默认界面不能像说明书。餐饮客户先跑闭环，深度对标和外部依赖放到高级复核里。
             </p>
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
@@ -146,7 +146,7 @@ export default async function FactoryPage({
               </p>
             </div>
             <div className="rounded-md border border-amber-300/25 bg-amber-300/10 p-4 text-[13px] leading-6 text-amber-50">
-              当前边界：本地试跑已可跑；真实平台授权、外部发布执行、门店活动权限、视频素材通道、平台反馈回流和企业云资产接入前，不宣称平台级规模执行。
+              当前边界：本地试跑可先准备；账号资料确认、发布凭证回执、门店活动权限、视频素材通道、平台反馈回流和企业云资产接入前，不宣称平台级规模执行。
             </div>
           </div>
 
@@ -232,7 +232,7 @@ export default async function FactoryPage({
                     <span className="rounded-sm border border-amber-200/30 px-2 py-1 text-[10px] font-black uppercase text-amber-100">{item.layer}</span>
                   </div>
                   <p className="mt-3 text-[12px] leading-5 text-emerald-100/85">内部可用：{item.internal}</p>
-                  <p className="mt-2 text-[12px] leading-5 text-amber-100/85">外部门禁：{item.external}</p>
+                  <p className="mt-2 text-[12px] leading-5 text-amber-100/85">外部门禁 / 账号资料条件：{item.external}</p>
                 </article>
               ))}
             </div>

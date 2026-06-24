@@ -78,11 +78,11 @@ describe('video production queue page', () => {
 
     expect(partnerHtml).toContain('合作者视角');
     expect(partnerHtml).toContain('合作者验收路径');
-    expect(partnerHtml).toContain('未接真实视频 provider、平台 OAuth、广告账户、analytics sync 和审计规模账本前，不展示 91M+/42M+ 为 Wenai 自有能力');
+    expect(partnerHtml).toContain('未接真实视频 provider、平台授权、商户授权、反馈回流和审计规模账本前，不展示 91M+/42M+ 为 Wenai 自有能力');
     expect(partnerHtml).toContain('Cut 不是单个生成按钮，而是一条可审计的视频工业化生产线');
     expect(partnerHtml).toContain('Hookly / Omneky');
     expect(partnerHtml).toContain('筷子科技的编拍剪投管');
-    expect(partnerHtml).toContain('未接真实视频 provider、平台 OAuth、广告账户和 analytics sync 前，不宣称自动规模化');
+    expect(partnerHtml).toContain('未接真实视频 provider、平台授权、商户授权和反馈回流前，不宣称自动规模化');
 
     expect(friendHtml).toContain('Wenai 餐饮门店增长工作台');
     expect(friendHtml).toContain('一组到店理由生成多条本地内容');
@@ -90,6 +90,11 @@ describe('video production queue page', () => {
     expect(friendHtml).toContain('Video Batch');
     expect(friendHtml).toContain('新增批量剪辑任务');
     expect(friendHtml).toContain('生产队列');
+    expect(friendHtml).toContain('视频生产护照');
+    expect(friendHtml).toContain('脚本、素材、剪辑、成片、审核和发布证明在一张表里');
+    expect(friendHtml).toContain('这不是成片生成按钮');
+    expect(friendHtml).toContain('负责人待办');
+    expect(friendHtml).toContain('没有外部视频通道资料和成片凭证，不说视频已经完成。');
     expect(friendHtml).toContain('/factory/cast?variant=friend_trial');
     expect(friendHtml).toContain('一眼看懂：这套内容怎么帮门店拿到预约、券领取和私信咨询');
     expect(friendHtml).toContain('/factory?variant=friend_trial');
@@ -172,7 +177,7 @@ describe('video production queue page', () => {
       expect.objectContaining({
         label: '分发表现回流',
         status: 'blocked',
-        externalGate: expect.stringContaining('平台 OAuth'),
+        externalGate: expect.stringContaining('平台授权'),
       }),
     ]));
   });
@@ -224,12 +229,12 @@ describe('video production queue page', () => {
     expect(html).toContain('正在加载');
     expect(html).toContain('不伪装自动生成');
     expect(html).toContain('只有 provider、素材授权、平台账号和回流都接上');
-    expect(html).toContain('没有平台 OAuth、广告账户和 analytics sync 前，只能做计划与手工回灌');
+    expect(html).toContain('没有平台授权、商户授权和反馈回流前，只能做计划与手工回灌');
     expect(html).toContain('多模态视频解析 provider、合法视频源、下载/存储权限');
     expect(html).toContain('真实剪辑引擎、素材授权、音频/字体授权和成片回调');
     expect(html).toContain('视频生成 provider token、任务回调、失败重试和成本额度');
     expect(html).toContain('正式域名、客户权限策略、素材下载/水印策略');
-    expect(html).toContain('平台 OAuth、广告账户授权、自动发布和 analytics sync');
+    expect(html).toContain('平台授权、商户授权、发布执行和反馈回流');
     expect(html).toContain('成片 URL');
     expect(html).not.toContain('一键生成成片');
     expect(html).not.toContain('handoff_only');
@@ -283,7 +288,7 @@ describe('video production queue page', () => {
     expect(html).toContain('仍需外部接入');
     expect(html).toContain('运营下一步');
     expect(html).toContain('禁止伪规模');
-    expect(html).toContain('不能自动出片或自动发布');
+    expect(html).toContain('不能标记成片或外部发布完成');
     expect(html).toContain('能力');
     expect(html).toContain('外部阻塞清单');
     expect(html).toContain('规模化数字展示保护');
@@ -353,7 +358,7 @@ describe('video production queue page', () => {
           clientReceipt: {
             title: '客户验收回执',
             summary: '客户当前可以查看交付物，并决定是反馈还是批准。',
-            nextStep: '批准后进入分发、CRM 交接和表现回流。',
+            nextStep: '批准后进入分发、到店跟进交接和表现回流。',
             operatorRecipient: '运营 / 客服',
             evidenceToCheck: ['成片可打开'],
             shareNote: '审核码 review-video-1 可继续验收。',

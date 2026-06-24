@@ -87,15 +87,15 @@ describe('manage operations console page', () => {
     const html = renderToStaticMarkup(page);
 
     expect(html).toContain('交付管理控制台');
-    expect(html).toContain('Manage Operations Variant');
-    expect(html).toContain('Manage Action Playbook');
+    expect(html).toContain('门店交付管理视角');
+    expect(html).toContain('运营动作剧本');
     expect(html).toContain('Manage 运营动作剧本');
-    expect(html).toContain('Clico式客户交付与企业安全验收板');
-    expect(html).toContain('Asset Enforcement Matrix');
-    expect(html).toContain('企业资产访问门禁矩阵');
-    expect(html).toContain('download/share/publish');
+    expect(html).toContain('餐饮交付与负责人承接看板');
+    expect(html).toContain('发布/交付门禁矩阵');
+    expect(html).toContain('发布证明与交付访问门禁');
+    expect(html).toContain('下载、分享、发布和交付');
     expect(html).toContain('默认阻断');
-    expect(html).toContain('Manage Seed');
+    expect(html).toContain('补门店交付策略');
     expect(html).toContain('客户审核权限、受控分享对象、安全策略、DLP、水印和留存规则');
     expect(html).toContain('/factory/manage?projectId=launch-manage&amp;variant=partner');
     expect(html).toContain('/factory/manage?projectId=launch-manage&amp;variant=friend_trial');
@@ -130,8 +130,8 @@ describe('manage operations console page', () => {
 
     expect(partnerHtml).toContain('合作者视角');
     expect(partnerHtml).toContain('Manage 商业验收剧本');
-    expect(partnerHtml).toContain('企业云资产、CRM 同步和 analytics sync');
-    expect(partnerHtml).toContain('企业云盘、团队空间、自动 CRM');
+    expect(partnerHtml).toContain('企业云资产、到店跟进同步和平台/社群反馈回流');
+    expect(partnerHtml).toContain('企业云盘、团队空间、自动到店跟进');
 
     expect(friendHtml).toContain('门店下一步怎么跟进');
     expect(friendHtml).toContain('餐饮门店增长工作台');
@@ -151,8 +151,12 @@ describe('manage operations console page', () => {
     expect(friendHtml).toContain('少解释，直接看动作');
     expect(friendHtml).toContain('去多平台发 +');
     expect(friendHtml).toContain('/factory/cast?variant=friend_trial');
-    expect(friendHtml).toContain('已接通能力');
+    expect(friendHtml).toContain('能力边界');
+    expect(friendHtml).toContain('缺发布链接或截图');
     expect(friendHtml).toContain('只展示已确认结果');
+    expect(friendHtml).toContain('店长任务队列');
+    expect(friendHtml).toContain('不保存私信原文 / 手机号 / 微信号 / POS 明细');
+    expect(friendHtml).toContain('发布证明、预约/券领取/私信聚合、门店确认和复盘动作');
     expect(friendHtml).toContain('发布证明');
     expect(friendHtml).toContain('效果优化表');
     expect(friendHtml).toContain('今天要确认的事');
@@ -201,7 +205,7 @@ describe('manage operations console page', () => {
     }));
   });
 
-  it('builds Clico-style Manage operating checks from review, security, audit, and return evidence', () => {
+  it('builds restaurant Manage operating checks from review, security, audit, and return evidence', () => {
     const readyIndustrial = industrial({
       clientReviewAssetCount: 1,
       approvedDeliverableCount: 1,
@@ -250,7 +254,7 @@ describe('manage operations console page', () => {
         ready: true,
       }),
       expect.objectContaining({
-        stage: 'CRM / 下一步队列',
+        stage: '到店跟进 / 下一步队列',
         ready: true,
       }),
     ]));
@@ -293,7 +297,7 @@ describe('manage operations console page', () => {
       expect.objectContaining({
         gate: '发布/交付 fail-closed',
         ready: false,
-        evidence: expect.stringContaining('blockers 2'),
+        evidence: expect.stringContaining('阻断项 2'),
       }),
     ]));
 

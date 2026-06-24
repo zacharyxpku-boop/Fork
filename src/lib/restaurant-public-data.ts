@@ -270,7 +270,7 @@ export const RESTAURANT_EXTERNAL_DATA_SOURCES: RestaurantExternalDataSource[] = 
     externalRequirement: '需要 API key、配额、费用评估、缓存规则、服务条款审查和地区可用性确认。',
   },
   {
-    name: 'POS / 收银 / 会员 / 库存',
+    name: '收银汇总 / 会员 / 库存',
     status: 'manual-import-only',
     canUseNow: false,
     usefulFor: '营业额、桌数、客单、菜品销量、券核销、会员复购和缺货',

@@ -35,7 +35,7 @@ const CREATE_VARIANTS: Record<FactoryUiVariantId, {
     label: '合作者视角',
     audience: '看 Wenai 是否把 brief、脚本、素材、生产交接和客户验收串成 Create 层能力。',
     headline: 'Create 不是一键生成按钮，而是可追溯的资产生产账本。',
-    body: '这一层把商品 brief、benchmark、脚本、图片/视频资产、production handoff、版权状态和客户交付状态放在同一条链路里，避免只有前端按钮没有真实生产记录。',
+    body: '这一层把菜品/套餐 brief、到店 benchmark、脚本、图片/视频资产、production handoff、版权状态和客户交付状态放在同一条链路里，避免只有前端按钮没有真实生产记录。',
     firstAction: '先看资产账本是否覆盖 brief、benchmark、视觉资产和交付物，再判断是否可以接真实视频/图片 provider。',
     stopLine: '没有 provider token、素材授权、对象存储和客户验收前，不能宣称稳定一键生成或批量混剪。',
   },
@@ -49,11 +49,11 @@ const CREATE_VARIANTS: Record<FactoryUiVariantId, {
   },
   friend_trial: {
     label: '朋友试用视角',
-    audience: '给非技术朋友看能不能从一个商品需求得到可审核的生产包。',
-    headline: '朋友只需要看到：输入商品、生成生产包、等待结果、进入审核。',
-    body: '这一视角把 provider、对象存储、DLP、版权和 CRM 术语放到后台边界里，前台只展示清楚的下一步。',
-    firstAction: '先创建一个商品 brief、一个参考 benchmark 和一个待生产脚本；没有真实成品 URL 时不展示“已生成”。',
-    stopLine: '没有真实成品和审核入口时，只能试用 Create 流程，不能试用自动成片效果。',
+    audience: '给非技术朋友看能不能从一个菜品/套餐需求得到可审核的门店内容生产包。',
+    headline: '朋友只需要看到：输入菜品/套餐、生成生产包、等待结果、进入审核。',
+    body: '这一视角把 provider、对象存储、DLP、版权和到店跟进术语放到后台边界里，前台只展示清楚的下一步。',
+    firstAction: '先创建一个菜品/套餐 brief、一个参考 benchmark 和一个待生产脚本；没有真实成品 URL 时不展示“已生成”。',
+    stopLine: '没有真实成品和审核入口时，只能试用门店内容生产流程，不能试用自动成片效果。',
   },
 };
 
@@ -161,8 +161,8 @@ export function buildCreateVariantPlaybook(
     return {
       title: '朋友试用 Create 路径',
       primaryAction: readyForTrial
-        ? '可以让朋友从商品 brief 看见脚本和素材包；没有成品时明确标注“待生产”。'
-        : '先补商品 brief、参考 benchmark 和可授权素材，否则朋友会不知道系统到底产出了什么。',
+        ? '可以让朋友从菜品/套餐 brief 看见脚本和素材包；没有成品时明确标注“待生产”。'
+        : '先补菜品/套餐 brief、参考 benchmark 和可授权素材，否则朋友会不知道系统到底产出了什么。',
       proofToCheck: '朋友只看三项：输入是否明确、生产包是否完整、有没有可打开的成品或审核入口。',
       handoffBoundary: '没有真实成品 URL、review token 和客户批准前，不要把 Create 包装成一键视频已完成。',
       cards: [
@@ -249,7 +249,7 @@ export function CreateAssetConsoleClient({
       await addAsset({
         type: 'brief',
         title: `${productName} production brief`,
-        evidence: '商品定位、目标平台、核心卖点、禁用表达和验收口径已进入 Create brief。',
+        evidence: '菜品/套餐定位、目标平台、到店理由、禁用表达和验收口径已进入 Create brief。',
         tags: ['create-brief', 'operator-ready'],
         approvalStatus: 'approved',
         rightsStatus: 'owned',
@@ -439,8 +439,8 @@ export function CreateAssetConsoleClient({
       { title: '素材授权', detail: `版权问题 ${snapshot?.rightsIssueAssetCount || 0} / 治理问题 ${snapshot?.assetGovernanceIssueCount || 0}`, blocked: (snapshot?.rightsIssueAssetCount || 0) > 0 || (snapshot?.assetGovernanceIssueCount || 0) > 0 },
       { title: '对象存储', detail: '真实文件存储、签名 URL、DLP 仍需外部配置。', blocked: true },
       { title: '视频 Provider', detail: '真实成片仍需剪辑/生成 provider 回调。', blocked: true },
-      { title: '平台账号', detail: '分发与自动发布需要 OAuth 授权。', blocked: true },
-      { title: 'Analytics Sync', detail: '表现回流管道未接通前只做内部证据。', blocked: true },
+      { title: '平台授权', detail: '发布执行需要商户授权、平台授权和发布回执。', blocked: true },
+      { title: '反馈回流', detail: '平台/社群反馈回流管道未接通前只做内部证据。', blocked: true },
     ];
     const evidenceRows = [
       { module: 'Brief', source: `${projectId || 'default-project'}`, status: snapshot?.assetCount ? '内部已索引' : '待写入', audit: `${snapshot?.assetCount || 0} assets` },
@@ -523,7 +523,7 @@ export function CreateAssetConsoleClient({
                       <a href="#asset-evidence" className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50">查看证据</a>
                       <a href="#create-readiness" className="inline-flex items-center rounded-md border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm hover:bg-neutral-50">Readiness</a>
                     </div>
-                    <div className="text-xs font-medium text-neutral-500">No fake provider · No fake OAuth · Ledger first</div>
+                    <div className="text-xs font-medium text-neutral-500">No fake provider · No fake platform auth · Ledger first</div>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     {[
@@ -555,7 +555,7 @@ export function CreateAssetConsoleClient({
                       <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         {[
                           ['项目', projectId, setProjectId],
-                          ['商品', productName, setProductName],
+                          ['菜品/套餐', productName, setProductName],
                           ['参考 benchmark URL', benchmarkUrl, setBenchmarkUrl],
                           ['脚本标题', scriptTitle, setScriptTitle],
                           ['视觉资产标题', visualTitle, setVisualTitle],
@@ -876,7 +876,7 @@ export function CreateAssetConsoleClient({
                 <input value={projectId} onChange={event => setProjectId(event.target.value)} className="mt-1 w-full rounded-[6px] border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:border-amber-300" />
               </label>
               <label className="text-sm text-white/70">
-                商品
+                菜品/套餐
                 <input value={productName} onChange={event => setProductName(event.target.value)} className="mt-1 w-full rounded-[6px] border border-white/10 bg-black/30 px-3 py-2 text-white outline-none focus:border-amber-300" />
               </label>
               <label className="text-sm text-white/70">

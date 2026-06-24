@@ -160,7 +160,7 @@ export function buildRestaurantProviderAdapterContractPack(input: RestaurantTria
       label: 'Dianping / Xiaohongshu / Douyin / WeChat publish proof',
       status: merchantReady ? (runtimeReady && callbackReady ? 'ready-to-test' : 'needs-server-key') : 'needs-merchant-auth',
       owner: merchantReady ? 'runtime-admin' : 'merchant',
-      providerChoices: ['merchant platform API/OAuth', 'authorized browser session', 'manual public link/screenshot import'],
+      providerChoices: ['merchant platform API / platform grant', 'authorized browser session', 'manual public link/screenshot import'],
       requiredEnvKeys: runtimeKeys.concat('RESTAURANT_AGENT_CALLBACK_SECRET'),
       merchantGrant: ['platform account authorization', 'allowed publish/proof actions', 'expiry', 'revocation owner'],
       callbackEvents: ['external-receipt'],

@@ -62,11 +62,11 @@ describe('restaurant decision engine', () => {
     expect(decision.why.join(' ')).toContain('限量');
     expect(decision.blockedAutomation).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        capability: '自动发布',
+        capability: '发布执行',
         missing: expect.stringContaining('平台账号授权'),
       }),
       expect.objectContaining({
-        capability: '自动核销',
+        capability: '核销承接',
         missing: expect.stringContaining('核销接口'),
       }),
       expect.objectContaining({

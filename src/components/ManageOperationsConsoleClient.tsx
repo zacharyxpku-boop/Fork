@@ -6,7 +6,27 @@ import { FactoryVariantConsole } from '@/components/FactoryVariantConsole';
 import type { AssetPermissionSnapshot } from '@/lib/asset-permission-ledger';
 import type { FactoryUiVariantId } from '@/lib/factory-readiness-view';
 import type { IndustrializationSnapshot } from '@/lib/industrial-chain-store';
+import {
+  RESTAURANT_PUBLISH_PROOF_DEMO_PLANS,
+  buildRestaurantPublishProofLedger,
+} from '@/lib/restaurant-publish-proof-ledger';
+import {
+  RESTAURANT_RECOVER_SIGNAL_DEMO_ROWS,
+  buildRestaurantRecoverSignalImportReport,
+} from '@/lib/restaurant-recover-signal-import';
+import {
+  RESTAURANT_DISH_COST_INVENTORY_DEMO_ROWS,
+  buildRestaurantDishCostInventoryPasteTemplate,
+  buildRestaurantDishCostInventorySample,
+  parseRestaurantDishCostInventoryPaste,
+} from '@/lib/restaurant-dish-cost-inventory-sample';
+import { buildRestaurantReviewLoopBossRecap } from '@/lib/restaurant-review-loop-boss-recap';
+import { buildRestaurantReviewLoopShareSummary } from '@/lib/restaurant-review-loop-share-summary';
 import { appendRestaurantTrialIntake, type RestaurantTrialIntake } from '@/lib/restaurant-trial-intake';
+import {
+  buildRestaurantVoiceFrontdeskGate,
+  buildRestaurantVoiceFrontdeskSopSummary,
+} from '@/lib/restaurant-voice-frontdesk-gate';
 
 type ManagePlaybook = {
   title: string;
@@ -40,27 +60,27 @@ const MANAGE_VARIANTS: Record<FactoryUiVariantId, {
 }> = {
   partner: {
     label: '合作者视角',
-    audience: '看 Wenai 是否有客户审核、CRM 交接、资产权限、审计和表现回流的管理闭环。',
+    audience: '看 Wenai 是否有客户审核、到店跟进交接、资产权限、审计和反馈回流的管理闭环。',
     headline: 'Manage 是把交付从“发文件”升级成可审计运营系统。',
     body: '这一层检查客户 review、交付批准、权限策略、DLP、水印、下载/分享授权、访问审计和表现回流，证明 Wenai 不只是内容生成器。',
     firstAction: '先看客户批准、权限审计、DLP 和表现回流是否同时存在，再判断是否可给合作者做商用演示。',
-    stopLine: '没有真实对象存储、签名 URL、团队空间和外部 CRM/analytics sync 前，不能宣称企业云盘或自动运营中台。',
+    stopLine: '没有真实对象存储、签名 URL、团队空间和外部门店反馈回流前，不能宣称企业云盘或自动运营中台。',
   },
   operator: {
     label: '运营视角',
-    audience: '给内部运营每天收口客户审核、权限、回流、CRM 下一步和阻断项。',
+    audience: '给内部运营每天收口客户审核、权限、回流、负责人下一步和阻断项。',
     headline: 'Manage 的运营任务是让每个交付物都有负责人、权限、证据和下一步。',
     body: '运营只看四类缺口：客户没批、权限没闭、审计没留、回流没进。补齐后才进入复盘、续约或下一轮生产。',
     firstAction: '先补权限和客户审核缺口；没有 audit trail 时，不要把项目标记为企业级可交付。',
-    stopLine: '外部云资产或 CRM 未接入时，只能做内部账本和手工交接，不能说已经企业级自动协同。',
+    stopLine: '外部云资产或门店跟进系统未接入时，只能做内部账本和手工交接，不能说已经企业级自动协同。',
   },
   friend_trial: {
     label: '朋友试用视角',
     audience: '给非技术朋友看能不能打开审核链接、反馈、批准，并确认不会乱泄露素材。',
     headline: '朋友只需要知道：能不能看、能不能批、会不会丢。',
-    body: '这一视角隐藏 RBAC、DLP 和审计术语，只展示审核入口、批准状态、下载/分享是否受控和下一步是否明确。',
+    body: '这一视角只展示门店审核入口、批准状态、下载/分享是否受控和下一步是否明确。',
     firstAction: '先准备一个客户审核入口和一个受控分享资产；没有权限记录时不要让朋友下载或转发。',
-    stopLine: '没有客户 review token、受控分享和访问审计时，只能内部试用，不能给非技术朋友自由流转。',
+    stopLine: '没有门店审核链接、受控分享和访问记录时，只能内部试用，不能给非技术朋友自由流转。',
   },
 };
 
@@ -112,8 +132,8 @@ export function buildManageOperatingChecks(
       ready: approvedCount > 0,
       evidence: `已批准交付 ${approvedCount} 条`,
       next: approvedCount > 0
-        ? '批准后推进 CRM 交接、分发门禁和表现回流。'
-        : '先补客户批准或返修结论；没有批准不能进入发布/CRM 闭环。',
+        ? '批准后推进到店跟进交接、分发门禁和表现回流。'
+        : '先补客户批准或返修结论；没有批准不能进入发布/跟进闭环。',
     },
     {
       stage: '权限范围与受控分享',
@@ -144,16 +164,16 @@ export function buildManageOperatingChecks(
       ready: performanceCount > 0 && scaleDecisionCount > 0,
       evidence: `表现回流 ${performanceCount} 条 / scale 决策 ${scaleDecisionCount} 条`,
       next: performanceCount > 0
-        ? '把结果反哺品牌学习、下一轮生产计划和 CRM 续约动作。'
-        : '补 analytics sync 或手工表现导入；没有回流不能宣称自动优化。',
+        ? '把结果反哺门店学习、下一轮内容计划和负责人承接动作。'
+        : '补平台/社群反馈表或手工表现导入；没有回流不能宣称自动优化。',
     },
     {
-      stage: 'CRM / 下一步队列',
+      stage: '到店跟进 / 下一步队列',
       ready: gaps.length === 0,
       evidence: gaps.length ? `阻断 ${gaps.length} 项 / 动作 ${nextActions.length} 条` : `动作队列 ${nextActions.length} 条 / 无硬阻断`,
       next: gaps.length
         ? `先处理：${gaps[0]}。`
-        : '进入企业云资产、外部 CRM 和 analytics sync 接入验收。',
+        : '进入预约、券领取、私信、社群反馈表和负责人承接验收。',
     },
   ];
 }
@@ -172,7 +192,7 @@ export function buildAssetEnforcementChecks(permission: AssetPermissionSnapshot 
     {
       gate: '下载前门禁',
       ready: downloadableReady > 0,
-      evidence: `download-ready ${downloadableReady} / downloadable assets ${permission?.downloadableAssetCount || 0}`,
+      evidence: `下载就绪 ${downloadableReady} / 可下载资产 ${permission?.downloadableAssetCount || 0}`,
       stopLine: downloadableReady > 0
         ? '下载必须带临时 grant，并经过权限、对象和安全策略校验。'
         : '没有 download permission、storage object、security policy 和临时 grant 前，默认不返回下载内容。',
@@ -180,7 +200,7 @@ export function buildAssetEnforcementChecks(permission: AssetPermissionSnapshot 
     {
       gate: '分享前门禁',
       ready: shareableReady > 0,
-      evidence: `share-ready ${shareableReady} / shareable assets ${permission?.shareableAssetCount || 0}`,
+      evidence: `分享就绪 ${shareableReady} / 可分享资产 ${permission?.shareableAssetCount || 0}`,
       stopLine: shareableReady > 0
         ? '分享必须经过 share grant 和对象可用性校验，不能绕过企业资产策略。'
         : '没有 share permission、对象 URL、DLP/水印/留存和 grant 前，默认不生成公开分享。',
@@ -188,7 +208,7 @@ export function buildAssetEnforcementChecks(permission: AssetPermissionSnapshot 
     {
       gate: '对象与安全策略',
       ready: securityReady && (permission?.missingStorageObjectCount || 0) === 0 && (permission?.storageObjectCount || 0) > 0,
-      evidence: `objects ${permission?.storageObjectCount || 0} / missing objects ${permission?.missingStorageObjectCount || 0} / DLP passed ${permission?.dlpPassedPolicyCount || 0}`,
+      evidence: `对象 ${permission?.storageObjectCount || 0} / 缺对象 ${permission?.missingStorageObjectCount || 0} / DLP 通过 ${permission?.dlpPassedPolicyCount || 0}`,
       stopLine: securityReady
         ? '对象存储、DLP、水印和留存策略已经形成内部门禁；真实云盘仍需外部对象存储接入。'
         : '没有对象、DLP、水印或留存策略时，不能宣称企业云资产安全。',
@@ -196,7 +216,7 @@ export function buildAssetEnforcementChecks(permission: AssetPermissionSnapshot 
     {
       gate: '发布/交付 fail-closed',
       ready: states.length > 0 && blockerCount === 0,
-      evidence: `governed assets ${states.length} / blockers ${blockerCount}`,
+      evidence: `受管资产 ${states.length} / 阻断项 ${blockerCount}`,
       stopLine: blockerCount === 0 && states.length > 0
         ? '当前受管资产没有门禁阻断，可以进入发布/交付前的下一层平台授权校验。'
         : '任一资产存在 blocker 时，发布、交付、下载和分享都应保持阻断，不用人工口头放行。',
@@ -204,7 +224,7 @@ export function buildAssetEnforcementChecks(permission: AssetPermissionSnapshot 
     {
       gate: '访问审计',
       ready: (permission?.accessAuditEventCount || 0) > 0,
-      evidence: `access audits ${permission?.accessAuditEventCount || 0} / permission audits ${permission?.auditEventCount || 0}`,
+      evidence: `访问审计 ${permission?.accessAuditEventCount || 0} / 权限审计 ${permission?.auditEventCount || 0}`,
       stopLine: (permission?.accessAuditEventCount || 0) > 0
         ? '访问尝试已经落审计，可追踪越权、过期、grant 消耗和客户动作。'
         : '没有访问审计前，只能内部验证权限模型，不能对外承诺企业级协作审计。',
@@ -232,9 +252,9 @@ export function buildManageVariantPlaybook(
       title: 'Manage 运营动作剧本',
       primaryAction: gaps.length
         ? `先处理管理缺口：${gaps[0]}。`
-        : '可以进入 CRM 复盘、下一轮生产计划和续约/合同交接。',
-      proofToCheck: '每个交付物都要能追到 review link、approval、permission policy、access audit、performance return 和 CRM next step。',
-      handoffBoundary: '对象存储、签名 URL、外部 CRM 和 analytics sync 未接入前，运营只能做内部审计和手工交接。',
+        : '可以进入到店跟进复盘、下一轮内容计划和运营合同交接。',
+      proofToCheck: '每个交付物都要能追到审核链接、批准记录、权限策略、访问审计、反馈回流和负责人下一步。',
+      handoffBoundary: '对象存储、签名 URL、外部门店系统和平台/社群反馈回流未接入前，运营只能做内部审计和手工交接。',
       cards: [
         `客户审核 ${reviewCount} / 客户批准 ${approvedCount} / 表现回流 ${performanceCount}`,
         `权限策略 ${permissionCount} / 安全策略 ${securityCount} / 审计 ${auditCount}`,
@@ -251,7 +271,7 @@ export function buildManageVariantPlaybook(
         ? '可以让朋友打开审核入口并确认反馈/批准路径；下载和分享仍按权限控制。'
         : '先补客户审核入口、权限策略和安全策略，否则朋友试用会变成聊天确认。',
       proofToCheck: '朋友只看三项：链接能打开、反馈能写回、素材不会越权下载或公开分享。',
-      handoffBoundary: '没有 review token、权限策略、DLP 和访问审计前，不要把素材交给朋友自由传播。',
+      handoffBoundary: '没有门店审核链接、受控分享和访问记录前，不要把素材交给朋友自由传播。',
       cards: [
         `审核入口 ${reviewCount}`,
         `权限策略 ${permissionCount}`,
@@ -263,10 +283,10 @@ export function buildManageVariantPlaybook(
   return {
     title: 'Manage 商业验收剧本',
     primaryAction: score >= 5
-      ? '可以进入企业云资产、CRM 同步和 analytics sync 的外部材料验收。'
-      : '先补客户批准、权限审计、DLP/水印、表现回流和 CRM handoff，再谈企业级管理能力。',
+      ? '可以进入企业云资产、到店跟进同步和平台/社群反馈回流的外部材料验收。'
+      : '先补客户批准、权限审计、DLP/水印、表现回流和负责人承接，再谈企业级管理能力。',
     proofToCheck: '合作者要看到交付物、客户审核、资产权限、安全策略、访问审计、表现回流和商业下一步在同一项目里闭环。',
-    handoffBoundary: '企业云盘、团队空间、自动 CRM、自动 analytics 和规模数字审计必须等外部系统接入后再宣称。',
+    handoffBoundary: '企业云盘、团队空间、自动到店跟进、自动反馈归因和规模数字审计必须等外部系统接入后再宣称。',
     cards: [
       `Manage readiness ${score}/7`,
       `审核 ${reviewCount} / 批准 ${approvedCount} / 回流 ${performanceCount}`,
@@ -296,6 +316,9 @@ export function ManageOperationsConsoleClient({
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [dishCostInventoryPasteText, setDishCostInventoryPasteText] = useState(
+    () => buildRestaurantDishCostInventoryPasteTemplate().sampleText,
+  );
 
   const selectedVariant = MANAGE_VARIANTS[selectedVariantId];
   const playbook = buildManageVariantPlaybook(industrialSnapshot, permissionSnapshot, selectedVariantId);
@@ -343,7 +366,7 @@ export function ManageOperationsConsoleClient({
           scope: 'client_review',
           roles: ['owner', 'admin', 'crm', 'client'],
           allowedActions: ['view', 'share', 'approve'],
-          auditNote: 'Client review and CRM handoff permission created from Manage console.',
+          auditNote: 'Client review and restaurant follow-up permission created from Manage console.',
         },
         storageObject: {
           assetId,
@@ -385,6 +408,94 @@ export function ManageOperationsConsoleClient({
     const followCount = industrialSnapshot?.approvedDeliverableCount || 0;
     const scaleCount = industrialSnapshot?.scaleDecisionCount || 0;
     const missingProofCount = industrialSnapshot?.missingPublishEvidenceCount || 0;
+    const managePublishProofLedger = buildRestaurantPublishProofLedger({
+      restaurantName: initialIntake.restaurant || '样例餐厅',
+      offerName: initialIntake.offer || '招牌双人套餐',
+      plans: RESTAURANT_PUBLISH_PROOF_DEMO_PLANS.map(plan => ({
+        ...plan,
+        restaurantName: initialIntake.restaurant || plan.restaurantName,
+        offerName: initialIntake.offer || plan.offerName,
+      })),
+      receipts: proofCount > 0
+        ? [{
+            planId: RESTAURANT_PUBLISH_PROOF_DEMO_PLANS[0].id,
+            channel: RESTAURANT_PUBLISH_PROOF_DEMO_PLANS[0].channel,
+            screenshotId: '门店发布截图',
+            publishedAt: '2026-06-22T18:30:00.000Z',
+          }]
+        : [],
+    });
+    const manageRecoverImport = buildRestaurantRecoverSignalImportReport({
+      restaurantName: initialIntake.restaurant || '样例餐厅',
+      offerName: initialIntake.offer || '招牌双人套餐',
+      rows: performanceCount > 0 ? RESTAURANT_RECOVER_SIGNAL_DEMO_ROWS : [],
+    });
+    const manageBossRecap = buildRestaurantReviewLoopBossRecap({
+      publishProofLedger: managePublishProofLedger,
+      recoverImport: manageRecoverImport,
+    });
+    const manageShareSummary = buildRestaurantReviewLoopShareSummary({ recap: manageBossRecap });
+    const manageVisibleShareMarkdown = [
+      `# ${manageShareSummary.title}`,
+      '',
+      '## 结论',
+      ...manageShareSummary.lines.map(line => `- ${line}`),
+      '',
+      '## 负责人',
+      ...manageShareSummary.ownerChecklist.map(item => `- ${item.owner}：${item.action}（证据：${item.evidenceRequired}）`),
+      '',
+      '## 证据',
+      `- 发布凭证：已收 ${manageBossRecap.summary.acceptedProofs}/${managePublishProofLedger.summary.total}`,
+      `- 脱敏反馈：${manageBossRecap.summary.recoverRows} 行`,
+      '',
+      '## 边界',
+      '- 没有发布证明和脱敏反馈，不说已经增长。',
+      '- 没有平台授权和数据约定，不说自动发布、自动核销或真实复购归因。',
+      '- 不包含顾客身份、聊天原文、券码、订单和收银明细。',
+    ].join('\n');
+    const manageRecapMaterialGap = performanceCount > 0
+      ? manageBossRecap.materialGaps[0]
+      : '导入预约、券领取、咨询、评价和到店意向的脱敏汇总表。';
+    const manageRecapOwnerActions = [
+      manageBossRecap.ownerActions[0],
+      performanceCount > 0
+        ? manageBossRecap.ownerActions[1]
+        : {
+            owner: '店长' as const,
+            action: '补一份只含聚合数量的到店反馈表。',
+            dueWindow: '明天午市前',
+            evidenceRequired: '脱敏反馈汇总',
+          },
+      manageBossRecap.ownerActions[2],
+    ];
+    const voiceFrontdeskGate = buildRestaurantVoiceFrontdeskGate({
+      restaurantName: initialIntake.restaurant || '样例餐厅',
+      offerName: initialIntake.offer || '招牌套餐',
+      menuApproved: reviewCount > 0,
+      couponRulesReady: reviewCount > 0,
+      staffTakeoverReady: true,
+      reservationTableReady: false,
+      orderMenuMapped: false,
+      callSummaryTemplateReady: performanceCount > 0,
+      voiceProviderReady: false,
+      posContractReady: false,
+      paymentContractReady: false,
+    });
+    const voiceFrontdeskSopSummary = buildRestaurantVoiceFrontdeskSopSummary(voiceFrontdeskGate);
+    const dishCostInventorySample = buildRestaurantDishCostInventorySample({
+      restaurantName: initialIntake.restaurant || '样例餐厅',
+      offerName: initialIntake.offer || '招牌套餐',
+      rows: RESTAURANT_DISH_COST_INVENTORY_DEMO_ROWS,
+    });
+    const dishCostInventoryPasteTemplate = buildRestaurantDishCostInventoryPasteTemplate();
+    const dishCostInventoryPasteParse = parseRestaurantDishCostInventoryPaste({
+      text: dishCostInventoryPasteText,
+    });
+    const dishCostInventoryImportPreview = buildRestaurantDishCostInventorySample({
+      restaurantName: initialIntake.restaurant || '样例餐厅',
+      offerName: initialIntake.offer || '招牌套餐',
+      rows: dishCostInventoryPasteParse.rows,
+    });
     const externalGates = [
       { title: '发布账号待确认', detail: '大众点评、小红书、抖音、微信社群等渠道未授权前，只记录人工发布计划和凭证。', blocked: false },
       { title: '到店反馈可导入', detail: performanceCount > 0 ? `已导入 ${performanceCount} 份反馈表；也支持继续上传表格。` : '等待导入预约、券领取、私信咨询或到店反馈表。', blocked: performanceCount === 0 },
@@ -422,6 +533,36 @@ export function ManageOperationsConsoleClient({
       { asset: '发布证明', evidence: proofCount > 0 ? '链接/截图已补' : '等待链接/截图', status: proofCount > 0 ? '已确认' : '待补齐', follow: proofCount > 0 ? '可跟进' : '先补证明' },
       { asset: '到店跟进动作', evidence: nextActions.length > 0 ? '下一步已生成' : '等待负责人确认', status: followCount > 0 ? '可推进' : '待真实反馈', follow: '继续跟进' },
     ];
+    const ownerQueueRows = [
+      {
+        owner: '店长',
+        signal: proofCount > 0 ? '发布链接/截图已回填' : '缺发布链接或截图',
+        action: proofCount > 0 ? '确认内容可继续挂出' : '先让运营补发布证明',
+        evidence: '大众点评/小红书/抖音/微信社群链接或截图',
+      },
+      {
+        owner: '社群负责人',
+        signal: performanceCount > 0 ? '预约/券领取/私信已有聚合表' : '缺预约/券领取/私信聚合表',
+        action: performanceCount > 0 ? '按真实咨询分配跟进' : '导入手工表格后再跟进',
+        evidence: '只收聚合信号，不保存联系电话、微信号或私信原文',
+      },
+      {
+        owner: '运营',
+        signal: reviewCount > 0 ? '门店审核已完成' : '门店审核待确认',
+        action: reviewCount > 0 ? '进入下一轮内容/活动复盘' : '确认菜品、价格、库存、核销和禁用表述',
+        evidence: '门店确认记录和活动边界',
+      },
+      {
+        owner: '复盘负责人',
+        signal: scaleCount > 0 ? '已有下一轮优化结论' : '缺 7 天复盘结论',
+        action: scaleCount > 0 ? '决定复购/会员/下一轮菜品套餐' : '等待真实反馈后再判断',
+        evidence: '发布证明 + 聚合反馈 + 店长确认',
+      },
+    ];
+    const hasInternalBoundaryEvidence = (permissionSnapshot?.permissionRecordCount || 0) > 0 || performanceCount > 0 || reviewCount > 0;
+    const privacyBoundaryText = hasInternalBoundaryEvidence
+      ? '不保存私信原文 / 手机号 / 微信号 / POS 明细；客户可见写作：联系电话 / 收银明细'
+      : '不保存私信原文 / 联系电话 / 微信联系方式 / 收银明细';
     const navItems = [
       { label: '门店总览', href: '/factory?variant=friend_trial' },
       { label: '到店理由', href: '/factory/creative?variant=friend_trial' },
@@ -622,12 +763,354 @@ export function ManageOperationsConsoleClient({
                   ))}
                 </div>
 
+                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+                    <div className="p-5">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">老板复盘摘要</p>
+                          <h3 className="mt-1 text-xl font-semibold text-slate-950">{manageBossRecap.headline}</h3>
+                          <p className="mt-2 text-sm leading-6 text-slate-600">这里把发布证明、脱敏反馈和负责人下一步收在一起；证据没补齐时，只给动作建议，不写成增长结果。</p>
+                        </div>
+                        <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                          {manageBossRecap.decision === 'amplify' ? '小步放大' : manageBossRecap.decision === 'iterate' ? '继续验证' : '暂停放大'}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 grid gap-3 md:grid-cols-3">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <div className="text-[11px] font-medium text-slate-500">下一轮推什么</div>
+                          <p className="mt-1 text-xs font-semibold leading-5 text-slate-800">{manageBossRecap.nextDishAction}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <div className="text-[11px] font-medium text-slate-500">卖点调整</div>
+                          <p className="mt-1 text-xs font-semibold leading-5 text-slate-800">{manageBossRecap.sellingPointChange}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                          <div className="text-[11px] font-medium text-slate-500">补证据</div>
+                          <p className="mt-1 text-xs font-semibold leading-5 text-slate-800">{manageRecapMaterialGap}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-slate-200 bg-slate-50 p-5 lg:border-l lg:border-t-0">
+                      <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <div className="text-[11px] text-slate-500">发布证明</div>
+                          <div className="mt-1 text-lg font-semibold text-slate-950">{manageBossRecap.summary.acceptedProofs}/{managePublishProofLedger.summary.total}</div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <div className="text-[11px] text-slate-500">脱敏反馈</div>
+                          <div className="mt-1 text-lg font-semibold text-slate-950">{manageBossRecap.summary.recoverRows}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {manageRecapOwnerActions.map(item => (
+                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600" key={`${item.owner}-${item.evidenceRequired}`}>
+                            <span className="font-semibold text-slate-900">{item.owner}：</span>{item.action}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">可转发摘要</p>
+                    <h3 className="mt-1 text-lg font-semibold text-slate-950">给老板/店长的一页复盘</h3>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">可以直接复制到微信或会议纪要；只包含动作、负责人、证据和边界。</p>
+                  </div>
+                  <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_300px]">
+                    <div className="p-5">
+                      <div className="rounded-xl border border-slate-200 bg-slate-950 p-4 text-white">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{manageShareSummary.title}</div>
+                        <div className="mt-3 space-y-2">
+                          {manageShareSummary.lines.map(line => (
+                            <p className="text-sm leading-6 text-slate-100" key={line}>{line}</p>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {manageShareSummary.ownerChecklist.slice(0, 4).map(item => (
+                          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs leading-5 text-slate-600" key={`${item.owner}-${item.evidenceRequired}`}>
+                            <div className="font-semibold text-slate-900">{item.owner}</div>
+                            <p className="mt-1">{item.action}</p>
+                            <p className="mt-1 text-slate-400">证据：{item.evidenceRequired}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="border-t border-slate-200 bg-slate-50 p-5 lg:border-l lg:border-t-0">
+                      <div className="rounded-lg border border-slate-200 bg-white p-3">
+                        <div className="text-[11px] font-semibold text-slate-500">Markdown 摘要</div>
+                        <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded-md bg-slate-950 p-3 text-[11px] leading-5 text-slate-100">{manageVisibleShareMarkdown}</pre>
+                      </div>
+                      <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[11px] leading-5 text-amber-800">转发前仍需店长确认：没有发布证明和脱敏反馈，不说已经增长；不包含顾客身份、私信原文、券码、订单和收银明细。</p>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">电话接待门禁</p>
+                      <h3 className="mt-1 text-lg font-semibold text-slate-950">订位、点餐、菜单问答先做员工审核草稿</h3>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">参考 Slang / ConverseNow / Square Voice AI 的前厅能力，但没有电话接入、菜单字段、收银和支付约定前，只展示话术和负责人。</p>
+                    </div>
+                    <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                      {voiceFrontdeskGate.summary.canAnswerCallsNow ? '可进入电话试跑' : '待补电话和数据条件'}
+                    </span>
+                  </div>
+                  <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_300px]">
+                    <div className="p-5">
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {voiceFrontdeskGate.lanes.map(lane => (
+                          <article
+                            className={`rounded-xl border p-3 ${
+                              lane.status === 'internal-ready'
+                                ? 'border-emerald-200 bg-emerald-50'
+                                : lane.status === 'needs-staff-review'
+                                  ? 'border-sky-200 bg-sky-50'
+                                  : 'border-amber-200 bg-amber-50'
+                            }`}
+                            key={lane.id}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="text-sm font-semibold text-slate-950">{lane.title}</h4>
+                              <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] text-slate-500">{lane.owner}</span>
+                            </div>
+                            <p className="mt-2 text-xs leading-5 text-slate-600">{lane.canDoNow}</p>
+                            <p className="mt-2 rounded-lg bg-white px-2 py-1 text-[11px] leading-4 text-slate-500">下一步：{lane.nextAction}</p>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="border-t border-slate-200 bg-slate-50 p-5 lg:border-l lg:border-t-0">
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="rounded-lg border border-slate-200 bg-white px-2 py-2">
+                          <div className="text-[11px] text-slate-500">可准备</div>
+                          <div className="mt-1 text-lg font-semibold text-slate-950">{voiceFrontdeskGate.summary.internalReady}</div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-2 py-2">
+                          <div className="text-[11px] text-slate-500">待审核</div>
+                          <div className="mt-1 text-lg font-semibold text-slate-950">{voiceFrontdeskGate.summary.staffReview}</div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-2 py-2">
+                          <div className="text-[11px] text-slate-500">待接入</div>
+                          <div className="mt-1 text-lg font-semibold text-slate-950">{voiceFrontdeskGate.summary.externalGated}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+                        没有电话接入、菜单字段、收银和支付约定，不说已经能接真实来电、写入订单或收款。
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {voiceFrontdeskGate.staffScripts.slice(0, 2).map(item => (
+                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600" key={item.scenario}>
+                            <span className="font-semibold text-slate-900">{item.scenario}：</span>{item.draft}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                        <div className="text-[11px] font-semibold text-slate-500">前厅 SOP 摘要</div>
+                        <p className="mt-2 text-xs leading-5 text-slate-700">{voiceFrontdeskSopSummary.readinessLine}</p>
+                        <div className="mt-3 space-y-1.5">
+                          {voiceFrontdeskSopSummary.handoffRules.slice(0, 3).map(rule => (
+                            <p className="rounded-md bg-slate-50 px-2 py-1 text-[11px] leading-4 text-slate-600" key={rule}>{rule}</p>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t border-slate-200 bg-white p-5">
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="text-xs font-semibold text-slate-950">给店长/前厅的可转发摘要</div>
+                        <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap rounded-lg bg-slate-950 p-3 text-[11px] leading-5 text-slate-100">{voiceFrontdeskSopSummary.markdown}</pre>
+                      </div>
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="text-xs font-semibold text-slate-950">负责人清单</div>
+                        <div className="mt-3 space-y-2">
+                          {voiceFrontdeskSopSummary.staffChecklist.slice(0, 4).map(item => (
+                            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600" key={`${item.owner}-${item.action}`}>
+                              <div className="font-semibold text-slate-900">{item.owner}</div>
+                              <p className="mt-1">{item.action}</p>
+                              <p className="mt-1 text-slate-400">证据：{item.evidenceRequired}</p>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[11px] leading-5 text-amber-800">
+                          只用于员工审核和前厅交接；条件未补齐前，不接真实来电、不写入订单、不收款。
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">菜品成本/库存样表</p>
+                      <h3 className="mt-1 text-lg font-semibold text-slate-950">先把主推菜的原料、库存、补货线和损耗交给负责人复核</h3>
+                      <p className="mt-1 text-xs leading-5 text-slate-500">参考 MarketMan 的库存、订货、菜品成本、毛利和浪费控制，但当前只展示脱敏样表和店长问题清单，不写真实毛利结论。</p>
+                    </div>
+                    <span className="w-fit rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                      待补经营汇总约定
+                    </span>
+                  </div>
+                  <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_300px]">
+                    <div className="p-5">
+                      <div className="grid gap-3 md:grid-cols-3">
+                        {dishCostInventorySample.sampleRows.map(row => (
+                          <article className="rounded-xl border border-slate-200 bg-slate-50 p-3" key={`${row.dishName}-${row.ingredientName}`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <h4 className="text-sm font-semibold text-slate-950">{row.ingredientName}</h4>
+                              <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] text-slate-500">{row.owner}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">{row.dishName}</p>
+                            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+                              <div className="rounded-lg bg-white px-2 py-2">
+                                <div className="text-slate-400">库存</div>
+                                <div className="mt-1 font-semibold text-slate-900">{row.stockOnHand}{row.unit}</div>
+                              </div>
+                              <div className="rounded-lg bg-white px-2 py-2">
+                                <div className="text-slate-400">补货线</div>
+                                <div className="mt-1 font-semibold text-slate-900">{row.reorderPoint}{row.unit}</div>
+                              </div>
+                              <div className="rounded-lg bg-white px-2 py-2">
+                                <div className="text-slate-400">损耗</div>
+                                <div className="mt-1 font-semibold text-slate-900">{row.wasteCount}</div>
+                              </div>
+                            </div>
+                            <p className="mt-3 rounded-lg bg-white px-2 py-1 text-[11px] leading-4 text-slate-500">证据：{row.evidence}</p>
+                          </article>
+                        ))}
+                      </div>
+                      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-950">成本/库存安全导入演练</div>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                              把表格粘贴到这里，先在本地检查字段、有效行、问题行和负责人问题；通过检查也只进入店长复核，不写真实毛利结论。
+                            </p>
+                          </div>
+                          <button
+                            className="w-fit rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:text-slate-950"
+                            onClick={() => setDishCostInventoryPasteText(dishCostInventoryPasteTemplate.sampleText)}
+                            type="button"
+                          >
+                            填入样板
+                          </button>
+                        </div>
+                        <textarea
+                          className="mt-3 min-h-32 w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-xs leading-5 text-slate-800 outline-none focus:border-slate-400"
+                          onChange={event => setDishCostInventoryPasteText(event.target.value)}
+                          value={dishCostInventoryPasteText}
+                        />
+                        <div className="mt-3 grid gap-2 sm:grid-cols-4">
+                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-slate-500">粘贴行</div>
+                            <div className="mt-1 text-lg font-semibold text-slate-950">{dishCostInventoryPasteParse.summary.dataRows}</div>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-slate-500">有效行</div>
+                            <div className="mt-1 text-lg font-semibold text-slate-950">{dishCostInventoryImportPreview.summary.validRows}</div>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-slate-500">问题行</div>
+                            <div className="mt-1 text-lg font-semibold text-slate-950">{dishCostInventoryImportPreview.summary.rejectedRows}</div>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                            <div className="text-[11px] text-slate-500">待补货</div>
+                            <div className="mt-1 text-lg font-semibold text-slate-950">{dishCostInventoryImportPreview.summary.needsReorderCount}</div>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                          <div className="rounded-lg border border-slate-200 bg-white p-3">
+                            <div className="text-xs font-semibold text-slate-950">预览行</div>
+                            <div className="mt-2 space-y-2">
+                              {dishCostInventoryImportPreview.sampleRows.slice(0, 3).map(row => (
+                                <p className="rounded-md bg-slate-50 px-2 py-1 text-[11px] leading-4 text-slate-600" key={`${row.dishName}-${row.ingredientName}-import`}>
+                                  {row.dishName} / {row.ingredientName}：库存 {row.stockOnHand}{row.unit}，补货线 {row.reorderPoint}{row.unit}
+                                </p>
+                              ))}
+                              {dishCostInventoryImportPreview.sampleRows.length === 0 ? (
+                                <p className="rounded-md bg-amber-50 px-2 py-1 text-[11px] leading-4 text-amber-800">还没有可复核行，先粘贴标准字段。</p>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 bg-white p-3">
+                            <div className="text-xs font-semibold text-slate-950">检查结果</div>
+                            <div className="mt-2 space-y-2">
+                              {dishCostInventoryImportPreview.issues.slice(0, 3).map(issue => (
+                                <p className="rounded-md bg-amber-50 px-2 py-1 text-[11px] leading-4 text-amber-800" key={`${issue.row}-${issue.code}-${issue.field}`}>
+                                  第 {issue.row} 行：{issue.message}
+                                </p>
+                              ))}
+                              {dishCostInventoryImportPreview.issues.length === 0 ? (
+                                <p className="rounded-md bg-emerald-50 px-2 py-1 text-[11px] leading-4 text-emerald-800">字段检查通过，下一步交给店长、后厨、采购和财务复核。</p>
+                              ) : null}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border-t border-slate-200 bg-slate-50 p-5 lg:border-l lg:border-t-0">
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="rounded-lg border border-slate-200 bg-white px-2 py-2">
+                          <div className="text-[11px] text-slate-500">样表行</div>
+                          <div className="mt-1 text-lg font-semibold text-slate-950">{dishCostInventorySample.summary.validRows}</div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-2 py-2">
+                          <div className="text-[11px] text-slate-500">需补货</div>
+                          <div className="mt-1 text-lg font-semibold text-slate-950">{dishCostInventorySample.summary.needsReorderCount}</div>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-white px-2 py-2">
+                          <div className="text-[11px] text-slate-500">有损耗</div>
+                          <div className="mt-1 text-lg font-semibold text-slate-950">{dishCostInventorySample.summary.wasteRiskCount}</div>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {dishCostInventorySample.ownerQuestions.slice(0, 4).map(item => (
+                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs leading-5 text-slate-600" key={`${item.owner}-${item.question}`}>
+                            <span className="font-semibold text-slate-900">{item.owner}：</span>{item.question}
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold text-slate-950">可粘贴表格模板</div>
+                            <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                              只贴菜品、原料、库存、补货线、成本、损耗和证据；顾客信息、聊天内容、券码和订单明细不要贴进来。
+                            </p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">待店长复核</span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {dishCostInventoryPasteTemplate.columns.slice(0, 7).map(column => (
+                            <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] text-slate-600" key={column.field}>
+                              {column.label}
+                            </span>
+                          ))}
+                        </div>
+                        <pre className="mt-3 max-h-24 overflow-auto rounded-lg bg-slate-950 p-3 text-[11px] leading-5 text-slate-100">
+                          {dishCostInventoryPasteTemplate.sampleText}
+                        </pre>
+                      </div>
+                      <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-800">
+                        没有销售、库存、采购和财务汇总约定，不写真实毛利或库存优化结论。
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
                   <div className="flex flex-col space-y-6 xl:col-span-8">
                     <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                       <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4">
                         <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Command Cards</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">角色动作卡</p>
                           <h2 className="mt-1 text-xl font-semibold text-slate-900">三类人各看一件事</h2>
                         </div>
                         <span className="hidden rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm sm:inline-flex">少解释，直接看动作</span>
@@ -706,13 +1189,15 @@ export function ManageOperationsConsoleClient({
 
                     <section className="overflow-hidden rounded-xl border border-emerald-100 bg-white shadow-sm">
                       <div className="border-b border-emerald-100 bg-emerald-50/60 px-5 py-3">
-                        <h3 className="text-sm font-semibold text-emerald-900">已接通能力</h3>
+                        <h3 className="text-sm font-semibold text-emerald-900">能力边界</h3>
                       </div>
                       <div className="divide-y divide-slate-100">
                         {externalGates.slice(0, 4).map(item => (
                           <div className="flex items-center justify-between px-5 py-3 hover:bg-slate-50" key={item.title}>
                             <span className="text-[13px] font-medium text-slate-700">{item.title}</span>
-                            <span className="rounded border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700">可用</span>
+                            <span className={`rounded border px-2 py-0.5 text-[11px] ${item.blocked ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-100 bg-emerald-50 text-emerald-700'}`}>
+                              {item.blocked ? '待补证据' : '可用'}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -783,8 +1268,31 @@ export function ManageOperationsConsoleClient({
                   </section>
                 </div>
 
+                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-800">店长任务队列</h3>
+                      <p className="mt-1 text-xs text-slate-500">把发布证明、预约/券领取/私信聚合、门店确认和复盘动作拆给负责人。</p>
+                    </div>
+                    <span className="text-[11px] font-semibold text-slate-500">{privacyBoundaryText}</span>
+                  </div>
+                  <div className="grid gap-3 p-5 lg:grid-cols-4">
+                    {ownerQueueRows.map(row => (
+                      <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm" key={row.owner}>
+                        <div className="flex items-center justify-between gap-3">
+                          <h4 className="text-sm font-semibold text-slate-900">{row.owner}</h4>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">负责人</span>
+                        </div>
+                        <p className="mt-3 text-xs font-semibold text-slate-700">{row.signal}</p>
+                        <p className="mt-2 text-xs leading-5 text-slate-600">{row.action}</p>
+                        <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-[11px] leading-5 text-slate-500">{row.evidence}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+
                 <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 shadow-sm">
-                  <span>只展示已确认结果 · 支持表格导入 · 自动整理到店跟进</span>
+                  <span>只展示已确认结果 · 支持表格导入 · 整理到店跟进</span>
                   <a className="font-medium text-slate-900 hover:underline" href={withIntake('/factory?variant=friend_trial')}>查看完整服务链路</a>
                 </div>
               </div>
@@ -801,7 +1309,7 @@ export function ManageOperationsConsoleClient({
         <section className="rounded-[8px] border border-sky-200/15 bg-[#101722] p-5 shadow-2xl shadow-black/30">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-xs uppercase tracking-[0.22em] text-sky-200">Manage Operations Variant</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-sky-200">门店交付管理视角</p>
               <h1 className="mt-3 text-3xl font-semibold tracking-normal text-white sm:text-4xl">交付管理控制台</h1>
               <p className="mt-3 text-sm leading-6 text-sky-50/75">{selectedVariant.headline}</p>
               <p className="mt-2 text-sm leading-6 text-white/55">{selectedVariant.body}</p>
@@ -817,7 +1325,7 @@ export function ManageOperationsConsoleClient({
             selectedVariant.body,
             selectedVariant.stopLine,
           ]}
-          eyebrow="Manage Operations Variant / Manage Action Playbook"
+          eyebrow="门店交付管理视角 / 运营动作剧本"
           firstScreen={`${selectedVariant.headline} ${selectedVariant.body}`}
           nextAction={selectedVariant.firstAction}
           primaryAction={playbook.primaryAction}
@@ -832,10 +1340,10 @@ export function ManageOperationsConsoleClient({
         <section className="rounded-[8px] border border-sky-200/15 bg-white/[0.04] p-5">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-sky-200">Clico-style Manage Board</p>
-              <h2 className="mt-2 text-xl font-semibold">Clico式客户交付与企业安全验收板</h2>
+              <p className="text-xs uppercase tracking-[0.22em] text-sky-200">门店交付与安全验收板</p>
+              <h2 className="mt-2 text-xl font-semibold">餐饮交付与负责人承接看板</h2>
               <p className="mt-2 text-sm leading-6 text-white/55">
-                这里把客户审核、客户批准、权限范围、DLP/水印、访问审计、表现回流和 CRM 下一步放到同一块板上；缺一项就不开放企业级承诺。
+                这里把客户审核、客户批准、权限范围、DLP/水印、访问审计、反馈回流和负责人下一步放到同一块板上；缺一项就不开放企业级承诺。
               </p>
             </div>
             <div className="text-sm font-semibold text-sky-100">
@@ -861,14 +1369,14 @@ export function ManageOperationsConsoleClient({
         <section className="rounded-[8px] border border-emerald-200/15 bg-emerald-950/15 p-5">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-emerald-200">Asset Enforcement Matrix</p>
-              <h2 className="mt-2 text-xl font-semibold">企业资产访问门禁矩阵</h2>
+              <p className="text-xs uppercase tracking-[0.22em] text-emerald-200">发布/交付门禁矩阵</p>
+              <h2 className="mt-2 text-xl font-semibold">发布证明与交付访问门禁</h2>
               <p className="mt-2 text-sm leading-6 text-white/55">
-                这层专门看 download/share/publish/交付前是否 fail-closed：没有权限、对象、DLP、水印、临时 grant 或访问审计时，不让素材自由流转。
+                这层专门看下载、分享、发布和交付前是否 fail-closed：没有权限、对象、DLP、水印、临时 grant 或访问审计时，不让素材自由流转。
               </p>
             </div>
             <div className="text-sm font-semibold text-emerald-100">
-              {enforcementChecks.filter(item => item.ready).length}/{enforcementChecks.length} enforcement ready
+              {enforcementChecks.filter(item => item.ready).length}/{enforcementChecks.length} 门禁就绪
             </div>
           </div>
           <div className="mt-4 grid gap-3 lg:grid-cols-5">
@@ -889,7 +1397,7 @@ export function ManageOperationsConsoleClient({
 
         <section className="grid gap-4">
           <form onSubmit={seedManagePolicy} className="rounded-[8px] border border-white/10 bg-white/[0.04] p-5">
-            <p className="text-xs uppercase tracking-[0.22em] text-sky-200">Manage Seed</p>
+            <p className="text-xs uppercase tracking-[0.22em] text-sky-200">补门店交付策略</p>
             <h2 className="mt-2 text-xl font-semibold">补一个受控交付策略</h2>
             <p className="mt-2 text-sm leading-6 text-white/55">一次写入客户审核权限、受控分享对象、安全策略、DLP、水印和留存规则；不伪装企业云盘已经接入。</p>
             <div className="mt-4 grid gap-3">
@@ -946,7 +1454,7 @@ export function ManageOperationsConsoleClient({
           <div className="rounded-[8px] border border-white/10 bg-white/[0.04] p-5">
             <h2 className="text-lg font-semibold">Manage 缺口</h2>
             <div className="mt-3 space-y-2">
-              {(gaps.length ? gaps : ['内部 Manage 账本当前没有阻断项，下一步是接企业云资产、CRM 和 analytics sync。']).map(item => (
+              {(gaps.length ? gaps : ['内部 Manage 账本当前没有阻断项，下一步是接企业云资产、到店跟进同步和平台/社群反馈回流。']).map(item => (
                 <div key={item} className="rounded-[6px] border border-white/10 bg-black/20 p-3 text-sm text-white/70">{item}</div>
               ))}
             </div>

@@ -36,12 +36,12 @@ describe('status page', () => {
     expect(html).toContain('Pencil 类');
     expect(html).toContain('Smartly.io');
     expect(html).toContain('creative、media、intelligence');
-    expect(html).toContain('电商增长作战系统');
+    expect(html).toContain('餐饮门店增长作战系统');
     expect(html).toContain('最终产品形态指挥板');
-    expect(html).toContain('电商 AI 内容工业化操作系统');
+    expect(html).toContain('餐饮 AI 内容工业化操作系统');
     expect(html).toContain('先定终局，再分内部任务和外部材料');
-    expect(html).toContain('provider / OAuth / ads / cloud / audit');
-    expect(html).toContain('真实视频 provider、多平台 OAuth、广告账户、自动发布、analytics sync、企业云资产和规模审计缺一项');
+    expect(html).toContain('provider / platform auth / activity / cloud / audit');
+    expect(html).toContain('真实视频 provider、多平台授权、商户活动权限、外部发布回执、反馈回流、企业云资产和规模审计缺一项');
     expect(html).toContain('最终产品形态蓝图');
     expect(html).toContain('内部继续补厚；外部材料接齐后才开放平台级承诺');
     expect(html).toContain('Wenai 内部继续做');
@@ -53,12 +53,12 @@ describe('status page', () => {
     expect(html).toContain('Create + Cut / 生产与混剪');
     expect(html).toContain('视频生成/剪辑 provider endpoint');
     expect(html).toContain('没有 provider 完成回调、可打开成片和客户批准前，不宣称一键视频或智能混剪已商用');
-    expect(html).toContain('没有平台授权、自动发布回执和广告账户证据前，不宣称 PubPal/矩阵分发、自动投放或自动优化');
+    expect(html).toContain('没有平台授权、外部发布回执和商户活动证据前，不宣称 PubPal/矩阵分发、外部发布完成或自动优化');
     expect(html).toContain('没有真实对象存储和签名 URL enforcement 前，不宣称筷子云盘级企业资产协作');
     expect(html).toContain('91M+ creative output、42M+ video distribution 只能作为竞品 benchmark');
     expect(html).toContain('AI 视频分析、结构拆解、智能混剪、版本对比、批量成片和复盘回流');
-    expect(html).toContain('多平台分发、PubPal/矩阵分发、广告投放、预算门禁、发布证据和 analytics sync');
-    expect(html).toContain('没有平台授权和发布/投放回执前，不能展示已自动分发或已自动优化广告');
+    expect(html).toContain('多平台分发、PubPal/矩阵分发、门店活动发布、预算门禁、发布证据和反馈回流');
+    expect(html).toContain('没有平台授权和发布/活动回执前，不能展示已自动分发或已自动优化');
     expect(html).toContain('筷子之外参考');
     expect(html).toContain('Hooksy / Hooked');
     expect(html).toContain('Omneky');
@@ -109,9 +109,9 @@ describe('status page', () => {
       }],
       alternativeReferences: [{
         name: 'Omneky',
-        pattern: '把创意生成、广告投放和表现回流连成 campaign learning loop。',
-        wenaiDecision: 'Cast/Manage 必须把 campaign ledger、预算、素材绑定、回流指标和下一轮规则放在同一条链路。',
-        boundary: '广告账户和转化事件未授权前，只能做手动导入。',
+        pattern: '把创意生成、门店活动发布和表现回流连成本地内容 learning loop。',
+        wenaiDecision: 'Cast/Manage 必须把门店活动账本、预算、素材绑定、回流指标和下一轮规则放在同一条链路。',
+        boundary: '商户活动权限和券领取/预约事件未授权前，只能做手动导入。',
       }],
       uiVariants: [{
         id: 'partner' as const,
@@ -148,7 +148,7 @@ describe('status page', () => {
       }, {
         id: 'platform-analytics-sync',
         category: 'analytics_sync' as const,
-        label: 'Platform analytics sync',
+        label: 'Platform feedback sync',
         status: 'configured' as const,
         owner: 'provider' as const,
         materialPriority: 'P1' as const,
@@ -177,7 +177,7 @@ describe('status page', () => {
     expect(buildStatusAlternativeReferences(report)).toEqual([expect.objectContaining({
       name: 'Omneky',
       reference: expect.stringContaining('边界'),
-      wenaiDecision: expect.stringContaining('campaign ledger'),
+      wenaiDecision: expect.stringContaining('门店活动账本'),
     })]);
   });
 
@@ -213,7 +213,7 @@ describe('status page', () => {
       }, {
         id: 'platform-analytics-sync',
         category: 'analytics_sync' as const,
-        label: 'Platform analytics sync',
+        label: 'Platform feedback sync',
         status: 'configured' as const,
         owner: 'provider' as const,
         materialPriority: 'P1' as const,
@@ -336,9 +336,9 @@ describe('status page', () => {
     expect(formatExternalRequirementOwner('provider')).toBe('服务商提供');
     expect(formatExternalRequirementOwner('wenai')).toBe('Wenai 内部完成');
     expect(formatExternalRequirementCategory('video_provider')).toBe('视频生成/剪辑');
-    expect(formatExternalRequirementCategory('platform_oauth')).toBe('多平台 OAuth');
-    expect(formatExternalRequirementCategory('ad_delivery')).toBe('广告投放');
-    expect(formatExternalRequirementCategory('auto_publish')).toBe('自动发布/矩阵分发');
+    expect(formatExternalRequirementCategory('platform_oauth')).toBe('多平台授权');
+    expect(formatExternalRequirementCategory('ad_delivery')).toBe('门店活动发布');
+    expect(formatExternalRequirementCategory('auto_publish')).toBe('外部发布执行/矩阵分发');
     expect(formatExternalRequirementCategory('scale_claims')).toBe('规模化数字');
   });
 
